@@ -1,4 +1,4 @@
-# 📱 Gourd Classification Mobile App - System Workflow
+# Gourd Classification Mobile App - System Workflow
 
 This document outlines the suggested workflow for a mobile application that scans/captures images of gourds to identify if it is male/female, determine the type of gourd, estimate the harvest date, and more.
 
