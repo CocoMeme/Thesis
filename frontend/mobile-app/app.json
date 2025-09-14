@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "gourd-scanner-expo",
+    "name": "thesis",
     "slug": "gourd-scanner-expo",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,16 +8,17 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/android-chrome-192x192.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#ffffff",
+      "hideExpoLoadingScreen": true
     },
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/android-chrome-192x192.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true
