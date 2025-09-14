@@ -1,10 +1,10 @@
-# 🚀 Gourd Classification Mobile App - Setup Guide
+# Gourd Classification Mobile App - Setup Guide
 
 This guide will walk you through setting up the entire Gourd Classification project, including the React Native mobile app, Node.js backend, and ML model training environment.
 
 ---
 
-## 📋 Prerequisites
+## Prerequisites
 
 Before starting, ensure you have the following installed on your system:
 
@@ -27,7 +27,7 @@ Before starting, ensure you have the following installed on your system:
 
 ---
 
-## 🏗️ Project Structure Setup
+## Project Structure Setup
 
 ### 1. Create Main Project Directory
 ```powershell
@@ -151,7 +151,7 @@ Add the following to your `backend/package.json`:
 
 ---
 
-## 🤖 ML Models Setup (Python Environment)
+## ML Models Setup (Python Environment)
 
 ### 1. Create ML Environment
 ```powershell
@@ -195,7 +195,7 @@ mkdir notebooks datasets yolov8-training harvest-prediction exports
 
 ---
 
-## 🗄️ Database Setup (MongoDB)
+## Database Setup (MongoDB)
 
 ### 1. Start MongoDB Service
 ```powershell
@@ -226,7 +226,7 @@ exit
 
 ---
 
-## ⚙️ Environment Configuration
+## Environment Configuration
 
 ### 1. Backend Environment Variables
 Create `backend/.env` file:
@@ -249,7 +249,7 @@ ENVIRONMENT=development
 
 ---
 
-## 🎯 Development Workflow
+## Development Workflow
 
 ### 1. Start Backend Server
 ```powershell
@@ -282,7 +282,7 @@ jupyter lab
 
 ---
 
-## 📝 Essential Files to Create
+## Essential Files to Create
 
 ### 1. Root .gitignore
 Create `thesis-app/.gitignore`:
@@ -361,7 +361,7 @@ app.listen(PORT, () => {
 
 ---
 
-## 🧪 Testing the Setup
+## Testing the Setup
 
 ### 1. Verify Backend
 ```powershell
@@ -386,7 +386,7 @@ python -c "import cv2; print('OpenCV version:', cv2.__version__)"
 
 ---
 
-## 🚨 Common Issues & Troubleshooting
+## Common Issues & Troubleshooting
 
 ### React Native Issues
 - **Metro bundler port conflict**: Use `npx react-native start --reset-cache`
@@ -403,7 +403,7 @@ python -c "import cv2; print('OpenCV version:', cv2.__version__)"
 
 ---
 
-## 📚 Next Steps
+## Next Steps
 
 1. **Implement Core Components**: Start with basic UI components and camera integration
 2. **Create ML Models**: Begin with YOLOv8 training for gourd detection
@@ -413,11 +413,9 @@ python -c "import cv2; print('OpenCV version:', cv2.__version__)"
 
 ---
 
-## 📞 Support
+## Support
 
 For issues or questions:
 1. Check the troubleshooting section above
 2. Review the architecture.md for system overview
 3. Consult the individual component documentation
-
-Happy coding! 🎉

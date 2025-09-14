@@ -52,7 +52,33 @@ This document outlines the suggested workflow for a mobile application that scan
 
 ---
 
-## 6. Output to User (React Native App)
+## 6. Admin Website (React Frontend)
+- Built using **React** for web-based administration and management.
+- Provides comprehensive admin functionalities:
+  - **User Management**: View, create, edit, and delete user accounts.
+  - **Data Analytics**: Advanced dashboard with charts and statistics on:
+    - Classification accuracy trends
+    - User engagement metrics
+    - Gourd type distribution
+    - Harvest prediction performance
+  - **Model Management**: 
+    - Monitor ML model performance
+    - Upload and deploy new model versions
+    - A/B testing for different model configurations
+  - **Content Management**:
+    - Manage gourd type categories and descriptions
+    - Update harvest prediction parameters
+    - Maintain reference image datasets
+  - **System Monitoring**:
+    - Backend server health and performance metrics
+    - Database usage statistics
+    - API endpoint monitoring and logs
+- **Authentication & Authorization**: Role-based access control (super admin, moderator, analyst).
+- **Real-time Updates**: WebSocket integration for live data updates and notifications.
+
+---
+
+## 7. Output to User (React Native App)
 - Display results to the user:
   - Detected **gourd type**.
   - Identified as **male/female flower**.
@@ -61,4 +87,4 @@ This document outlines the suggested workflow for a mobile application that scan
 
 ---
 
-## ⚡ Simplified Flow Diagram
+##  Simplified Flow Diagram
