@@ -34,7 +34,7 @@ const authenticate = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Find user and attach to request
-    const user = await User.findById(decoded.id).select('-password -refreshTokens');
+    const user = await User.findById(decoded.userId).select('-password -refreshTokens');
     
     if (!user) {
       return res.status(401).json({

@@ -14,9 +14,11 @@
       "hideExpoLoadingScreen": true
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.coandrei.gourdscanner"
     },
     "android": {
+      "package": "com.coandrei.gourdscanner",
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-chrome-192x192.png",
         "backgroundColor": "#ffffff"

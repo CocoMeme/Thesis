@@ -24,12 +24,23 @@ class App {
 
     // CORS configuration
     const corsOptions = {
-      origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'],
+      origin: process.env.CORS_ORIGIN?.split(',') || [
+        'http://localhost:3000',
+        'http://192.168.1.66:3000',
+        'http://localhost:19006', // Expo dev server
+        'http://192.168.1.66:19006', // Expo dev server with IP
+      ],
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
       credentials: true,
       optionsSuccessStatus: 200
     };
+    
+    // For development, allow all origins from React Native
+    if (process.env.NODE_ENV === 'development') {
+      corsOptions.origin = true; // Allow all origins in development
+    }
+    
     this.app.use(cors(corsOptions));
 
     // Logging middleware
@@ -102,7 +113,9 @@ class App {
       });
     });
 
-    // TODO: Import and use route modules when created
+    // Import and use route modules
+    this.app.use('/api/auth/firebase', require('./routes/firebaseAuth'));
+    // TODO: Add these when other route modules are created
     // this.app.use('/api/auth', require('./routes/auth'));
     // this.app.use('/api/users', require('./routes/users'));
     // this.app.use('/api/scans', require('./routes/scans'));

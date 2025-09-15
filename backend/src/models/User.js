@@ -6,8 +6,9 @@ const userSchema = new mongoose.Schema({
   // Basic user information
   username: {
     type: String,
-    required: [true, 'Username is required'],
+    required: false, // Make username optional for email registration
     unique: true,
+    sparse: true, // Allows multiple null values
     trim: true,
     minlength: [3, 'Username must be at least 3 characters long'],
     maxlength: [30, 'Username cannot exceed 30 characters'],
@@ -28,27 +29,52 @@ const userSchema = new mongoose.Schema({
 
   password: {
     type: String,
-    required: [true, 'Password is required'],
+    required: function() {
+      return !this.firebaseUid; // Password required only if not using Firebase
+    },
     minlength: [6, 'Password must be at least 6 characters long'],
     select: false // Don't return password in queries by default
   },
 
-  // Profile information
+  // Firebase integration fields
+  firebaseUid: {
+    type: String,
+    unique: true,
+    sparse: true, // Allows multiple null values
+    index: true
+  },
+
+  emailVerified: {
+    type: Boolean,
+    default: false
+  },
+
+  provider: {
+    type: String,
+    enum: ['local', 'firebase', 'google', 'facebook', 'apple'],
+    default: 'local'
+  },
+
+  // Profile information (top-level for Firebase compatibility)
+  firstName: {
+    type: String,
+    trim: true,
+    maxlength: [50, 'First name cannot exceed 50 characters']
+  },
+  
+  lastName: {
+    type: String,
+    trim: true,
+    maxlength: [50, 'Last name cannot exceed 50 characters']
+  },
+
+  profilePicture: {
+    type: String, // URL to profile image
+    default: null
+  },
+
+  // Additional profile information
   profile: {
-    firstName: {
-      type: String,
-      trim: true,
-      maxlength: [50, 'First name cannot exceed 50 characters']
-    },
-    lastName: {
-      type: String,
-      trim: true,
-      maxlength: [50, 'Last name cannot exceed 50 characters']
-    },
-    avatar: {
-      type: String, // URL to profile image
-      default: null
-    },
     bio: {
       type: String,
       maxlength: [500, 'Bio cannot exceed 500 characters']
