@@ -1,4 +1,7 @@
 # local env files
-.env*.local
-
+.env
+.env.local
+.env.production
+.env.development
+*.env
 .firebase-config-reference.env
