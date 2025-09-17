@@ -2,23 +2,70 @@ import React, { useState, useEffect } from 'react';
 import { NavigationContainer, useFocusEffect } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, Alert } from 'react-native';
 
 import { HomeScreen, CameraScreen, HistoryScreen, LoginScreen, SignUpScreen, ProfileScreen } from '../screens';
 import { authService } from '../services';
+import { CustomHeader } from '../components';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
 const HomeStack = () => {
+  const [user, setUser] = React.useState(null);
+
+  React.useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      const userData = await authService.getCurrentUser();
+      setUser(userData);
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
+  };
+
+  const handleNotificationPress = () => {
+    Alert.alert('Notifications', 'Notification feature coming soon!');
+  };
+
+  const handleMenuPress = () => {
+    Alert.alert(
+      'Menu Options', 
+      'What would you like to do?',
+      [
+        { text: 'Settings', onPress: () => console.log('Settings pressed') },
+        { text: 'Help', onPress: () => console.log('Help pressed') },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  };
+
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerTitleStyle: {
+          fontFamily: 'Poppins_600SemiBold',
+          fontSize: 18,
+        },
+      }}
+    >
       <Stack.Screen 
         name="HomeMain" 
         component={HomeScreen} 
-        options={{ title: 'Gourd Scanner' }}
+        options={{
+          header: () => (
+            <CustomHeader
+              user={user}
+              onNotificationPress={handleNotificationPress}
+              onMenuPress={handleMenuPress}
+            />
+          ),
+        }}
       />
     </Stack.Navigator>
   );
@@ -26,7 +73,14 @@ const HomeStack = () => {
 
 const CameraStack = () => {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerTitleStyle: {
+          fontFamily: 'Poppins_600SemiBold',
+          fontSize: 18,
+        },
+      }}
+    >
       <Stack.Screen 
         name="CameraMain" 
         component={CameraScreen} 
@@ -38,7 +92,14 @@ const CameraStack = () => {
 
 const HistoryStack = () => {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerTitleStyle: {
+          fontFamily: 'Poppins_600SemiBold',
+          fontSize: 18,
+        },
+      }}
+    >
       <Stack.Screen 
         name="HistoryMain" 
         component={HistoryScreen} 
@@ -50,7 +111,14 @@ const HistoryStack = () => {
 
 const ProfileStack = ({ onAuthChange }) => {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerTitleStyle: {
+          fontFamily: 'Poppins_600SemiBold',
+          fontSize: 18,
+        },
+      }}
+    >
       <Stack.Screen 
         name="ProfileMain" 
         options={{ title: 'Profile' }}
@@ -84,19 +152,23 @@ const MainTabs = ({ onAuthChange }) => {
           let iconName;
 
           if (route.name === 'Home') {
-            iconName = 'home';
+            iconName = 'view-dashboard';
           } else if (route.name === 'Camera') {
             iconName = 'camera';
           } else if (route.name === 'History') {
             iconName = 'history';
           } else if (route.name === 'Profile') {
-            iconName = 'person';
+            iconName = 'account-box';
           }
 
-          return <MaterialIcons name={iconName} size={size} color={color} />;
+          return <MaterialCommunityIcons name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: '#4CAF50',
         tabBarInactiveTintColor: 'gray',
+        tabBarLabelStyle: {
+          fontFamily: 'Poppins_500Medium',
+          fontSize: 12,
+        },
         headerShown: false,
       })}
     >

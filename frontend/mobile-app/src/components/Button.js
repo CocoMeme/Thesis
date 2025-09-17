@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { theme } from '../styles';
 
 export const Button = ({ 
   title, 
@@ -30,30 +31,29 @@ export const Button = ({
 
 const styles = StyleSheet.create({
   button: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.medium,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 48,
   },
   primary: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: theme.colors.primary,
   },
   secondary: {
-    backgroundColor: '#FFC107',
+    backgroundColor: theme.colors.secondary,
   },
   outline: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#4CAF50',
+    borderColor: theme.colors.primary,
   },
   disabled: {
     backgroundColor: '#E0E0E0',
   },
   text: {
-    fontSize: 16,
-    fontWeight: '600',
+    ...theme.typography.button,
   },
   primaryText: {
     color: '#FFFFFF',
@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   outlineText: {
-    color: '#4CAF50',
+    color: theme.colors.primary,
   },
   disabledText: {
     color: '#9E9E9E',

@@ -8,7 +8,7 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { authService } from '../services';
 import { theme } from '../styles';
 
@@ -67,13 +67,13 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
   const ProfileItem = ({ icon, title, value, onPress }) => (
     <TouchableOpacity style={styles.profileItem} onPress={onPress} disabled={!onPress}>
       <View style={styles.profileItemLeft}>
-        <MaterialIcons name={icon} size={24} color={theme.colors.primary} />
+        <MaterialCommunityIcons name={icon} size={24} color={theme.colors.primary} />
         <Text style={styles.profileItemTitle}>{title}</Text>
       </View>
       <View style={styles.profileItemRight}>
         <Text style={styles.profileItemValue}>{value}</Text>
         {onPress && (
-          <MaterialIcons name="chevron-right" size={20} color={theme.colors.text.secondary} />
+          <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.text.secondary} />
         )}
       </View>
     </TouchableOpacity>
@@ -85,7 +85,7 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.avatarContainer}>
-            <MaterialIcons name="person" size={60} color={theme.colors.primary} />
+            <MaterialCommunityIcons name="account-box" size={60} color={theme.colors.primary} />
           </View>
           <Text style={styles.userName}>
             {user ? `${user.firstName} ${user.lastName}` : 'Loading...'}
@@ -98,12 +98,12 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
           <Text style={styles.sectionTitle}>Profile Information</Text>
           <View style={styles.profileItems}>
             <ProfileItem
-              icon="person"
+              icon="account"
               title="First Name"
               value={user?.firstName || '-'}
             />
             <ProfileItem
-              icon="person-outline"
+              icon="account-outline"
               title="Last Name"
               value={user?.lastName || '-'}
             />
@@ -113,7 +113,7 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
               value={user?.email || '-'}
             />
             <ProfileItem
-              icon="verified-user"
+              icon="shield-check"
               title="Account Status"
               value={user?.emailVerified ? 'Verified' : 'Unverified'}
             />
@@ -131,12 +131,12 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
               onPress={() => navigation.navigate('History')}
             />
             <ProfileItem
-              icon="help"
+              icon="help-circle"
               title="Help & Support"
               value="Get help"
             />
             <ProfileItem
-              icon="info"
+              icon="information"
               title="About"
               value="App version 1.0.0"
             />
@@ -149,7 +149,7 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
           onPress={handleLogout}
           disabled={loading}
         >
-          <MaterialIcons 
+          <MaterialCommunityIcons 
             name="logout" 
             size={20} 
             color="#FFFFFF" 
@@ -190,12 +190,13 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: theme.typography.h2.fontSize,
-    fontWeight: theme.typography.h2.fontWeight,
+    fontFamily: theme.typography.h2.fontFamily,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   userEmail: {
     fontSize: theme.typography.body.fontSize,
+    fontFamily: theme.typography.body.fontFamily,
     color: theme.colors.text.secondary,
   },
   section: {
@@ -203,7 +204,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: theme.typography.h2.fontSize,
-    fontWeight: theme.typography.h2.fontWeight,
+    fontFamily: theme.typography.h2.fontFamily,
     color: theme.colors.text.primary,
     paddingHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.sm,
@@ -227,6 +228,7 @@ const styles = StyleSheet.create({
   },
   profileItemTitle: {
     fontSize: theme.typography.body.fontSize,
+    fontFamily: theme.typography.body.fontFamily,
     color: theme.colors.text.primary,
     marginLeft: theme.spacing.md,
   },
@@ -236,6 +238,7 @@ const styles = StyleSheet.create({
   },
   profileItemValue: {
     fontSize: theme.typography.body.fontSize,
+    fontFamily: theme.typography.body.fontFamily,
     color: theme.colors.text.secondary,
     marginRight: theme.spacing.xs,
   },
@@ -257,7 +260,7 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     color: '#FFFFFF',
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: '600',
+    fontSize: theme.typography.button.fontSize,
+    fontFamily: theme.typography.button.fontFamily,
   },
 });

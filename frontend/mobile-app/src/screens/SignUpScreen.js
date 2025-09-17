@@ -398,12 +398,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontFamily: 'Poppins_700Bold',
     color: '#1B5E20',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
+    fontFamily: 'Poppins_400Regular',
     textAlign: 'center',
     color: '#2E7D32',
     paddingHorizontal: 20,
@@ -415,6 +416,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 24,
+    fontFamily: 'Poppins_600SemiBold',
     textAlign: 'center',
     marginBottom: 20,
     color: '#1B5E20',
@@ -435,7 +437,7 @@ const styles = StyleSheet.create({
   },
   strengthText: {
     fontSize: 12,
-    fontWeight: 'bold',
+    fontFamily: 'Poppins_600SemiBold',
   },
   checkboxContainer: {
     flexDirection: 'row',
@@ -446,6 +448,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 8,
     fontSize: 14,
+    fontFamily: 'Poppins_400Regular',
     lineHeight: 20,
     color: '#2E7D32',
   },
@@ -474,6 +477,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     color: '#66BB6A',
     fontSize: 14,
+    fontFamily: 'Poppins_400Regular',
   },
   googleButton: {
     marginBottom: 10,

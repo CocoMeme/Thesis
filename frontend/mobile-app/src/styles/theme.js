@@ -29,20 +29,44 @@ export const theme = {
     medium: 8,
     large: 16,
   },
+  fonts: {
+    regular: 'Poppins_400Regular',
+    medium: 'Poppins_500Medium',
+    semiBold: 'Poppins_600SemiBold',
+    bold: 'Poppins_700Bold',
+  },
   typography: {
     h1: {
       fontSize: 24,
       fontWeight: 'bold',
+      fontFamily: 'Poppins_700Bold',
     },
     h2: {
       fontSize: 20,
       fontWeight: 'bold',
+      fontFamily: 'Poppins_600SemiBold',
+    },
+    h3: {
+      fontSize: 18,
+      fontWeight: '600',
+      fontFamily: 'Poppins_600SemiBold',
     },
     body: {
       fontSize: 16,
+      fontFamily: 'Poppins_400Regular',
+    },
+    bodyMedium: {
+      fontSize: 16,
+      fontFamily: 'Poppins_500Medium',
     },
     caption: {
       fontSize: 12,
+      fontFamily: 'Poppins_400Regular',
+    },
+    button: {
+      fontSize: 16,
+      fontWeight: '600',
+      fontFamily: 'Poppins_600SemiBold',
     },
   },
 };
