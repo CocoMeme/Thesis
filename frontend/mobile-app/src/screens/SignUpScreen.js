@@ -22,6 +22,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../services';
+import rnFirebaseAuth from '../services/rnFirebaseAuth';
 
 export const SignUpScreen = ({ navigation, onAuthSuccess }) => {
   const [formData, setFormData] = useState({
@@ -94,11 +95,27 @@ export const SignUpScreen = ({ navigation, onAuthSuccess }) => {
     setLoading(true);
 
     try {
-      const { confirmPassword, ...signupData } = formData;
-      
-      const result = await authService.register(signupData);
+      // Option 1: Use React Native Firebase Auth (recommended)
+      console.log('🚀 Creating Firebase user...');
+      const firebaseResult = await rnFirebaseAuth.createUserWithEmailAndPassword(
+        formData.email, 
+        formData.password
+      );
 
-      if (result.success) {
+      if (firebaseResult.success) {
+        // Store user data locally
+        await AsyncStorage.setItem('user', JSON.stringify({
+          ...firebaseResult.user,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+        }));
+        
+        await AsyncStorage.setItem('firebaseUser', JSON.stringify({
+          uid: firebaseResult.firebaseUser.uid,
+          email: firebaseResult.firebaseUser.email,
+          displayName: `${formData.firstName} ${formData.lastName}`,
+        }));
+
         Alert.alert(
           'Success', 
           'Account created successfully! Welcome to Gourd Scanner!',
@@ -115,7 +132,29 @@ export const SignUpScreen = ({ navigation, onAuthSuccess }) => {
           ]
         );
       } else {
-        Alert.alert('Registration Failed', result.message || 'Unable to create account');
+        // Fallback to backend registration if Firebase fails
+        console.log('Firebase registration failed, trying backend...');
+        const { confirmPassword, ...signupData } = formData;
+        const result = await authService.register(signupData);
+
+        if (result.success) {
+          Alert.alert(
+            'Success', 
+            'Account created successfully! Welcome to Gourd Scanner!',
+            [
+              {
+                text: 'OK',
+                onPress: () => {
+                  if (onAuthSuccess) {
+                    onAuthSuccess();
+                  }
+                }
+              }
+            ]
+          );
+        } else {
+          Alert.alert('Registration Failed', result.message || 'Unable to create account');
+        }
       }
     } catch (error) {
       console.error('Signup error:', error);
@@ -129,9 +168,21 @@ export const SignUpScreen = ({ navigation, onAuthSuccess }) => {
     setLoading(true);
 
     try {
-      const result = await authService.signInWithGoogle();
+      console.log('🚀 Starting React Native Firebase Google Sign-Up...');
+      const result = await rnFirebaseAuth.signInWithGoogle();
 
       if (result.success) {
+        console.log('✅ React Native Firebase Google Sign-Up successful:', result.user);
+        
+        // Store user data locally
+        await AsyncStorage.setItem('user', JSON.stringify(result.user));
+        await AsyncStorage.setItem('firebaseUser', JSON.stringify({
+          uid: result.firebaseUser.uid,
+          email: result.firebaseUser.email,
+          displayName: result.firebaseUser.displayName,
+          photoURL: result.firebaseUser.photoURL,
+        }));
+        
         Alert.alert(
           'Success', 
           'Google Sign-Up successful! Welcome to Gourd Scanner!',
@@ -148,21 +199,12 @@ export const SignUpScreen = ({ navigation, onAuthSuccess }) => {
           ]
         );
       } else {
-        // Show a more detailed error for configuration issues
-        const errorMessage = result.message || 'Unable to sign up with Google';
-        if (errorMessage.includes('not configured')) {
-          Alert.alert(
-            'Google Sign-In Setup Required', 
-            'Google Sign-In needs to be configured first. Check the console for setup instructions or refer to docs/google-auth-setup.md',
-            [{ text: 'OK' }]
-          );
-        } else {
-          Alert.alert('Google Sign-Up Failed', errorMessage);
-        }
+        console.error('❌ React Native Firebase Google Sign-Up failed:', result.error);
+        Alert.alert('Google Sign-Up Failed', result.error || 'Authentication failed. Please try again.');
       }
     } catch (error) {
-      console.error('Google Sign-Up error:', error);
-      Alert.alert('Error', 'Network error. Please try again.');
+      console.error('❌ Google Sign-Up error:', error);
+      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }

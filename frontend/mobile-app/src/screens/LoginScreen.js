@@ -21,6 +21,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../services';
+import rnFirebaseAuth from '../services/rnFirebaseAuth';
 
 export const LoginScreen = ({ navigation, onAuthSuccess }) => {
   const [email, setEmail] = useState('');
@@ -73,9 +74,21 @@ export const LoginScreen = ({ navigation, onAuthSuccess }) => {
     setLoading(true);
 
     try {
-      const result = await authService.signInWithGoogle();
+      console.log('🚀 Starting React Native Firebase Google Sign-In...');
+      const result = await rnFirebaseAuth.signInWithGoogle();
 
       if (result.success) {
+        console.log('✅ React Native Firebase Google Sign-In successful:', result.user);
+        
+        // Store user data locally
+        await AsyncStorage.setItem('user', JSON.stringify(result.user));
+        await AsyncStorage.setItem('firebaseUser', JSON.stringify({
+          uid: result.firebaseUser.uid,
+          email: result.firebaseUser.email,
+          displayName: result.firebaseUser.displayName,
+          photoURL: result.firebaseUser.photoURL,
+        }));
+        
         Alert.alert('Success', 'Google Sign-In successful!', [
           {
             text: 'OK',
@@ -88,21 +101,12 @@ export const LoginScreen = ({ navigation, onAuthSuccess }) => {
           }
         ]);
       } else {
-        // Show a more detailed error for configuration issues
-        const errorMessage = result.message || 'Unable to sign in with Google';
-        if (errorMessage.includes('not configured')) {
-          Alert.alert(
-            'Google Sign-In Setup Required', 
-            'Google Sign-In needs to be configured first. Check the console for setup instructions or refer to docs/google-auth-setup.md',
-            [{ text: 'OK' }]
-          );
-        } else {
-          Alert.alert('Google Sign-In Failed', errorMessage);
-        }
+        console.error('❌ React Native Firebase Google Sign-In failed:', result.error);
+        Alert.alert('Google Sign-In Failed', result.error || 'Authentication failed. Please try again.');
       }
     } catch (error) {
-      console.error('Google Sign-In error:', error);
-      Alert.alert('Error', 'Network error. Please try again.');
+      console.error('❌ Google Sign-In error:', error);
+      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }

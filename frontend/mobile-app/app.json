@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "thesis",
+    "name": "Thesis",
     "slug": "gourd-scanner-expo",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -15,7 +15,8 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.coandrei.gourdscanner"
+      "bundleIdentifier": "com.coandrei.gourdscanner",
+      "googleServicesFile": "./google-services.json"
     },
     "android": {
       "package": "com.coandrei.gourdscanner",
@@ -23,10 +24,31 @@
         "foregroundImage": "./assets/android-chrome-192x192.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-dev-client",
+      "expo-system-ui",
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.615143258112-ds27osd166pmue5qv2hii9rg82smt5ne"
+        }
+      ]
+    ],
+    "developmentClient": {
+      "silentLaunch": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "9c8b2fff-7413-4f48-9834-3e4410c40c85"
+      }
     }
   }
 }
