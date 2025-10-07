@@ -114,9 +114,9 @@ class App {
     });
 
     // Import and use route modules
-    this.app.use('/api/auth/firebase', require('./routes/firebaseAuth'));
+    this.app.use('/api/auth', require('./routes/googleAuth'));
+    this.app.use('/api/auth/local', require('./routes/localAuth'));
     // TODO: Add these when other route modules are created
-    // this.app.use('/api/auth', require('./routes/auth'));
     // this.app.use('/api/users', require('./routes/users'));
     // this.app.use('/api/scans', require('./routes/scans'));
     // this.app.use('/api/uploads', require('./routes/uploads'));

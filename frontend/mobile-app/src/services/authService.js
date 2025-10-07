@@ -32,11 +32,11 @@ class AuthService {
   }
 
   /**
-   * Login with email and password
+   * Login with email and password (Local authentication using MongoDB)
    */
   async login(email, password) {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/firebase/login`, {
+      const response = await fetch(`${API_BASE_URL}/auth/local/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -75,11 +75,11 @@ class AuthService {
   }
 
   /**
-   * Register a new user
+   * Register a new user (Local registration using MongoDB)
    */
   async register(userData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/firebase/register`, {
+      const response = await fetch(`${API_BASE_URL}/auth/local/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -135,15 +135,22 @@ class AuthService {
       }
 
       // Send Google user data to your backend for verification and user creation/login
-      const response = await fetch(`${API_BASE_URL}/auth/firebase/google`, {
+      const payload = {
+        idToken: googleResult.tokens.idToken,
+        accessToken: googleResult.tokens.accessToken,
+      };
+
+      // Add demo user data if in demo mode (for development)
+      if (googleResult.tokens.idToken?.startsWith('demo_')) {
+        payload.demoUser = googleResult.user;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/auth/google`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          googleUser: googleResult.user,
-          idToken: googleResult.tokens.idToken,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -183,7 +190,7 @@ class AuthService {
     try {
       // Call logout endpoint if token exists
       if (this.token) {
-        await fetch(`${API_BASE_URL}/auth/firebase/logout`, {
+        await fetch(`${API_BASE_URL}/auth/local/logout`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${this.token}`,
@@ -236,28 +243,31 @@ class AuthService {
   }
 
   /**
-   * Refresh user token (Firebase tokens are handled automatically)
-   * This method is kept for compatibility but Firebase handles token refresh internally
+   * Refresh user token using Google OAuth refresh token
    */
-  async refreshToken() {
+  async refreshToken(refreshToken) {
     try {
-      if (!this.token) {
-        throw new Error('No token available for refresh');
+      if (!refreshToken) {
+        throw new Error('No refresh token available');
       }
 
-      // Firebase tokens are automatically refreshed by Firebase SDK
-      // For now, we'll return the current token
-      console.log('Token refresh requested - Firebase handles this automatically');
-      
-      return {
-        success: true,
-        token: this.token,
-        message: 'Firebase handles token refresh automatically'
-      };
+      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Token refresh failed');
+      }
 
       return {
         success: true,
-        token: data.token,
+        tokens: data.tokens,
       };
     } catch (error) {
       console.error('Token refresh error:', error);
@@ -279,7 +289,7 @@ class AuthService {
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch(`${API_BASE_URL}/auth/firebase/profile`, {
+      const response = await fetch(`${API_BASE_URL}/auth/local/profile`, {
         method: 'PUT',
         headers: this.getAuthHeaders(),
         body: JSON.stringify(profileData),
@@ -309,7 +319,7 @@ class AuthService {
   }
 
   /**
-   * Change password (handled by Firebase Authentication)
+   * Change password for local accounts
    */
   async changePassword(currentPassword, newPassword) {
     try {
@@ -317,10 +327,24 @@ class AuthService {
         throw new Error('Not authenticated');
       }
 
-      // Change password functionality should be handled through Firebase Authentication
+      const response = await fetch(`${API_BASE_URL}/auth/local/password`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Password change failed');
+      }
+
       return {
-        success: false,
-        message: 'Password change should be handled through Firebase Authentication UI'
+        success: true,
+        message: data.message || 'Password changed successfully',
       };
     } catch (error) {
       console.error('Password change error:', error);
@@ -332,14 +356,15 @@ class AuthService {
   }
 
   /**
-   * Request password reset (handled by Firebase Authentication)
+   * Request password reset (to be implemented)
    */
   async requestPasswordReset(email) {
     try {
-      // Forgot password functionality should be handled through Firebase Authentication
+      // This would typically send a password reset email
+      // For now, return a placeholder response
       return {
         success: false,
-        message: 'Password reset should be handled through Firebase Authentication UI'
+        message: 'Password reset functionality is not yet implemented. Please contact support for assistance.',
       };
     } catch (error) {
       console.error('Password reset error:', error);
@@ -389,6 +414,20 @@ class AuthService {
       console.error('Authenticated request error:', error);
       throw error;
     }
+  }
+
+  /**
+   * Get Google OAuth configuration status
+   */
+  getGoogleAuthStatus() {
+    return googleAuthService.getConfigurationStatus();
+  }
+
+  /**
+   * Check if Google OAuth is configured
+   */
+  isGoogleAuthConfigured() {
+    return googleAuthService.isConfigured();
   }
 }
 

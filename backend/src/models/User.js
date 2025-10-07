@@ -30,14 +30,14 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: function() {
-      return !this.firebaseUid; // Password required only if not using Firebase
+      return !this.googleId; // Password required only if not using Google OAuth
     },
     minlength: [6, 'Password must be at least 6 characters long'],
     select: false // Don't return password in queries by default
   },
 
-  // Firebase integration fields
-  firebaseUid: {
+  // Google OAuth integration fields
+  googleId: {
     type: String,
     unique: true,
     sparse: true, // Allows multiple null values
@@ -51,7 +51,7 @@ const userSchema = new mongoose.Schema({
 
   provider: {
     type: String,
-    enum: ['local', 'firebase', 'google', 'facebook', 'apple'],
+    enum: ['local', 'google', 'facebook', 'apple'],
     default: 'local'
   },
 
@@ -160,8 +160,7 @@ const userSchema = new mongoose.Schema({
 });
 
 // Indexes for better query performance
-userSchema.index({ email: 1 });
-userSchema.index({ username: 1 });
+// Note: email and username indexes are already created by unique: true
 userSchema.index({ 'refreshTokens.token': 1 });
 userSchema.index({ 'refreshTokens.expiresAt': 1 });
 

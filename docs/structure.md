@@ -41,14 +41,15 @@ thesis/
 │
 ├── backend/                      # Node.js + Express backend (optional)
 │   ├── src/
-│   │   ├── controllers/          # Handle API logic
+│   │   ├── controllers/          # Handle API logic (Google OAuth, auth)
 │   │   ├── models/               # MongoDB schemas (User, Scan, GourdData)
 │   │   ├── routes/               # API routes (auth, scans, gourds)
 │   │   ├── services/             # Business logic (harvest prediction, analytics)
+│   │   ├── middleware/           # Auth middleware, error handling, validation
 │   │   ├── utils/                # Helpers (validation, error handling)
 │   │   └── app.js                # Main Express app
 │   │
-│   ├── config/                   # DB config, environment variables
+│   ├── config/                   # DB config, Google Cloud Console config, environment variables
 │   ├── uploads/                  # Image uploads (if storing locally, else Cloudinary)
 │   └── package.json              # Backend dependencies
 │

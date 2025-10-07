@@ -369,6 +369,32 @@ const validateFileUpload = (req, res, next) => {
   next();
 };
 
+/**
+ * Simple request body validation for required fields
+ */
+const validateRequestBody = (requiredFields) => {
+  return (req, res, next) => {
+    const missingFields = [];
+    
+    for (const field of requiredFields) {
+      if (!req.body[field]) {
+        missingFields.push(field);
+      }
+    }
+
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Missing required fields',
+        missingFields: missingFields,
+        code: 'MISSING_FIELDS'
+      });
+    }
+
+    next();
+  };
+};
+
 module.exports = {
   handleValidationErrors,
   validateUserRegistration,
@@ -381,5 +407,6 @@ module.exports = {
   validateObjectId,
   validatePagination,
   validateSearch,
-  validateFileUpload
+  validateFileUpload,
+  validateRequestBody
 };

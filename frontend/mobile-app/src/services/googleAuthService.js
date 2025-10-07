@@ -7,16 +7,21 @@ WebBrowser.maybeCompleteAuthSession();
 
 class GoogleAuthService {
   constructor() {
-    // You'll need to configure these with your actual Firebase project credentials
+    // Google Cloud Console OAuth 2.0 Client IDs
+    // These are your actual Google Cloud Console project credentials
     this.clientId = {
-      android: 'YOUR_ANDROID_CLIENT_ID.apps.googleusercontent.com',
-      ios: 'YOUR_IOS_CLIENT_ID.apps.googleusercontent.com',
-      web: 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com',
+      // Get this from Google Cloud Console > APIs & Credentials > OAuth 2.0 Client IDs
+      android: 'YOUR_ANDROID_CLIENT_ID.apps.googleusercontent.com', // You'll need to create this
+      ios: 'YOUR_IOS_CLIENT_ID.apps.googleusercontent.com',         // You'll need to create this
+      web: '1057085767143-583oor5rvrhfjrobf03belasl6utei8e.apps.googleusercontent.com',
     };
     
     this.redirectUri = AuthSession.makeRedirectUri({
       useProxy: true,
     });
+
+    // For development, you can temporarily use these demo values (not for production!)
+    this.isDemoMode = this.clientId.web.includes('YOUR_');
   }
 
   /**
@@ -42,9 +47,15 @@ class GoogleAuthService {
       const clientId = this.getClientId();
       
       if (!clientId || clientId.includes('YOUR_')) {
+        // For development/demo purposes, return mock data
+        if (this.isDemoMode) {
+          console.log('🚨 Demo Mode: Google Sign-In credentials not configured');
+          return this.getMockGoogleUser();
+        }
+        
         return {
           success: false,
-          error: 'Google Sign-In is not configured yet. Please set up Google OAuth credentials in Firebase Console and update GoogleAuthService.js with your project\'s client IDs. See docs/google-auth-setup.md for detailed instructions.',
+          error: 'Google Sign-In is not configured yet. Please set up Google OAuth 2.0 credentials in Google Cloud Console and update GoogleAuthService.js with your project\'s client IDs. See docs/google-oauth-setup.md for detailed instructions.',
         };
       }
 
@@ -149,6 +160,55 @@ class GoogleAuthService {
         error: error.message || 'An error occurred during sign out',
       };
     }
+  }
+
+  /**
+   * Mock Google user for development/testing purposes
+   * This allows you to test the authentication flow without setting up Google OAuth
+   */
+  getMockGoogleUser() {
+    const mockUser = {
+      id: 'demo_' + Date.now(),
+      email: 'demo@gourdscanner.com',
+      name: 'Demo User',
+      firstName: 'Demo',
+      lastName: 'User',
+      picture: 'https://via.placeholder.com/150/4CAF50/FFFFFF?text=DU',
+    };
+
+    const mockTokens = {
+      accessToken: 'demo_access_token_' + Date.now(),
+      refreshToken: 'demo_refresh_token_' + Date.now(),
+      idToken: 'demo_id_token_' + Date.now(),
+    };
+
+    console.log('🎭 Using mock Google user for development:', mockUser);
+    
+    return {
+      success: true,
+      user: mockUser,
+      tokens: mockTokens,
+    };
+  }
+
+  /**
+   * Check if Google OAuth is properly configured
+   */
+  isConfigured() {
+    return !this.isDemoMode;
+  }
+
+  /**
+   * Get configuration status for debugging
+   */
+  getConfigurationStatus() {
+    return {
+      android: !this.clientId.android.includes('YOUR_'),
+      ios: !this.clientId.ios.includes('YOUR_'),
+      web: !this.clientId.web.includes('YOUR_'),
+      isConfigured: this.isConfigured(),
+      isDemoMode: this.isDemoMode,
+    };
   }
 }
 

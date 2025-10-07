@@ -73,10 +73,15 @@ export const LoginScreen = ({ navigation, onAuthSuccess }) => {
     setLoading(true);
 
     try {
+      // Check Google Auth configuration status
+      const authStatus = authService.getGoogleAuthStatus();
+      console.log('🔍 Google Auth Status:', authStatus);
+
       const result = await authService.signInWithGoogle();
 
       if (result.success) {
-        Alert.alert('Success', 'Google Sign-In successful!', [
+        const mode = authStatus.isDemoMode ? ' (Demo Mode)' : '';
+        Alert.alert('Success', `Google Sign-In successful!${mode}`, [
           {
             text: 'OK',
             onPress: () => {
@@ -93,8 +98,11 @@ export const LoginScreen = ({ navigation, onAuthSuccess }) => {
         if (errorMessage.includes('not configured')) {
           Alert.alert(
             'Google Sign-In Setup Required', 
-            'Google Sign-In needs to be configured first. Check the console for setup instructions or refer to docs/google-auth-setup.md',
-            [{ text: 'OK' }]
+            'Google Sign-In is running in demo mode. To enable real Google authentication, please follow the setup guide in docs/google-oauth-complete-setup.md',
+            [
+              { text: 'Use Demo Mode', onPress: () => handleGoogleSignIn() },
+              { text: 'OK' }
+            ]
           );
         } else {
           Alert.alert('Google Sign-In Failed', errorMessage);

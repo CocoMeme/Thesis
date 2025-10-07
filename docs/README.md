@@ -47,6 +47,8 @@ This document outlines the suggested workflow for a mobile application that scan
   - Stores user scans (image + classification result).
   - Tracks growth progress.
   - Provides analytics (average harvest times, statistics).
+  - **Google Cloud Console OAuth 2.0**: Handles user authentication and authorization.
+  - **JWT Token Management**: Secure session management with Google-issued tokens.
 - **Offline mode**:
   - Lightweight model stored **on-device** (TensorFlow Lite integration with React Native).
 
@@ -73,7 +75,7 @@ This document outlines the suggested workflow for a mobile application that scan
     - Backend server health and performance metrics
     - Database usage statistics
     - API endpoint monitoring and logs
-- **Authentication & Authorization**: Role-based access control (super admin, moderator, analyst).
+- **Authentication & Authorization**: Google Cloud Console OAuth 2.0 integration with role-based access control (super admin, moderator, analyst).
 - **Real-time Updates**: WebSocket integration for live data updates and notifications.
 
 ---
