@@ -129,6 +129,17 @@ const userSchema = new mongoose.Schema({
   // Email verification
   emailVerificationToken: String,
   emailVerificationExpires: Date,
+  
+  // Email verification PIN
+  verificationPin: {
+    type: String,
+    select: false // Don't return PIN in queries by default
+  },
+  verificationPinExpires: Date,
+  verificationPinAttempts: {
+    type: Number,
+    default: 0
+  },
 
   // Login tracking
   lastLogin: Date,

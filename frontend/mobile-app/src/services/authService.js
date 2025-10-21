@@ -429,6 +429,110 @@ class AuthService {
   isGoogleAuthConfigured() {
     return googleAuthService.isConfigured();
   }
+
+  /**
+   * Send verification PIN to email
+   */
+  async sendVerificationPin(email) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/send-verification-pin`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send verification PIN');
+      }
+
+      return {
+        success: true,
+        message: data.message,
+        expiresIn: data.expiresIn,
+      };
+    } catch (error) {
+      console.error('Send verification PIN error:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to send verification PIN',
+      };
+    }
+  }
+
+  /**
+   * Verify email with PIN
+   */
+  async verifyEmailWithPin(email, pin) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/verify-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, pin }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Email verification failed');
+      }
+
+      // Update stored user data
+      if (this.user) {
+        this.user.emailVerified = true;
+        this.user.isEmailVerified = true;
+        await AsyncStorage.setItem(USER_KEY, JSON.stringify(this.user));
+      }
+
+      return {
+        success: true,
+        message: data.message,
+        user: data.user,
+      };
+    } catch (error) {
+      console.error('Email verification error:', error);
+      return {
+        success: false,
+        message: error.message || 'Email verification failed',
+      };
+    }
+  }
+
+  /**
+   * Check verification status
+   */
+  async checkVerificationStatus(email) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/verification-status?email=${encodeURIComponent(email)}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to check verification status');
+      }
+
+      return {
+        success: true,
+        isVerified: data.isVerified,
+      };
+    } catch (error) {
+      console.error('Check verification status error:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to check verification status',
+      };
+    }
+  }
 }
 
 // Create and export singleton instance
