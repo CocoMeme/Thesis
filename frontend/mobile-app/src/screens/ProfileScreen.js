@@ -10,7 +10,9 @@ import {
   TextInput,
   Modal,
   ActivityIndicator,
+  Image,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { authService } from '../services';
 import { theme } from '../styles';
@@ -18,10 +20,19 @@ import { theme } from '../styles';
 export const ProfileScreen = ({ navigation, onAuthChange }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('profile');
   const [verificationModalVisible, setVerificationModalVisible] = useState(false);
   const [verificationPin, setVerificationPin] = useState('');
   const [sendingPin, setSendingPin] = useState(false);
   const [verifyingPin, setVerifyingPin] = useState(false);
+
+  // Logo configuration - adjust these values to customize the logo
+  const logoConfig = {
+    size: 270,           // Logo width and height
+    opacity: 0.15,        // Logo opacity (0.0 to 1.0)
+    top: -30,             // Distance from top
+    right: -10,           // Distance from right
+  };
 
   useEffect(() => {
     loadUserData();
@@ -41,15 +52,8 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
       'Logout',
       'Are you sure you want to logout?',
       [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: performLogout,
-        },
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Logout', style: 'destructive', onPress: performLogout },
       ],
       { cancelable: false }
     );
@@ -59,7 +63,6 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
     try {
       setLoading(true);
       await authService.logout();
-      // Trigger auth state change to refresh navigation
       if (onAuthChange) {
         onAuthChange();
       }
@@ -108,7 +111,6 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
       setVerificationModalVisible(false);
       setVerificationPin('');
       Alert.alert('Success', 'Email verified successfully!');
-      // Reload user data
       await loadUserData();
     } else {
       Alert.alert('Error', result.message || 'Failed to verify email');
@@ -150,92 +152,139 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
 
   const isVerified = user?.emailVerified || user?.isEmailVerified;
 
+  const renderProfileTab = () => (
+    <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Profile Information</Text>
+        <View style={styles.profileItems}>
+          <ProfileItem icon="account" title="First Name" value={user?.firstName || '-'} />
+          <ProfileItem icon="account-outline" title="Last Name" value={user?.lastName || '-'} />
+          <ProfileItem icon="email" title="Email" value={user?.email || '-'} />
+          <ProfileItem
+            icon="shield-check"
+            title="Account Status"
+            value={isVerified ? 'Verified' : 'Unverified'}
+            badge={isVerified ? 'Verified' : 'Not Verified'}
+            badgeColor={isVerified ? theme.colors.success : theme.colors.warning}
+            onPress={!isVerified ? handleVerifyEmail : undefined}
+          />
+        </View>
+      </View>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <View style={styles.profileItems}>
+          <ProfileItem
+            icon="history"
+            title="Scan History"
+            value="View your scans"
+            onPress={() => navigation.navigate('History')}
+          />
+        </View>
+      </View>
+    </ScrollView>
+  );
+
+  const renderSettingsTab = () => (
+    <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>App Settings</Text>
+        <View style={styles.profileItems}>
+          <ProfileItem icon="bell-outline" title="Notifications" value="Manage alerts" />
+          <ProfileItem icon="translate" title="Language" value="English" />
+          <ProfileItem icon="theme-light-dark" title="Theme" value="Light Mode" />
+        </View>
+      </View>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>About</Text>
+        <View style={styles.profileItems}>
+          <ProfileItem icon="help-circle" title="Help & Support" value="Get help" />
+          <ProfileItem icon="information" title="About" value="App version 1.0.0" />
+          <ProfileItem icon="file-document" title="Privacy Policy" value="Read policy" />
+          <ProfileItem icon="shield-check" title="Terms of Service" value="Read terms" />
+        </View>
+      </View>
+      <TouchableOpacity
+        style={[styles.logoutButton, loading && styles.logoutButtonDisabled]}
+        onPress={handleLogout}
+        disabled={loading}
+      >
+        <MaterialCommunityIcons name="logout" size={20} color="#FFFFFF" style={styles.logoutIcon} />
+        <Text style={styles.logoutText}>{loading ? 'Logging out...' : 'Logout'}</Text>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
+      <LinearGradient
+        colors={[theme.colors.gradient.start, theme.colors.gradient.end]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}
+      >
+        {/* Background Logo */}
+        <Image
+          source={require('../../assets/logo/egourd-high-resolution-logo-white-transparent.png')}
+          style={[
+            styles.backgroundLogo,
+            {
+              width: logoConfig.size,
+              height: logoConfig.size,
+              opacity: logoConfig.opacity,
+              top: logoConfig.top,
+              right: logoConfig.right,
+            }
+          ]}
+          resizeMode="contain"
+        />
+        
+        <View style={styles.profileHeaderContainer}>
           <View style={styles.avatarContainer}>
-            <MaterialCommunityIcons name="account-box" size={60} color={theme.colors.primary} />
+            {user?.profilePicture ? (
+              <Image source={{ uri: user.profilePicture }} style={styles.avatarImage} />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <MaterialCommunityIcons name="account" size={40} color="#FFFFFF" />
+              </View>
+            )}
           </View>
-          <Text style={styles.userName}>
-            {user ? `${user.firstName} ${user.lastName}` : 'Loading...'}
-          </Text>
-          <Text style={styles.userEmail}>{user?.email || ''}</Text>
-        </View>
-
-        {/* Profile Information */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Profile Information</Text>
-          <View style={styles.profileItems}>
-            <ProfileItem
-              icon="account"
-              title="First Name"
-              value={user?.firstName || '-'}
-            />
-            <ProfileItem
-              icon="account-outline"
-              title="Last Name"
-              value={user?.lastName || '-'}
-            />
-            <ProfileItem
-              icon="email"
-              title="Email"
-              value={user?.email || '-'}
-            />
-            <ProfileItem
-              icon="shield-check"
-              title="Account Status"
-              value={isVerified ? 'Verified' : 'Unverified'}
-              badge={isVerified ? 'Verified' : 'Not Verified'}
-              badgeColor={isVerified ? theme.colors.success : theme.colors.warning}
-              onPress={!isVerified ? handleVerifyEmail : undefined}
-            />
+          <View style={styles.userInfoContainer}>
+            <Text style={styles.userName}>
+              {user ? `${user.firstName} ${user.lastName}` : 'Loading...'}
+            </Text>
+            <Text style={styles.userEmail}>{user?.email || ''}</Text>
           </View>
         </View>
-
-        {/* App Information */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>App</Text>
-          <View style={styles.profileItems}>
-            <ProfileItem
-              icon="history"
-              title="Scan History"
-              value="View your scans"
-              onPress={() => navigation.navigate('History')}
-            />
-            <ProfileItem
-              icon="help-circle"
-              title="Help & Support"
-              value="Get help"
-            />
-            <ProfileItem
-              icon="information"
-              title="About"
-              value="App version 1.0.0"
-            />
-          </View>
-        </View>
-
-        {/* Logout Button */}
+      </LinearGradient>
+      <View style={styles.tabsContainer}>
         <TouchableOpacity
-          style={[styles.logoutButton, loading && styles.logoutButtonDisabled]}
-          onPress={handleLogout}
-          disabled={loading}
+          style={[styles.tab, activeTab === 'profile' && styles.activeTab]}
+          onPress={() => setActiveTab('profile')}
         >
-          <MaterialCommunityIcons 
-            name="logout" 
-            size={20} 
-            color="#FFFFFF" 
-            style={styles.logoutIcon}
+          <MaterialCommunityIcons
+            name="account"
+            size={20}
+            color={activeTab === 'profile' ? theme.colors.primary : theme.colors.text.secondary}
           />
-          <Text style={styles.logoutText}>
-            {loading ? 'Logging out...' : 'Logout'}
+          <Text style={[styles.tabText, activeTab === 'profile' && styles.activeTabText]}>
+            Profile
           </Text>
         </TouchableOpacity>
-      </ScrollView>
-
-      {/* Verification Modal */}
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'settings' && styles.activeTab]}
+          onPress={() => setActiveTab('settings')}
+        >
+          <MaterialCommunityIcons
+            name="cog"
+            size={20}
+            color={activeTab === 'settings' ? theme.colors.primary : theme.colors.text.secondary}
+          />
+          <Text style={[styles.tabText, activeTab === 'settings' && styles.activeTabText]}>
+            Settings
+          </Text>
+        </TouchableOpacity>
+      </View>
+      {activeTab === 'profile' ? renderProfileTab() : renderSettingsTab()}
       <Modal
         visible={verificationModalVisible}
         transparent
@@ -250,11 +299,9 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
                 <MaterialCommunityIcons name="close" size={24} color={theme.colors.text.primary} />
               </TouchableOpacity>
             </View>
-
             <Text style={styles.modalDescription}>
               Enter the 6-digit PIN sent to your email address
             </Text>
-
             <TextInput
               style={styles.pinInput}
               value={verificationPin}
@@ -264,7 +311,6 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
               placeholder="000000"
               placeholderTextColor={theme.colors.text.secondary}
             />
-
             <TouchableOpacity
               style={[styles.verifyButton, verifyingPin && styles.buttonDisabled]}
               onPress={handleVerifyPin}
@@ -276,7 +322,6 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
                 <Text style={styles.verifyButtonText}>Verify Email</Text>
               )}
             </TouchableOpacity>
-
             <TouchableOpacity
               style={[styles.resendButton, sendingPin && styles.buttonDisabled]}
               onPress={handleResendPin}
@@ -294,53 +339,73 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background.secondary,
-  },
-  content: {
-    flex: 1,
-  },
-  header: {
-    backgroundColor: theme.colors.surface,
-    paddingVertical: theme.spacing.xl,
+  container: { flex: 1, backgroundColor: theme.colors.background.secondary },
+  header: { 
+    paddingVertical: theme.spacing.xl, 
     paddingHorizontal: theme.spacing.lg,
-    alignItems: 'center',
-    marginBottom: theme.spacing.md,
+    position: 'relative',
+    overflow: 'hidden',
   },
-  avatarContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: theme.colors.background.secondary,
+  backgroundLogo: {
+    position: 'absolute',
+  },
+  profileHeaderContainer: { flexDirection: 'row', alignItems: 'center' },
+  avatarContainer: { marginRight: theme.spacing.md },
+  avatarImage: { width: 70, height: 70, borderRadius: 35, borderWidth: 3, borderColor: '#FFFFFF' },
+  avatarPlaceholder: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: theme.spacing.md,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
   },
+  userInfoContainer: { flex: 1, justifyContent: 'center' },
   userName: {
     fontSize: theme.typography.h2.fontSize,
     fontFamily: theme.typography.h2.fontFamily,
-    color: theme.colors.text.primary,
+    color: '#FFFFFF',
     marginBottom: theme.spacing.xs,
+    fontWeight: '700',
   },
   userEmail: {
     fontSize: theme.typography.body.fontSize,
     fontFamily: theme.typography.body.fontFamily,
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    backgroundColor: theme.colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.background.secondary,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: theme.spacing.md,
+    gap: theme.spacing.xs,
+  },
+  activeTab: { borderBottomWidth: 3, borderBottomColor: theme.colors.primary },
+  tabText: {
+    fontSize: theme.typography.body.fontSize,
+    fontFamily: theme.typography.body.fontFamily,
     color: theme.colors.text.secondary,
   },
-  section: {
-    marginBottom: theme.spacing.lg,
-  },
+  activeTabText: { color: theme.colors.primary, fontFamily: theme.fonts.semiBold },
+  tabContent: { flex: 1 },
+  section: { marginBottom: theme.spacing.lg, marginTop: theme.spacing.md },
   sectionTitle: {
-    fontSize: theme.typography.h2.fontSize,
-    fontFamily: theme.typography.h2.fontFamily,
+    fontSize: theme.typography.h3.fontSize,
+    fontFamily: theme.typography.h3.fontFamily,
     color: theme.colors.text.primary,
     paddingHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.sm,
   },
-  profileItems: {
-    backgroundColor: theme.colors.surface,
-  },
+  profileItems: { backgroundColor: theme.colors.surface },
   profileItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -350,21 +415,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.background.secondary,
   },
-  profileItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
+  profileItemLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   profileItemTitle: {
     fontSize: theme.typography.body.fontSize,
     fontFamily: theme.typography.body.fontFamily,
     color: theme.colors.text.primary,
     marginLeft: theme.spacing.md,
   },
-  profileItemRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+  profileItemRight: { flexDirection: 'row', alignItems: 'center' },
   profileItemValue: {
     fontSize: theme.typography.body.fontSize,
     fontFamily: theme.typography.body.fontFamily,
@@ -393,12 +451,8 @@ const styles = StyleSheet.create({
     marginVertical: theme.spacing.xl,
     borderRadius: theme.borderRadius.medium,
   },
-  logoutButtonDisabled: {
-    opacity: 0.6,
-  },
-  logoutIcon: {
-    marginRight: theme.spacing.sm,
-  },
+  logoutButtonDisabled: { opacity: 0.6 },
+  logoutIcon: { marginRight: theme.spacing.sm },
   logoutText: {
     color: '#FFFFFF',
     fontSize: theme.typography.button.fontSize,
@@ -460,16 +514,11 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.button.fontFamily,
     fontWeight: '600',
   },
-  resendButton: {
-    padding: theme.spacing.sm,
-    alignItems: 'center',
-  },
+  resendButton: { padding: theme.spacing.sm, alignItems: 'center' },
   resendButtonText: {
     color: theme.colors.primary,
     fontSize: theme.typography.body.fontSize,
     fontFamily: theme.typography.body.fontFamily,
   },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
+  buttonDisabled: { opacity: 0.6 },
 });

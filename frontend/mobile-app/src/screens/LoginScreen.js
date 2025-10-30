@@ -3,41 +3,49 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Image,
-} from 'react-native';
-import {
+  TextInput as RNTextInput,
+  TouchableOpacity,
   Text,
-  TextInput,
-  Button,
-  Card,
-  Title,
-  Paragraph,
-  ActivityIndicator,
-  Surface,
-} from 'react-native-paper';
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../services';
+import { theme } from '../styles';
+import { CustomAlert } from '../components';
 
 export const LoginScreen = ({ navigation, onAuthSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [alert, setAlert] = useState({ visible: false, type: 'info', title: '', message: '', buttons: [] });
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      setAlert({
+        visible: true,
+        type: 'warning',
+        title: 'Missing Information',
+        message: 'Please fill in all fields to continue.',
+        buttons: [],
+      });
       return;
     }
 
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      setAlert({
+        visible: true,
+        type: 'error',
+        title: 'Invalid Email',
+        message: 'Please enter a valid email address.',
+        buttons: [],
+      });
       return;
     }
 
@@ -47,23 +55,28 @@ export const LoginScreen = ({ navigation, onAuthSuccess }) => {
       const result = await authService.login(email, password);
 
       if (result.success) {
-        Alert.alert('Success', 'Login successful!', [
-          {
-            text: 'OK',
-            onPress: () => {
-              // Notify AppNavigator that authentication succeeded
-              if (onAuthSuccess) {
-                onAuthSuccess();
-              }
-            }
-          }
-        ]);
+        // Navigate immediately without showing alert on login screen
+        if (onAuthSuccess) {
+          onAuthSuccess();
+        }
       } else {
-        Alert.alert('Login Failed', result.message || 'Invalid credentials');
+        setAlert({
+          visible: true,
+          type: 'error',
+          title: 'Login Failed',
+          message: result.message || 'Invalid credentials. Please try again.',
+          buttons: [],
+        });
       }
     } catch (error) {
       console.error('Login error:', error);
-      Alert.alert('Error', 'Network error. Please try again.');
+      setAlert({
+        visible: true,
+        type: 'error',
+        title: 'Connection Error',
+        message: 'Network error. Please check your connection and try again.',
+        buttons: [],
+      });
     } finally {
       setLoading(false);
     }
@@ -81,36 +94,43 @@ export const LoginScreen = ({ navigation, onAuthSuccess }) => {
 
       if (result.success) {
         const mode = authStatus.isDemoMode ? ' (Demo Mode)' : '';
-        Alert.alert('Success', `Google Sign-In successful!${mode}`, [
-          {
-            text: 'OK',
-            onPress: () => {
-              // Notify AppNavigator that authentication succeeded
-              if (onAuthSuccess) {
-                onAuthSuccess();
-              }
-            }
-          }
-        ]);
+        // Navigate immediately without showing alert on login screen
+        if (onAuthSuccess) {
+          onAuthSuccess();
+        }
       } else {
         // Show a more detailed error for configuration issues
         const errorMessage = result.message || 'Unable to sign in with Google';
         if (errorMessage.includes('not configured')) {
-          Alert.alert(
-            'Google Sign-In Setup Required', 
-            'Google Sign-In is running in demo mode. To enable real Google authentication, please follow the setup guide in docs/google-oauth-complete-setup.md',
-            [
+          setAlert({
+            visible: true,
+            type: 'info',
+            title: 'Setup Required',
+            message: 'Google Sign-In is running in demo mode. To enable real Google authentication, please follow the setup guide.',
+            buttons: [
               { text: 'Use Demo Mode', onPress: () => handleGoogleSignIn() },
-              { text: 'OK' }
-            ]
-          );
+              { text: 'Cancel', style: 'cancel' }
+            ],
+          });
         } else {
-          Alert.alert('Google Sign-In Failed', errorMessage);
+          setAlert({
+            visible: true,
+            type: 'error',
+            title: 'Sign-In Failed',
+            message: errorMessage,
+            buttons: [],
+          });
         }
       }
     } catch (error) {
       console.error('Google Sign-In error:', error);
-      Alert.alert('Error', 'Network error. Please try again.');
+      setAlert({
+        visible: true,
+        type: 'error',
+        title: 'Connection Error',
+        message: 'Network error. Please check your connection and try again.',
+        buttons: [],
+      });
     } finally {
       setLoading(false);
     }
@@ -122,116 +142,164 @@ export const LoginScreen = ({ navigation, onAuthSuccess }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoid}
+      <LinearGradient
+        colors={[theme.colors.gradient.start, theme.colors.gradient.end]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradient}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoid}
         >
-          <Surface style={styles.surface}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Logo Section */}
             <View style={styles.logoContainer}>
               <Image 
-                source={require('../../assets/android-chrome-192x192.png')} 
+                source={require('../../assets/logo/egourd-high-resolution-logo-white-transparent.png')} 
                 style={styles.logo}
+                resizeMode="contain"
               />
-              <Title style={styles.title}>Gourd Scanner</Title>
-              <Paragraph style={styles.subtitle}>
-                Sign in to continue scanning and tracking your gourds
-              </Paragraph>
+              <Text style={styles.title}>eGourd</Text>
+              <Text style={styles.subtitle}>
+                Scan, Analyze, and Track Your Gourds
+              </Text>
             </View>
 
-            <Card style={styles.card}>
-              <Card.Content>
-                <Title style={styles.cardTitle}>Welcome Back</Title>
-                
-                <TextInput
-                  label="Email"
+            {/* Login Form Card */}
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Welcome Back</Text>
+              
+              {/* Email Input */}
+              <View style={styles.inputContainer}>
+                <MaterialCommunityIcons 
+                  name="email-outline" 
+                  size={20} 
+                  color={theme.colors.text.secondary} 
+                  style={styles.inputIcon}
+                />
+                <RNTextInput
+                  placeholder="Email"
+                  placeholderTextColor={theme.colors.text.secondary}
                   value={email}
                   onChangeText={setEmail}
-                  mode="outlined"
                   style={styles.input}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoComplete="email"
-                  left={<TextInput.Icon icon="email" />}
                 />
+              </View>
 
-                <TextInput
-                  label="Password"
+              {/* Password Input */}
+              <View style={styles.inputContainer}>
+                <MaterialCommunityIcons 
+                  name="lock-outline" 
+                  size={20} 
+                  color={theme.colors.text.secondary} 
+                  style={styles.inputIcon}
+                />
+                <RNTextInput
+                  placeholder="Password"
+                  placeholderTextColor={theme.colors.text.secondary}
                   value={password}
                   onChangeText={setPassword}
-                  mode="outlined"
-                  secureTextEntry={!showPassword}
                   style={styles.input}
+                  secureTextEntry={!showPassword}
                   autoComplete="password"
-                  left={<TextInput.Icon icon="lock" />}
-                  right={
-                    <TextInput.Icon
-                      icon={showPassword ? 'eye-off' : 'eye'}
-                      onPress={() => setShowPassword(!showPassword)}
-                    />
-                  }
                 />
-
-                <Button
-                  mode="contained"
-                  onPress={handleLogin}
-                  loading={loading}
-                  disabled={loading}
-                  style={styles.loginButton}
-                  contentStyle={styles.buttonContent}
-                  buttonColor="#2E7D32"
+                <TouchableOpacity 
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeIcon}
                 >
-                  {loading ? 'Signing In...' : 'Sign In'}
-                </Button>
+                  <MaterialCommunityIcons 
+                    name={showPassword ? 'eye-off-outline' : 'eye-outline'} 
+                    size={20} 
+                    color={theme.colors.text.secondary} 
+                  />
+                </TouchableOpacity>
+              </View>
 
-                <View style={styles.dividerContainer}>
-                  <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>or</Text>
-                  <View style={styles.dividerLine} />
-                </View>
-
-                <Button
-                  mode="outlined"
-                  onPress={handleGoogleSignIn}
-                  style={styles.googleButton}
-                  contentStyle={styles.buttonContent}
-                  icon="google"
-                  textColor="#2E7D32"
-                  loading={loading}
-                  disabled={loading}
-                >
-                  Continue with Google
-                </Button>
-
-                <Button
-                  mode="text"
-                  onPress={() => Alert.alert('Info', 'Forgot password feature coming soon!')}
-                  style={styles.forgotButton}
-                  textColor="#43A047"
-                >
-                  Forgot Password?
-                </Button>
-              </Card.Content>
-            </Card>
-
-            <View style={styles.signupContainer}>
-              <Paragraph style={styles.signupText}>
-                Don't have an account?
-              </Paragraph>
-              <Button
-                mode="outlined"
-                onPress={navigateToSignUp}
-                style={styles.signupButton}
+              {/* Forgot Password */}
+              <TouchableOpacity 
+                onPress={() => setAlert({
+                  visible: true,
+                  type: 'info',
+                  title: 'Coming Soon',
+                  message: 'Password recovery feature will be available soon!',
+                  buttons: [],
+                })}
+                style={styles.forgotButton}
               >
-                Create Account
-              </Button>
+                <Text style={styles.forgotText}>Forgot Password?</Text>
+              </TouchableOpacity>
+
+              {/* Login Button */}
+              <TouchableOpacity
+                onPress={handleLogin}
+                disabled={loading}
+                style={[styles.loginButton, loading && styles.buttonDisabled]}
+              >
+                <LinearGradient
+                  colors={[theme.colors.primary, '#4a8a3f']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.loginButtonGradient}
+                >
+                  {loading ? (
+                    <Text style={styles.buttonText}>Signing In...</Text>
+                  ) : (
+                    <Text style={styles.buttonText}>Sign In</Text>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+
+              {/* Divider */}
+              <View style={styles.dividerContainer}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>or continue with</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              {/* Google Sign In Button */}
+              <TouchableOpacity
+                onPress={handleGoogleSignIn}
+                disabled={loading}
+                style={[styles.googleButton, loading && styles.buttonDisabled]}
+              >
+                <MaterialCommunityIcons 
+                  name="google" 
+                  size={20} 
+                  color={theme.colors.primary} 
+                  style={styles.googleIcon}
+                />
+                <Text style={styles.googleButtonText}>Continue with Google</Text>
+              </TouchableOpacity>
             </View>
-          </Surface>
-        </ScrollView>
-      </KeyboardAvoidingView>
+
+            {/* Sign Up Link */}
+            <View style={styles.signupContainer}>
+              <Text style={styles.signupText}>Don't have an account? </Text>
+              <TouchableOpacity onPress={navigateToSignUp}>
+                <Text style={styles.signupLink}>Create Account</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </LinearGradient>
+
+      {/* Custom Alert */}
+      <CustomAlert
+        visible={alert.visible}
+        type={alert.type}
+        title={alert.title}
+        message={alert.message}
+        buttons={alert.buttons}
+        onClose={() => setAlert({ ...alert, visible: false })}
+      />
     </SafeAreaView>
   );
 };
@@ -239,7 +307,9 @@ export const LoginScreen = ({ navigation, onAuthSuccess }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E8F5E8',
+  },
+  gradient: {
+    flex: 1,
   },
   keyboardAvoid: {
     flex: 1,
@@ -247,93 +317,152 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 20,
-  },
-  surface: {
-    flex: 1,
-    justifyContent: 'center',
-    backgroundColor: 'transparent',
+    padding: theme.spacing.lg,
+    paddingTop: theme.spacing.xl * 2,
+    paddingBottom: theme.spacing.xl,
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: theme.spacing.xl,
   },
   logo: {
-    width: 80,
-    height: 80,
-    marginBottom: 16,
-    borderRadius: 16,
+    width: 120,
+    height: 120,
+    marginBottom: theme.spacing.md,
   },
   title: {
-    fontSize: 32,
-    fontFamily: 'Poppins_700Bold',
-    color: '#1B5E20',
-    marginBottom: 8,
+    fontSize: 36,
+    fontFamily: theme.fonts.bold,
+    color: '#FFFFFF',
+    marginBottom: theme.spacing.xs,
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   subtitle: {
-    fontSize: 16,
-    fontFamily: 'Poppins_400Regular',
+    fontSize: 14,
+    fontFamily: theme.fonts.regular,
     textAlign: 'center',
-    color: '#2E7D32',
-    paddingHorizontal: 20,
+    color: 'rgba(255, 255, 255, 0.9)',
+    paddingHorizontal: theme.spacing.lg,
   },
   card: {
-    marginBottom: 20,
-    elevation: 4,
     backgroundColor: '#FFFFFF',
+    borderRadius: theme.borderRadius.large,
+    padding: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
   cardTitle: {
     fontSize: 24,
-    fontFamily: 'Poppins_600SemiBold',
+    fontFamily: theme.fonts.bold,
     textAlign: 'center',
-    marginBottom: 20,
-    color: '#1B5E20',
+    marginBottom: theme.spacing.xl,
+    color: theme.colors.text.primary,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.borderRadius.medium,
+    marginBottom: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.background.secondary,
+  },
+  inputIcon: {
+    marginRight: theme.spacing.sm,
   },
   input: {
-    marginBottom: 16,
+    flex: 1,
+    height: 50,
+    fontSize: 16,
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.text.primary,
+  },
+  eyeIcon: {
+    padding: theme.spacing.xs,
+  },
+  forgotButton: {
+    alignSelf: 'flex-end',
+    marginBottom: theme.spacing.lg,
+  },
+  forgotText: {
+    fontSize: 14,
+    fontFamily: theme.fonts.medium,
+    color: theme.colors.primary,
   },
   loginButton: {
-    marginTop: 10,
-    marginBottom: 10,
-    backgroundColor: '#2E7D32',
+    borderRadius: theme.borderRadius.medium,
+    overflow: 'hidden',
+    marginBottom: theme.spacing.lg,
   },
-  buttonContent: {
-    paddingVertical: 8,
+  loginButtonGradient: {
+    paddingVertical: theme.spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    fontSize: 16,
+    fontFamily: theme.fonts.semiBold,
+    color: '#FFFFFF',
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 20,
+    marginVertical: theme.spacing.lg,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#C8E6C9',
+    backgroundColor: theme.colors.background.secondary,
   },
   dividerText: {
-    marginHorizontal: 16,
-    color: '#66BB6A',
+    marginHorizontal: theme.spacing.md,
+    color: theme.colors.text.secondary,
     fontSize: 14,
-    fontFamily: 'Poppins_400Regular',
+    fontFamily: theme.fonts.regular,
   },
   googleButton: {
-    marginBottom: 10,
-    borderColor: '#2E7D32',
-    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.medium,
+    paddingVertical: theme.spacing.md,
   },
-  forgotButton: {
-    marginTop: 5,
+  googleIcon: {
+    marginRight: theme.spacing.sm,
+  },
+  googleButtonText: {
+    fontSize: 16,
+    fontFamily: theme.fonts.semiBold,
+    color: theme.colors.primary,
   },
   signupContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: theme.spacing.md,
   },
   signupText: {
-    marginBottom: 10,
-    color: '#2E7D32',
+    fontSize: 14,
+    fontFamily: theme.fonts.regular,
+    color: 'rgba(255, 255, 255, 0.9)',
   },
-  signupButton: {
-    minWidth: 200,
-    borderColor: '#2E7D32',
+  signupLink: {
+    fontSize: 14,
+    fontFamily: theme.fonts.semiBold,
+    color: '#FFFFFF',
+    textDecorationLine: 'underline',
   },
 });

@@ -1,7 +1,7 @@
 export const theme = {
   colors: {
-    primary: '#4CAF50',
-    secondary: '#FFC107',
+    primary: '#559c49',
+    secondary: '#dede50',
     accent: '#FF5722',
     background: {
       primary: '#FFFFFF',
@@ -13,9 +13,13 @@ export const theme = {
       secondary: '#757575',
     },
     error: '#F44336',
-    success: '#4CAF50',
+    success: '#559c49',
     warning: '#FF9800',
     info: '#2196F3',
+    gradient: {
+      start: '#559c49',
+      end: '#dede50',
+    },
   },
   spacing: {
     xs: 4,

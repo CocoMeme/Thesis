@@ -1,43 +1,104 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { theme } from '../../styles';
 
 export const TipCard = ({ tip, onDismiss, onNext }) => {
+  const slideAnim = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    Animated.timing(slideAnim, {
+      toValue: 1,
+      duration: 400,
+      useNativeDriver: true,
+    }).start();
+  }, [tip]);
+
   if (!tip) return null;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.titleContainer}>
-          <Ionicons name="bulb" size={20} color={theme.colors.warning} />
-          <Text style={styles.title}>Quick Tip</Text>
+    <Animated.View 
+      style={[
+        styles.container,
+        {
+          opacity: slideAnim,
+          transform: [
+            {
+              translateX: slideAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [50, 0],
+              }),
+            },
+          ],
+        },
+      ]}
+    >
+      <LinearGradient
+        colors={[theme.colors.secondary + '20', theme.colors.secondary + '10']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradient}
+      >
+        <View style={styles.accentBar} />
+        
+        <View style={styles.header}>
+          <View style={styles.titleContainer}>
+            <LinearGradient
+              colors={[theme.colors.secondary, '#c9c940']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.iconContainer}
+            >
+              <MaterialCommunityIcons name="lightbulb-on" size={20} color="#FFFFFF" />
+            </LinearGradient>
+            <Text style={styles.title}>Pro Tip</Text>
+          </View>
+          {onDismiss && (
+            <TouchableOpacity 
+              onPress={onDismiss} 
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={styles.closeButton}
+            >
+              <MaterialCommunityIcons name="close" size={20} color={theme.colors.text.secondary} />
+            </TouchableOpacity>
+          )}
         </View>
-        {onDismiss && (
-          <TouchableOpacity onPress={onDismiss} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <Ionicons name="close" size={20} color={theme.colors.text.secondary} />
+        
+        <Text style={styles.tipText}>{tip}</Text>
+        
+        {onNext && (
+          <TouchableOpacity style={styles.nextButton} onPress={onNext}>
+            <Text style={styles.nextButtonText}>Next Tip</Text>
+            <MaterialCommunityIcons name="arrow-right" size={18} color={theme.colors.secondary} />
           </TouchableOpacity>
         )}
-      </View>
-      <Text style={styles.tipText}>{tip}</Text>
-      {onNext && (
-        <TouchableOpacity style={styles.nextButton} onPress={onNext}>
-          <Text style={styles.nextButtonText}>Next Tip</Text>
-          <Ionicons name="arrow-forward" size={16} color={theme.colors.primary} />
-        </TouchableOpacity>
-      )}
-    </View>
+      </LinearGradient>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: theme.colors.warning + '15',
-    borderLeftWidth: 4,
-    borderLeftColor: theme.colors.warning,
-    borderRadius: theme.borderRadius.medium,
+    borderRadius: theme.borderRadius.large,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  gradient: {
     padding: theme.spacing.md,
-    marginBottom: theme.spacing.md,
+    position: 'relative',
+  },
+  accentBar: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+    backgroundColor: theme.colors.secondary,
   },
   header: {
     flexDirection: 'row',
@@ -49,25 +110,41 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  iconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: theme.spacing.sm,
+  },
   title: {
-    ...theme.typography.bodyMedium,
+    fontSize: 16,
+    fontFamily: theme.fonts.semiBold,
     color: theme.colors.text.primary,
-    marginLeft: theme.spacing.sm,
+  },
+  closeButton: {
+    padding: 4,
   },
   tipText: {
-    ...theme.typography.body,
+    fontSize: 14,
+    fontFamily: theme.fonts.regular,
     color: theme.colors.text.secondary,
     lineHeight: 22,
+    marginLeft: 40,
   },
   nextButton: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
     marginTop: theme.spacing.sm,
+    marginLeft: 40,
+    paddingVertical: theme.spacing.xs,
   },
   nextButtonText: {
-    ...theme.typography.bodyMedium,
-    color: theme.colors.primary,
+    fontSize: 14,
+    fontFamily: theme.fonts.semiBold,
+    color: theme.colors.secondary,
     marginRight: 4,
   },
 });

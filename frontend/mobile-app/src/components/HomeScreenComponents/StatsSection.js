@@ -7,24 +7,27 @@ export const StatsSection = ({ totalScans, readyGourds, pendingGourds, onStatsPr
   return (
     <View style={styles.container}>
       <StatCard
-        icon="scan"
+        icon="qrcode-scan"
         value={totalScans || 0}
         label="Total Scans"
-        color={theme.colors.primary}
+        color={theme.colors.info}
+        gradientColors={[theme.colors.info, '#2874a6']}
         onPress={() => onStatsPress?.('total')}
       />
       <StatCard
-        icon="checkmark-circle"
+        icon="check-circle"
         value={readyGourds || 0}
         label="Ready"
-        color={theme.colors.success}
+        color={theme.colors.primary}
+        gradientColors={[theme.colors.primary, '#4a8a3f']}
         onPress={() => onStatsPress?.('ready')}
       />
       <StatCard
-        icon="time"
+        icon="clock-outline"
         value={pendingGourds || 0}
         label="Pending"
-        color={theme.colors.warning}
+        color={theme.colors.secondary}
+        gradientColors={[theme.colors.secondary, '#c9c940']}
         onPress={() => onStatsPress?.('pending')}
       />
     </View>
@@ -34,6 +37,6 @@ export const StatsSection = ({ totalScans, readyGourds, pendingGourds, onStatsPr
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    gap: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
 });

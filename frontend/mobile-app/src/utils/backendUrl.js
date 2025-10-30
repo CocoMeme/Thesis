@@ -2,7 +2,7 @@
 
 // Development URL (when running backend locally)
 // Note: React Native can't access localhost, so we use the computer's IP address
-const DEV_URL = 'http://172.22.217.197:5000/api';
+const DEV_URL = 'http://192.168.1.66:5000/api';
 
 // Production URL (replace with your deployed backend URL)
 const PROD_URL = 'https://your-production-domain.com/api';

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { 
   WelcomeHeader, 
@@ -6,10 +6,12 @@ import {
   StatsSection,
   RecentScanCard,
   TipCard,
+  CustomAlert,
+  FeaturedScanCard,
 } from '../components';
 import { theme } from '../styles';
 
-export const HomeScreen = ({ navigation }) => {
+export const HomeScreen = ({ navigation, route }) => {
   // Mock data - replace with real data from API/storage
   const [userName] = useState('John');
   const [stats] = useState({
@@ -35,6 +37,7 @@ export const HomeScreen = ({ navigation }) => {
 
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
   const [showTip, setShowTip] = useState(true);
+  const [alert, setAlert] = useState({ visible: false, type: 'info', title: '', message: '', buttons: [] });
   
   const tips = [
     'Take photos in good lighting for better analysis results.',
@@ -42,6 +45,24 @@ export const HomeScreen = ({ navigation }) => {
     'Scan gourds regularly to track their ripeness progression.',
     'Clean the camera lens before scanning for clearer images.',
   ];
+
+  // Show welcome alert when user just logged in
+  useEffect(() => {
+    if (route?.params?.showWelcome) {
+      // Small delay to ensure smooth navigation transition
+      const timer = setTimeout(() => {
+        setAlert({
+          visible: true,
+          type: 'success',
+          title: 'Welcome Back!',
+          message: 'Login successful! Ready to scan your gourds.',
+          buttons: [],
+        });
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [route?.params?.showWelcome]);
 
   const handleNextTip = () => {
     setCurrentTipIndex((prev) => (prev + 1) % tips.length);
@@ -61,8 +82,14 @@ export const HomeScreen = ({ navigation }) => {
         <WelcomeHeader userName={userName} />
         
         <View style={styles.content}>
+          {/* Featured Scan Card */}
+          <View style={styles.section}>
+            <FeaturedScanCard onPress={() => navigation.navigate('Camera')} />
+          </View>
+
           {/* Stats Section */}
           <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Your Progress</Text>
             <StatsSection
               totalScans={stats.totalScans}
               readyGourds={stats.readyGourds}
@@ -75,24 +102,19 @@ export const HomeScreen = ({ navigation }) => {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Quick Actions</Text>
             <QuickActionCard
-              icon="camera"
-              title="Scan Gourd"
-              subtitle="Take a photo to analyze"
-              color={theme.colors.primary}
-              onPress={() => navigation.navigate('Camera')}
-            />
-            <QuickActionCard
-              icon="time"
+              icon="history"
               title="Scan History"
               subtitle="View past scans and results"
               color={theme.colors.info}
+              gradientColors={[theme.colors.info, '#2874a6']}
               onPress={() => navigation.navigate('History')}
             />
             <QuickActionCard
-              icon="person"
+              icon="account"
               title="My Profile"
               subtitle="Manage account settings"
               color={theme.colors.secondary}
+              gradientColors={[theme.colors.secondary, '#c9c940']}
               onPress={() => navigation.navigate('Profile')}
             />
           </View>
@@ -136,6 +158,16 @@ export const HomeScreen = ({ navigation }) => {
           )}
         </View>
       </ScrollView>
+
+      {/* Welcome Alert */}
+      <CustomAlert
+        visible={alert.visible}
+        type={alert.type}
+        title={alert.title}
+        message={alert.message}
+        buttons={alert.buttons}
+        onClose={() => setAlert({ ...alert, visible: false })}
+      />
     </SafeAreaView>
   );
 };
@@ -151,9 +183,10 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.xl,
+    paddingTop: theme.spacing.md,
   },
   section: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.xl,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -162,12 +195,14 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   sectionTitle: {
-    ...theme.typography.h3,
+    fontSize: 20,
+    fontFamily: theme.fonts.bold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.md,
   },
   viewAllButton: {
-    ...theme.typography.bodyMedium,
+    fontSize: 14,
+    fontFamily: theme.fonts.semiBold,
     color: theme.colors.primary,
   },
 });

@@ -3,25 +3,19 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Image,
-} from 'react-native';
-import {
+  TextInput as RNTextInput,
+  TouchableOpacity,
   Text,
-  TextInput,
-  Button,
-  Card,
-  Title,
-  Paragraph,
-  ActivityIndicator,
-  Surface,
-  Checkbox,
-} from 'react-native-paper';
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../services';
+import { theme } from '../styles';
+import { CustomAlert } from '../components';
 
 export const SignUpScreen = ({ navigation, onAuthSuccess }) => {
   const [formData, setFormData] = useState({
@@ -35,6 +29,7 @@ export const SignUpScreen = ({ navigation, onAuthSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [alert, setAlert] = useState({ visible: false, type: 'info', title: '', message: '', buttons: [] });
 
   const updateField = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -45,41 +40,74 @@ export const SignUpScreen = ({ navigation, onAuthSuccess }) => {
 
     // Check if all fields are filled
     if (!firstName.trim() || !lastName.trim() || !email.trim() || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
+      setAlert({
+        visible: true,
+        type: 'warning',
+        title: 'Missing Information',
+        message: 'Please fill in all fields to continue.',
+        buttons: [],
+      });
       return false;
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      setAlert({
+        visible: true,
+        type: 'error',
+        title: 'Invalid Email',
+        message: 'Please enter a valid email address.',
+        buttons: [],
+      });
       return false;
     }
 
     // Validate password strength
     if (password.length < 8) {
-      Alert.alert('Error', 'Password must be at least 8 characters long');
+      setAlert({
+        visible: true,
+        type: 'error',
+        title: 'Password Too Short',
+        message: 'Password must be at least 8 characters long.',
+        buttons: [],
+      });
       return false;
     }
 
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
     if (!passwordRegex.test(password)) {
-      Alert.alert(
-        'Weak Password',
-        'Password must contain at least one uppercase letter, one lowercase letter, and one number'
-      );
+      setAlert({
+        visible: true,
+        type: 'warning',
+        title: 'Weak Password',
+        message: 'Password must contain at least one uppercase letter, one lowercase letter, and one number.',
+        buttons: [],
+      });
       return false;
     }
 
     // Check if passwords match
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      setAlert({
+        visible: true,
+        type: 'error',
+        title: 'Password Mismatch',
+        message: 'Passwords do not match. Please try again.',
+        buttons: [],
+      });
       return false;
     }
 
     // Check terms agreement
     if (!agreeToTerms) {
-      Alert.alert('Error', 'Please agree to the Terms of Service and Privacy Policy');
+      setAlert({
+        visible: true,
+        type: 'warning',
+        title: 'Terms Required',
+        message: 'Please agree to the Terms of Service and Privacy Policy to continue.',
+        buttons: [],
+      });
       return false;
     }
 
@@ -99,12 +127,14 @@ export const SignUpScreen = ({ navigation, onAuthSuccess }) => {
       const result = await authService.register(signupData);
 
       if (result.success) {
-        Alert.alert(
-          'Success', 
-          'Account created successfully! Welcome to Gourd Scanner!',
-          [
+        setAlert({
+          visible: true,
+          type: 'success',
+          title: 'Welcome to eGourd!',
+          message: 'Account created successfully! Start scanning your gourds now.',
+          buttons: [
             {
-              text: 'OK',
+              text: 'Get Started',
               onPress: () => {
                 // Notify AppNavigator that authentication succeeded
                 if (onAuthSuccess) {
@@ -112,14 +142,26 @@ export const SignUpScreen = ({ navigation, onAuthSuccess }) => {
                 }
               }
             }
-          ]
-        );
+          ],
+        });
       } else {
-        Alert.alert('Registration Failed', result.message || 'Unable to create account');
+        setAlert({
+          visible: true,
+          type: 'error',
+          title: 'Registration Failed',
+          message: result.message || 'Unable to create account. Please try again.',
+          buttons: [],
+        });
       }
     } catch (error) {
       console.error('Signup error:', error);
-      Alert.alert('Error', 'Network error. Please try again.');
+      setAlert({
+        visible: true,
+        type: 'error',
+        title: 'Connection Error',
+        message: 'Network error. Please check your connection and try again.',
+        buttons: [],
+      });
     } finally {
       setLoading(false);
     }
@@ -132,12 +174,14 @@ export const SignUpScreen = ({ navigation, onAuthSuccess }) => {
       const result = await authService.signInWithGoogle();
 
       if (result.success) {
-        Alert.alert(
-          'Success', 
-          'Google Sign-Up successful! Welcome to Gourd Scanner!',
-          [
+        setAlert({
+          visible: true,
+          type: 'success',
+          title: 'Welcome to eGourd!',
+          message: 'Google Sign-Up successful! Start scanning your gourds now.',
+          buttons: [
             {
-              text: 'OK',
+              text: 'Get Started',
               onPress: () => {
                 // Notify AppNavigator that authentication succeeded
                 if (onAuthSuccess) {
@@ -145,24 +189,41 @@ export const SignUpScreen = ({ navigation, onAuthSuccess }) => {
                 }
               }
             }
-          ]
-        );
+          ],
+        });
       } else {
         // Show a more detailed error for configuration issues
         const errorMessage = result.message || 'Unable to sign up with Google';
         if (errorMessage.includes('not configured')) {
-          Alert.alert(
-            'Google Sign-In Setup Required', 
-            'Google Sign-In needs to be configured first. Check the console for setup instructions or refer to docs/google-auth-setup.md',
-            [{ text: 'OK' }]
-          );
+          setAlert({
+            visible: true,
+            type: 'info',
+            title: 'Setup Required',
+            message: 'Google Sign-Up is running in demo mode. To enable real Google authentication, please follow the setup guide.',
+            buttons: [
+              { text: 'Use Demo Mode', onPress: () => handleGoogleSignUp() },
+              { text: 'Cancel', style: 'cancel' }
+            ],
+          });
         } else {
-          Alert.alert('Google Sign-Up Failed', errorMessage);
+          setAlert({
+            visible: true,
+            type: 'error',
+            title: 'Sign-Up Failed',
+            message: errorMessage,
+            buttons: [],
+          });
         }
       }
     } catch (error) {
       console.error('Google Sign-Up error:', error);
-      Alert.alert('Error', 'Network error. Please try again.');
+      setAlert({
+        visible: true,
+        type: 'error',
+        title: 'Connection Error',
+        message: 'Network error. Please check your connection and try again.',
+        buttons: [],
+      });
     } finally {
       setLoading(false);
     }
@@ -193,177 +254,237 @@ export const SignUpScreen = ({ navigation, onAuthSuccess }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoid}
+      <LinearGradient
+        colors={[theme.colors.gradient.start, theme.colors.gradient.end]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradient}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoid}
         >
-          <Surface style={styles.surface}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Logo Section */}
             <View style={styles.logoContainer}>
               <Image 
-                source={require('../../assets/android-chrome-192x192.png')} 
+                source={require('../../assets/logo/egourd-high-resolution-logo-white-transparent.png')} 
                 style={styles.logo}
+                resizeMode="contain"
               />
-              <Title style={styles.title}>Join Gourd Scanner</Title>
-              <Paragraph style={styles.subtitle}>
+              <Text style={styles.title}>Join eGourd</Text>
+              <Text style={styles.subtitle}>
                 Create your account to start tracking and analyzing gourds
-              </Paragraph>
+              </Text>
             </View>
 
-            <Card style={styles.card}>
-              <Card.Content>
-                <Title style={styles.cardTitle}>Create Account</Title>
-                
-                <View style={styles.nameContainer}>
-                  <TextInput
-                    label="First Name"
+            {/* Sign Up Form Card */}
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Create Account</Text>
+              
+              {/* Name Inputs */}
+              <View style={styles.nameRow}>
+                <View style={[styles.inputContainer, styles.nameInput]}>
+                  <MaterialCommunityIcons 
+                    name="account-outline" 
+                    size={20} 
+                    color={theme.colors.text.secondary} 
+                    style={styles.inputIcon}
+                  />
+                  <RNTextInput
+                    placeholder="First Name"
+                    placeholderTextColor={theme.colors.text.secondary}
                     value={formData.firstName}
                     onChangeText={(value) => updateField('firstName', value)}
-                    mode="outlined"
-                    style={[styles.input, styles.nameInput]}
-                    autoCapitalize="words"
-                    left={<TextInput.Icon icon="account" />}
-                  />
-                  
-                  <TextInput
-                    label="Last Name"
-                    value={formData.lastName}
-                    onChangeText={(value) => updateField('lastName', value)}
-                    mode="outlined"
-                    style={[styles.input, styles.nameInput]}
+                    style={styles.input}
                     autoCapitalize="words"
                   />
                 </View>
+                
+                <View style={[styles.inputContainer, styles.nameInput]}>
+                  <RNTextInput
+                    placeholder="Last Name"
+                    placeholderTextColor={theme.colors.text.secondary}
+                    value={formData.lastName}
+                    onChangeText={(value) => updateField('lastName', value)}
+                    style={styles.input}
+                    autoCapitalize="words"
+                  />
+                </View>
+              </View>
 
-                <TextInput
-                  label="Email"
+              {/* Email Input */}
+              <View style={styles.inputContainer}>
+                <MaterialCommunityIcons 
+                  name="email-outline" 
+                  size={20} 
+                  color={theme.colors.text.secondary} 
+                  style={styles.inputIcon}
+                />
+                <RNTextInput
+                  placeholder="Email"
+                  placeholderTextColor={theme.colors.text.secondary}
                   value={formData.email}
                   onChangeText={(value) => updateField('email', value)}
-                  mode="outlined"
                   style={styles.input}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoComplete="email"
-                  left={<TextInput.Icon icon="email" />}
                 />
+              </View>
 
-                <TextInput
-                  label="Password"
+              {/* Password Input */}
+              <View style={styles.inputContainer}>
+                <MaterialCommunityIcons 
+                  name="lock-outline" 
+                  size={20} 
+                  color={theme.colors.text.secondary} 
+                  style={styles.inputIcon}
+                />
+                <RNTextInput
+                  placeholder="Password"
+                  placeholderTextColor={theme.colors.text.secondary}
                   value={formData.password}
                   onChangeText={(value) => updateField('password', value)}
-                  mode="outlined"
-                  secureTextEntry={!showPassword}
                   style={styles.input}
+                  secureTextEntry={!showPassword}
                   autoComplete="password-new"
-                  left={<TextInput.Icon icon="lock" />}
-                  right={
-                    <TextInput.Icon
-                      icon={showPassword ? 'eye-off' : 'eye'}
-                      onPress={() => setShowPassword(!showPassword)}
-                    />
-                  }
                 />
-                
-                {formData.password.length > 0 && (
-                  <View style={styles.passwordStrength}>
-                    <Text style={[styles.strengthText, { color: passwordStrength.color }]}>
-                      Password Strength: {passwordStrength.text}
-                    </Text>
-                  </View>
-                )}
+                <TouchableOpacity 
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeIcon}
+                >
+                  <MaterialCommunityIcons 
+                    name={showPassword ? 'eye-off-outline' : 'eye-outline'} 
+                    size={20} 
+                    color={theme.colors.text.secondary} 
+                  />
+                </TouchableOpacity>
+              </View>
 
-                <TextInput
-                  label="Confirm Password"
+              {/* Password Strength */}
+              {formData.password.length > 0 && (
+                <View style={styles.passwordStrength}>
+                  <Text style={[styles.strengthText, { color: passwordStrength.color }]}>
+                    Password Strength: {passwordStrength.text}
+                  </Text>
+                </View>
+              )}
+
+              {/* Confirm Password Input */}
+              <View style={styles.inputContainer}>
+                <MaterialCommunityIcons 
+                  name="lock-check-outline" 
+                  size={20} 
+                  color={theme.colors.text.secondary} 
+                  style={styles.inputIcon}
+                />
+                <RNTextInput
+                  placeholder="Confirm Password"
+                  placeholderTextColor={theme.colors.text.secondary}
                   value={formData.confirmPassword}
                   onChangeText={(value) => updateField('confirmPassword', value)}
-                  mode="outlined"
-                  secureTextEntry={!showConfirmPassword}
                   style={styles.input}
+                  secureTextEntry={!showConfirmPassword}
                   autoComplete="password-new"
-                  left={<TextInput.Icon icon="lock-check" />}
-                  right={
-                    <TextInput.Icon
-                      icon={showConfirmPassword ? 'eye-off' : 'eye'}
-                      onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                    />
-                  }
                 />
-
-                <View style={styles.checkboxContainer}>
-                  <Checkbox
-                    status={agreeToTerms ? 'checked' : 'unchecked'}
-                    onPress={() => setAgreeToTerms(!agreeToTerms)}
+                <TouchableOpacity 
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  style={styles.eyeIcon}
+                >
+                  <MaterialCommunityIcons 
+                    name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'} 
+                    size={20} 
+                    color={theme.colors.text.secondary} 
                   />
-                  <Paragraph style={styles.checkboxText}>
-                    I agree to the{' '}
-                    <Text 
-                      style={styles.linkText}
-                      onPress={() => Alert.alert('Info', 'Terms of Service coming soon!')}
-                    >
-                      Terms of Service
-                    </Text>
-                    {' '}and{' '}
-                    <Text 
-                      style={styles.linkText}
-                      onPress={() => Alert.alert('Info', 'Privacy Policy coming soon!')}
-                    >
-                      Privacy Policy
-                    </Text>
-                  </Paragraph>
-                </View>
+                </TouchableOpacity>
+              </View>
 
-                <Button
-                  mode="contained"
-                  onPress={handleSignUp}
-                  loading={loading}
-                  disabled={loading}
-                  style={styles.signupButton}
-                  contentStyle={styles.buttonContent}
-                  buttonColor="#2E7D32"
-                >
-                  {loading ? 'Creating Account...' : 'Create Account'}
-                </Button>
-
-                <View style={styles.dividerContainer}>
-                  <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>or</Text>
-                  <View style={styles.dividerLine} />
-                </View>
-
-                <Button
-                  mode="outlined"
-                  onPress={handleGoogleSignUp}
-                  style={styles.googleButton}
-                  contentStyle={styles.buttonContent}
-                  icon="google"
-                  textColor="#2E7D32"
-                  loading={loading}
-                  disabled={loading}
-                >
-                  Sign up with Google
-                </Button>
-              </Card.Content>
-            </Card>
-
-            <View style={styles.loginContainer}>
-              <Paragraph style={styles.loginText}>
-                Already have an account?
-              </Paragraph>
-              <Button
-                mode="outlined"
-                onPress={navigateToLogin}
-                style={styles.loginButton}
+              {/* Terms Checkbox */}
+              <TouchableOpacity 
+                style={styles.checkboxContainer}
+                onPress={() => setAgreeToTerms(!agreeToTerms)}
               >
-                Sign In
-              </Button>
+                <View style={[styles.checkbox, agreeToTerms && styles.checkboxChecked]}>
+                  {agreeToTerms && (
+                    <MaterialCommunityIcons name="check" size={16} color="#FFFFFF" />
+                  )}
+                </View>
+                <Text style={styles.checkboxText}>
+                  I agree to the{' '}
+                  <Text style={styles.linkText}>Terms of Service</Text>
+                  {' '}and{' '}
+                  <Text style={styles.linkText}>Privacy Policy</Text>
+                </Text>
+              </TouchableOpacity>
+
+              {/* Sign Up Button */}
+              <TouchableOpacity
+                onPress={handleSignUp}
+                disabled={loading}
+                style={[styles.signupButton, loading && styles.buttonDisabled]}
+              >
+                <LinearGradient
+                  colors={[theme.colors.primary, '#4a8a3f']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.signupButtonGradient}
+                >
+                  {loading ? (
+                    <Text style={styles.buttonText}>Creating Account...</Text>
+                  ) : (
+                    <Text style={styles.buttonText}>Create Account</Text>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+
+              {/* Divider */}
+              <View style={styles.dividerContainer}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>or sign up with</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              {/* Google Sign Up Button */}
+              <TouchableOpacity
+                onPress={handleGoogleSignUp}
+                disabled={loading}
+                style={[styles.googleButton, loading && styles.buttonDisabled]}
+              >
+                <MaterialCommunityIcons 
+                  name="google" 
+                  size={20} 
+                  color={theme.colors.primary} 
+                  style={styles.googleIcon}
+                />
+                <Text style={styles.googleButtonText}>Sign up with Google</Text>
+              </TouchableOpacity>
             </View>
-          </Surface>
-        </ScrollView>
-      </KeyboardAvoidingView>
+
+            {/* Login Link */}
+            <View style={styles.loginContainer}>
+              <Text style={styles.loginText}>Already have an account? </Text>
+              <TouchableOpacity onPress={navigateToLogin}>
+                <Text style={styles.loginLink}>Sign In</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </LinearGradient>
+
+      {/* Custom Alert */}
+      <CustomAlert
+        visible={alert.visible}
+        type={alert.type}
+        title={alert.title}
+        message={alert.message}
+        buttons={alert.buttons}
+        onClose={() => setAlert({ ...alert, visible: false })}
+      />
     </SafeAreaView>
   );
 };
@@ -371,7 +492,9 @@ export const SignUpScreen = ({ navigation, onAuthSuccess }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E8F5E8',
+  },
+  gradient: {
+    flex: 1,
   },
   keyboardAvoid: {
     flex: 1,
@@ -379,121 +502,190 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 20,
-  },
-  surface: {
-    flex: 1,
-    justifyContent: 'center',
-    backgroundColor: 'transparent',
+    padding: theme.spacing.lg,
+    paddingTop: theme.spacing.xl,
+    paddingBottom: theme.spacing.xl,
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: theme.spacing.xl,
   },
   logo: {
-    width: 80,
-    height: 80,
-    marginBottom: 16,
-    borderRadius: 16,
+    width: 100,
+    height: 100,
+    marginBottom: theme.spacing.md,
   },
   title: {
     fontSize: 32,
-    fontFamily: 'Poppins_700Bold',
-    color: '#1B5E20',
-    marginBottom: 8,
+    fontFamily: theme.fonts.bold,
+    color: '#FFFFFF',
+    marginBottom: theme.spacing.xs,
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   subtitle: {
-    fontSize: 16,
-    fontFamily: 'Poppins_400Regular',
+    fontSize: 14,
+    fontFamily: theme.fonts.regular,
     textAlign: 'center',
-    color: '#2E7D32',
-    paddingHorizontal: 20,
+    color: 'rgba(255, 255, 255, 0.9)',
+    paddingHorizontal: theme.spacing.lg,
   },
   card: {
-    marginBottom: 20,
-    elevation: 4,
     backgroundColor: '#FFFFFF',
+    borderRadius: theme.borderRadius.large,
+    padding: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
   cardTitle: {
     fontSize: 24,
-    fontFamily: 'Poppins_600SemiBold',
+    fontFamily: theme.fonts.bold,
     textAlign: 'center',
-    marginBottom: 20,
-    color: '#1B5E20',
+    marginBottom: theme.spacing.xl,
+    color: theme.colors.text.primary,
   },
-  nameContainer: {
+  nameRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: theme.spacing.md,
   },
   nameInput: {
     flex: 0.48,
+    marginBottom: 0,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.borderRadius.medium,
+    marginBottom: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.background.secondary,
+  },
+  inputIcon: {
+    marginRight: theme.spacing.sm,
   },
   input: {
-    marginBottom: 16,
+    flex: 1,
+    height: 50,
+    fontSize: 16,
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.text.primary,
+  },
+  eyeIcon: {
+    padding: theme.spacing.xs,
   },
   passwordStrength: {
-    marginBottom: 16,
-    marginTop: -8,
+    marginTop: -theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+    paddingLeft: theme.spacing.sm,
   },
   strengthText: {
     fontSize: 12,
-    fontFamily: 'Poppins_600SemiBold',
+    fontFamily: theme.fonts.semiBold,
   },
   checkboxContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 20,
+    alignItems: 'center',
+    marginBottom: theme.spacing.lg,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    marginRight: theme.spacing.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: theme.colors.primary,
   },
   checkboxText: {
     flex: 1,
-    marginLeft: 8,
-    fontSize: 14,
-    fontFamily: 'Poppins_400Regular',
-    lineHeight: 20,
-    color: '#2E7D32',
+    fontSize: 13,
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.text.secondary,
+    lineHeight: 18,
   },
   linkText: {
-    color: '#2E7D32',
-    fontWeight: 'bold',
+    color: theme.colors.primary,
+    fontFamily: theme.fonts.semiBold,
   },
   signupButton: {
-    marginTop: 10,
-    backgroundColor: '#2E7D32',
+    borderRadius: theme.borderRadius.medium,
+    overflow: 'hidden',
+    marginBottom: theme.spacing.lg,
   },
-  buttonContent: {
-    paddingVertical: 8,
+  signupButtonGradient: {
+    paddingVertical: theme.spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    fontSize: 16,
+    fontFamily: theme.fonts.semiBold,
+    color: '#FFFFFF',
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 20,
+    marginVertical: theme.spacing.lg,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#C8E6C9',
+    backgroundColor: theme.colors.background.secondary,
   },
   dividerText: {
-    marginHorizontal: 16,
-    color: '#66BB6A',
+    marginHorizontal: theme.spacing.md,
+    color: theme.colors.text.secondary,
     fontSize: 14,
-    fontFamily: 'Poppins_400Regular',
+    fontFamily: theme.fonts.regular,
   },
   googleButton: {
-    marginBottom: 10,
-    borderColor: '#2E7D32',
-    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.medium,
+    paddingVertical: theme.spacing.md,
+  },
+  googleIcon: {
+    marginRight: theme.spacing.sm,
+  },
+  googleButtonText: {
+    fontSize: 16,
+    fontFamily: theme.fonts.semiBold,
+    color: theme.colors.primary,
   },
   loginContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: theme.spacing.md,
   },
   loginText: {
-    marginBottom: 10,
-    color: '#2E7D32',
+    fontSize: 14,
+    fontFamily: theme.fonts.regular,
+    color: 'rgba(255, 255, 255, 0.9)',
   },
-  loginButton: {
-    minWidth: 200,
-    borderColor: '#2E7D32',
+  loginLink: {
+    fontSize: 14,
+    fontFamily: theme.fonts.semiBold,
+    color: '#FFFFFF',
+    textDecorationLine: 'underline',
   },
 });

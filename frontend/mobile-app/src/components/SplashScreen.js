@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Image,
@@ -10,58 +10,93 @@ import {
 const { width, height } = Dimensions.get('window');
 
 const SplashScreen = ({ onFinish }) => {
-  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const [showSecondLogo, setShowSecondLogo] = useState(false);
+  const firstLogoFade = useRef(new Animated.Value(1)).current;
+  const secondLogoFade = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
-    // Start with scale animation
+    // Animation sequence
     Animated.sequence([
-      // Scale up the logo
+      // Scale up the first logo
       Animated.timing(scaleAnim, {
         toValue: 1,
         duration: 800,
         useNativeDriver: true,
       }),
       // Wait for a moment
-      Animated.delay(1500),
-      // Fade out
-      Animated.timing(fadeAnim, {
+      Animated.delay(1200),
+      // Fade out first logo
+      Animated.timing(firstLogoFade, {
         toValue: 0,
         duration: 500,
         useNativeDriver: true,
       }),
     ]).start(() => {
-      // Call onFinish when animation completes
-      if (onFinish) {
-        onFinish();
-      }
+      // Switch to second logo
+      setShowSecondLogo(true);
+      
+      // Animate second logo
+      Animated.sequence([
+        // Fade in second logo
+        Animated.timing(secondLogoFade, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        // Wait for a moment
+        Animated.delay(1200),
+        // Fade out second logo
+        Animated.timing(secondLogoFade, {
+          toValue: 0,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        // Call onFinish when animation completes
+        if (onFinish) {
+          onFinish();
+        }
+      });
     });
-  }, [fadeAnim, scaleAnim, onFinish]);
+  }, [firstLogoFade, secondLogoFade, scaleAnim, onFinish]);
 
   return (
-    <Animated.View 
-      style={[
-        styles.container, 
-        { 
-          opacity: fadeAnim,
-        }
-      ]}
-    >
-      <Animated.View
-        style={[
-          styles.logoContainer,
-          {
-            transform: [{ scale: scaleAnim }],
-          },
-        ]}
-      >
-        <Image
-          source={require('../../assets/android-chrome-192x192.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-      </Animated.View>
-    </Animated.View>
+    <View style={styles.container}>
+      {!showSecondLogo && (
+        <Animated.View
+          style={[
+            styles.logoContainer,
+            {
+              opacity: firstLogoFade,
+              transform: [{ scale: scaleAnim }],
+            },
+          ]}
+        >
+          <Image
+            source={require('../../assets/logo/egourd-high-resolution-logo-transparent.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </Animated.View>
+      )}
+      {showSecondLogo && (
+        <Animated.View
+          style={[
+            styles.logoContainer,
+            {
+              opacity: secondLogoFade,
+            },
+          ]}
+        >
+          <Image
+            source={require('../../assets/logo/egourd-high-resolution-logo-name-transparent.png')}
+            style={styles.logoWithName}
+            resizeMode="contain"
+          />
+        </Animated.View>
+      )}
+    </View>
   );
 };
 
@@ -80,9 +115,14 @@ const styles = StyleSheet.create({
   logoContainer: {
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'absolute',
   },
   logo: {
     width: 150,
+    height: 150,
+  },
+  logoWithName: {
+    width: 250,
     height: 150,
   },
 });

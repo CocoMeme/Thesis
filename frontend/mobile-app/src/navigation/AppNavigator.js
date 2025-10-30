@@ -13,7 +13,7 @@ import { CustomHeader } from '../components';
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
-const HomeStack = () => {
+const HomeStack = ({ route }) => {
   const [user, setUser] = React.useState(null);
 
   React.useEffect(() => {
@@ -57,6 +57,7 @@ const HomeStack = () => {
       <Stack.Screen 
         name="HomeMain" 
         component={HomeScreen} 
+        initialParams={{ showWelcome: route?.params?.showWelcome }}
         options={{
           header: () => (
             <CustomHeader
@@ -144,7 +145,7 @@ const AuthStack = ({ onAuthSuccess }) => {
 };
 
 // Main Tab Navigator (protected)
-const MainTabs = ({ onAuthChange }) => {
+const MainTabs = ({ onAuthChange, showWelcome }) => {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -172,7 +173,12 @@ const MainTabs = ({ onAuthChange }) => {
         headerShown: false,
       })}
     >
-      <Tab.Screen name="Home" component={HomeStack} />
+      <Tab.Screen 
+        name="Home" 
+        initialParams={{ showWelcome }}
+      >
+        {(props) => <HomeStack {...props} />}
+      </Tab.Screen>
       <Tab.Screen name="Camera" component={CameraStack} />
       <Tab.Screen name="History" component={HistoryStack} />
       <Tab.Screen 
@@ -187,6 +193,7 @@ const MainTabs = ({ onAuthChange }) => {
 export const AppNavigator = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   // Check authentication status on app start
   useEffect(() => {
@@ -206,7 +213,8 @@ export const AppNavigator = () => {
   };
 
   const handleAuthChange = () => {
-    // Force re-check authentication status
+    // Force re-check authentication status and show welcome alert
+    setShowWelcome(true);
     setIsLoading(true);
     checkAuthStatus();
   };
@@ -224,8 +232,11 @@ export const AppNavigator = () => {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {isAuthenticated ? (
-          <Stack.Screen name="Main">
-            {(props) => <MainTabs {...props} onAuthChange={handleAuthChange} />}
+          <Stack.Screen 
+            name="Main"
+            initialParams={{ showWelcome }}
+          >
+            {(props) => <MainTabs {...props} onAuthChange={handleAuthChange} showWelcome={showWelcome} />}
           </Stack.Screen>
         ) : (
           <Stack.Screen name="Auth">

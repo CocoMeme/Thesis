@@ -1,13 +1,30 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { theme } from '../../styles';
 
 export const RecentScanCard = ({ imageUri, result, date, onPress }) => {
-  const getStatusColor = (result) => {
-    if (result?.toLowerCase().includes('ready')) return theme.colors.success;
-    if (result?.toLowerCase().includes('almost')) return theme.colors.warning;
-    return theme.colors.info;
+  const getStatusConfig = (result) => {
+    if (result?.toLowerCase().includes('ready')) {
+      return {
+        color: theme.colors.primary,
+        gradient: [theme.colors.primary, '#4a8a3f'],
+        icon: 'check-circle',
+      };
+    }
+    if (result?.toLowerCase().includes('almost')) {
+      return {
+        color: theme.colors.secondary,
+        gradient: [theme.colors.secondary, '#c9c940'],
+        icon: 'clock-alert-outline',
+      };
+    }
+    return {
+      color: theme.colors.info,
+      gradient: [theme.colors.info, '#2874a6'],
+      icon: 'information',
+    };
   };
 
   const formatDate = (dateString) => {
@@ -22,31 +39,47 @@ export const RecentScanCard = ({ imageUri, result, date, onPress }) => {
     return date.toLocaleDateString();
   };
 
+  const statusConfig = getStatusConfig(result);
+
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.imageContainer}>
         {imageUri ? (
-          <Image source={{ uri: imageUri }} style={styles.image} />
+          <>
+            <Image source={{ uri: imageUri }} style={styles.image} />
+            <LinearGradient
+              colors={['transparent', 'rgba(0, 0, 0, 0.3)']}
+              style={styles.imageOverlay}
+            />
+          </>
         ) : (
-          <View style={[styles.image, styles.placeholderImage]}>
-            <Ionicons name="image-outline" size={32} color={theme.colors.text.secondary} />
-          </View>
+          <LinearGradient
+            colors={['#f5f5f5', '#e0e0e0']}
+            style={[styles.image, styles.placeholderImage]}
+          >
+            <MaterialCommunityIcons name="image-outline" size={32} color={theme.colors.text.secondary} />
+          </LinearGradient>
         )}
       </View>
       <View style={styles.infoContainer}>
         <Text style={styles.result} numberOfLines={1}>{result || 'Analysis Result'}</Text>
         <View style={styles.dateContainer}>
-          <Ionicons name="time-outline" size={14} color={theme.colors.text.secondary} />
+          <MaterialCommunityIcons name="clock-outline" size={14} color={theme.colors.text.secondary} />
           <Text style={styles.date}>{formatDate(date)}</Text>
         </View>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(result) + '20' }]}>
-          <View style={[styles.statusDot, { backgroundColor: getStatusColor(result) }]} />
-          <Text style={[styles.statusText, { color: getStatusColor(result) }]}>
+        <LinearGradient
+          colors={[statusConfig.color + '25', statusConfig.color + '15']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.statusBadge}
+        >
+          <MaterialCommunityIcons name={statusConfig.icon} size={14} color={statusConfig.color} />
+          <Text style={[styles.statusText, { color: statusConfig.color }]}>
             {result?.split(' ')[0] || 'Completed'}
           </Text>
-        </View>
+        </LinearGradient>
       </View>
-      <Ionicons name="chevron-forward" size={20} color={theme.colors.text.secondary} />
+      <MaterialCommunityIcons name="chevron-right" size={22} color={theme.colors.text.secondary} />
     </TouchableOpacity>
   );
 };
@@ -56,25 +89,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.medium,
+    borderRadius: theme.borderRadius.large,
     padding: theme.spacing.md,
     marginBottom: theme.spacing.md,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
   },
   imageContainer: {
     marginRight: theme.spacing.md,
+    position: 'relative',
   },
   image: {
-    width: 64,
-    height: 64,
+    width: 70,
+    height: 70,
     borderRadius: theme.borderRadius.medium,
   },
+  imageOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
+    borderBottomLeftRadius: theme.borderRadius.medium,
+    borderBottomRightRadius: theme.borderRadius.medium,
+  },
   placeholderImage: {
-    backgroundColor: theme.colors.background.secondary,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -82,17 +124,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   result: {
-    ...theme.typography.bodyMedium,
+    fontSize: 16,
+    fontFamily: theme.fonts.semiBold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   dateContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.xs,
+    marginBottom: theme.spacing.sm,
   },
   date: {
-    ...theme.typography.caption,
+    fontSize: 13,
+    fontFamily: theme.fonts.regular,
     color: theme.colors.text.secondary,
     marginLeft: 4,
   },
@@ -100,18 +144,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: 4,
+    paddingHorizontal: theme.spacing.sm + 2,
+    paddingVertical: 5,
     borderRadius: theme.borderRadius.small,
-  },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginRight: 6,
+    gap: 4,
   },
   statusText: {
-    ...theme.typography.caption,
-    fontFamily: theme.fonts.medium,
+    fontSize: 12,
+    fontFamily: theme.fonts.semiBold,
   },
 });
