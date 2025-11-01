@@ -2,6 +2,7 @@
   "expo": {
     "name": "EGourd",
     "slug": "egourd",
+    "scheme": "egourd",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/logo/egourd-high-resolution-logo.png",
@@ -18,7 +19,8 @@
       "bundleIdentifier": "com.coandrei.egourd",
       "infoPlist": {
         "NSCameraUsageDescription": "EGourd needs camera access to scan ampalaya flowers and classify gender for optimal harvest.",
-        "NSPhotoLibraryUsageDescription": "EGourd needs photo library access to select ampalaya flower images for analysis."
+        "NSPhotoLibraryUsageDescription": "EGourd needs photo library access to select ampalaya flower images for analysis.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -40,6 +42,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      "expo-dev-client",
       [
         "expo-camera",
         {
