@@ -33,7 +33,6 @@
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
       ]
     },
@@ -61,7 +60,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "9c8b2fff-7413-4f48-9834-3e4410c40c85"
+        "projectId": "79fa9567-ea5a-4e31-a508-d5d97117d4f8"
       }
     }
   }
