@@ -1,4 +1,4 @@
-package com.coandrei.gourdscanner
+package com.coandrei.egourd
 
 import android.app.Application
 import android.content.res.Configuration

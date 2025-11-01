@@ -4,13 +4,40 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../styles';
+import { modelService } from '../services/modelService';
 
 export const CameraScreen = ({ navigation }) => {
   const [facing, setFacing] = useState('back');
   const [permission, requestPermission] = useCameraPermissions();
   const [capturedImage, setCapturedImage] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isModelReady, setIsModelReady] = useState(false);
   const cameraRef = useRef(null);
+
+  // Initialize model when component mounts
+  useEffect(() => {
+    const initializeModel = async () => {
+      try {
+        console.log('🤖 Initializing model service...');
+        await modelService.initialize();
+        setIsModelReady(true);
+        console.log('✅ Model service ready');
+        
+        // Optional: Warm up the model for faster first prediction
+        await modelService.warmUp();
+        console.log('🔥 Model warmed up');
+      } catch (error) {
+        console.error('❌ Model initialization failed:', error);
+        Alert.alert(
+          'Model Error',
+          'Failed to load AI model. The app will still work but predictions may not be available.',
+          [{ text: 'OK' }]
+        );
+      }
+    };
+
+    initializeModel();
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -78,11 +105,48 @@ export const CameraScreen = ({ navigation }) => {
     setCapturedImage(null);
   };
 
-  const analyzePicture = () => {
-    // TODO: Implement ML model integration
-    Alert.alert('Analyze', 'Image analysis will be implemented with ML model');
-    // For now, just show the captured image
-    // navigation.navigate('Results', { imageUri: capturedImage });
+  const analyzePicture = async () => {
+    try {
+      setIsProcessing(true);
+      
+      // Ensure model is ready
+      if (!isModelReady) {
+        Alert.alert(
+          'Model Loading',
+          'AI model is still loading. Please wait a moment and try again.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      console.log('🔍 Analyzing image...');
+      
+      // Run prediction
+      const prediction = await modelService.predictFlowerGender(capturedImage);
+      
+      console.log('✅ Prediction complete:', prediction);
+      
+      // Navigate to results screen with prediction data
+      navigation.navigate('Results', {
+        imageUri: capturedImage,
+        prediction: prediction
+      });
+      
+    } catch (error) {
+      console.error('❌ Analysis error:', error);
+      
+      // Show user-friendly error message
+      Alert.alert(
+        'Analysis Failed',
+        error.message || 'Unable to analyze the image. Please try again with a clearer photo.',
+        [
+          { text: 'Retake', onPress: retakePicture },
+          { text: 'Cancel', style: 'cancel' }
+        ]
+      );
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (capturedImage) {
@@ -90,17 +154,47 @@ export const CameraScreen = ({ navigation }) => {
       <View style={styles.container}>
         <View style={styles.previewContainer}>
           <Image source={{ uri: capturedImage }} style={styles.previewImage} />
+          
+          {/* Show processing overlay */}
+          {isProcessing && (
+            <View style={styles.processingOverlay}>
+              <ActivityIndicator size="large" color="#FFFFFF" />
+              <Text style={styles.processingText}>Analyzing flower...</Text>
+              <Text style={styles.processingSubtext}>This may take a moment</Text>
+            </View>
+          )}
         </View>
         
         <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.actionButton} onPress={retakePicture}>
+          <TouchableOpacity 
+            style={styles.actionButton} 
+            onPress={retakePicture}
+            disabled={isProcessing}
+          >
             <Ionicons name="close-circle" size={32} color={theme.colors.error} />
             <Text style={styles.actionButtonText}>Retake</Text>
           </TouchableOpacity>
           
-          <TouchableOpacity style={[styles.actionButton, styles.analyzeButton]} onPress={analyzePicture}>
-            <Ionicons name="checkmark-circle" size={32} color={theme.colors.success} />
-            <Text style={styles.actionButtonText}>Analyze</Text>
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.analyzeButton]} 
+            onPress={analyzePicture}
+            disabled={isProcessing || !isModelReady}
+          >
+            {isProcessing ? (
+              <ActivityIndicator size={32} color={theme.colors.success} />
+            ) : (
+              <Ionicons 
+                name="checkmark-circle" 
+                size={32} 
+                color={isModelReady ? theme.colors.success : theme.colors.text.secondary} 
+              />
+            )}
+            <Text style={[
+              styles.actionButtonText,
+              (!isModelReady || isProcessing) && styles.actionButtonTextDisabled
+            ]}>
+              {isProcessing ? 'Analyzing...' : isModelReady ? 'Analyze' : 'Loading...'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -256,10 +350,32 @@ const styles = StyleSheet.create({
   previewContainer: {
     flex: 1,
     backgroundColor: '#000000',
+    position: 'relative',
   },
   previewImage: {
     flex: 1,
     resizeMode: 'contain',
+  },
+  processingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  processingText: {
+    ...theme.typography.h3,
+    color: '#FFFFFF',
+    marginTop: theme.spacing.lg,
+    fontWeight: '600',
+  },
+  processingSubtext: {
+    ...theme.typography.body,
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginTop: theme.spacing.sm,
   },
   actionButtons: {
     flexDirection: 'row',
@@ -279,5 +395,9 @@ const styles = StyleSheet.create({
     ...theme.typography.bodyMedium,
     color: theme.colors.text.primary,
     marginTop: theme.spacing.xs,
+  },
+  actionButtonTextDisabled: {
+    color: theme.colors.text.secondary,
+    opacity: 0.6,
   },
 });

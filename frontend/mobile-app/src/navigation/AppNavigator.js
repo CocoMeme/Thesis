@@ -6,7 +6,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, View, Alert } from 'react-native';
 
-import { HomeScreen, CameraScreen, HistoryScreen, LoginScreen, SignUpScreen, ProfileScreen } from '../screens';
+import { HomeScreen, CameraScreen, ResultsScreen, HistoryScreen, LoginScreen, SignUpScreen, ProfileScreen } from '../screens';
 import { authService } from '../services';
 import { CustomHeader } from '../components';
 
@@ -86,6 +86,11 @@ const CameraStack = () => {
         name="CameraMain" 
         component={CameraScreen} 
         options={{ title: 'Scan Gourd' }}
+      />
+      <Stack.Screen 
+        name="Results" 
+        component={ResultsScreen} 
+        options={{ title: 'Scan Results' }}
       />
     </Stack.Navigator>
   );

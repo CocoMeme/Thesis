@@ -75,3 +75,9 @@ temp/
 
 # GitHub
 .github/
+
+# ML Models
+*.tflite
+*.h5
+*.pb
+!model_metadata.json

@@ -1,4 +1,4 @@
-package com.coandrei.gourdscanner
+package com.coandrei.egourd
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build
