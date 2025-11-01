@@ -8,7 +8,6 @@ import { ActivityIndicator, View, Alert } from 'react-native';
 
 import { HomeScreen, CameraScreen, ResultsScreen, HistoryScreen, LoginScreen, SignUpScreen, ProfileScreen } from '../screens';
 import { authService } from '../services';
-import { CustomHeader } from '../components';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -52,22 +51,20 @@ const HomeStack = ({ route }) => {
           fontFamily: 'Poppins_600SemiBold',
           fontSize: 18,
         },
+        headerShown: false,
       }}
     >
       <Stack.Screen 
         name="HomeMain" 
-        component={HomeScreen} 
-        initialParams={{ showWelcome: route?.params?.showWelcome }}
-        options={{
-          header: () => (
-            <CustomHeader
-              user={user}
-              onNotificationPress={handleNotificationPress}
-              onMenuPress={handleMenuPress}
-            />
-          ),
+        initialParams={{ 
+          showWelcome: route?.params?.showWelcome,
+          user: user,
+          onNotificationPress: handleNotificationPress,
+          onMenuPress: handleMenuPress,
         }}
-      />
+      >
+        {(props) => <HomeScreen {...props} />}
+      </Stack.Screen>
     </Stack.Navigator>
   );
 };

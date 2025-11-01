@@ -9,6 +9,7 @@ import {
   Platform,
   StatusBar,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { theme } from '../styles';
 
@@ -36,61 +37,66 @@ export const CustomHeader = ({
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-      {/* Left side - Avatar and Name */}
-      <View style={styles.leftSection}>
-        {showAvatar && (
-          <View style={styles.avatarContainer}>
-            {user?.profilePicture ? (
-              <Image 
-                source={{ uri: user.profilePicture }} 
-                style={styles.avatarImage}
-              />
-            ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarText}>{getInitials()}</Text>
-              </View>
-            )}
+      <LinearGradient
+        colors={[theme.colors.gradient.start, theme.colors.gradient.end]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.container}
+      >
+        {/* Left side - Avatar and Name */}
+        <View style={styles.leftSection}>
+          {showAvatar && (
+            <View style={styles.avatarContainer}>
+              {user?.profilePicture ? (
+                <Image 
+                  source={{ uri: user.profilePicture }} 
+                  style={styles.avatarImage}
+                />
+              ) : (
+                <View style={styles.avatarPlaceholder}>
+                  <Text style={styles.avatarText}>{getInitials()}</Text>
+                </View>
+              )}
+            </View>
+          )}
+          <View style={styles.nameContainer}>
+            <Text style={styles.greeting}>Good day,</Text>
+            <Text style={styles.userName}>{getDisplayName()}</Text>
           </View>
-        )}
-        <View style={styles.nameContainer}>
-          <Text style={styles.greeting}>Good day,</Text>
-          <Text style={styles.userName}>{getDisplayName()}</Text>
         </View>
-      </View>
 
-      {/* Right side - Action Icons */}
-      <View style={styles.rightSection}>
-        <TouchableOpacity 
-          style={styles.iconButton}
-          onPress={onNotificationPress}
-        >
-          <MaterialCommunityIcons 
-            name="bell-outline" 
-            size={24} 
-            color={theme.colors.text.primary} 
-          />
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.iconButton}
-          onPress={onMenuPress}
-        >
-          <MaterialCommunityIcons 
-            name="dots-vertical" 
-            size={24} 
-            color={theme.colors.text.primary} 
-          />
-        </TouchableOpacity>
-      </View>
-    </View>
+        {/* Right side - Action Icons */}
+        <View style={styles.rightSection}>
+          <TouchableOpacity 
+            style={styles.iconButton}
+            onPress={onNotificationPress}
+          >
+            <MaterialCommunityIcons 
+              name="bell-outline" 
+              size={24} 
+              color="#FFFFFF" 
+            />
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.iconButton}
+            onPress={onMenuPress}
+          >
+            <MaterialCommunityIcons 
+              name="dots-vertical" 
+              size={24} 
+              color="#FFFFFF" 
+            />
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: theme.colors.background.primary,
+    backgroundColor: theme.colors.gradient.start,
     paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + theme.spacing.xs : theme.spacing.sm,
   },
   container: {
@@ -99,9 +105,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
-    backgroundColor: theme.colors.background.primary,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.background.secondary,
   },
   leftSection: {
     flexDirection: 'row',
@@ -120,9 +123,11 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
   },
   avatarText: {
     fontSize: 18,
@@ -135,12 +140,12 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 12,
     fontFamily: theme.fonts.regular,
-    color: theme.colors.text.secondary,
+    color: 'rgba(255, 255, 255, 0.85)',
   },
   userName: {
     fontSize: 16,
     fontFamily: theme.fonts.semiBold,
-    color: theme.colors.text.primary,
+    color: '#FFFFFF',
   },
   rightSection: {
     flexDirection: 'row',

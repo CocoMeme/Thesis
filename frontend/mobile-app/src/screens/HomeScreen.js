@@ -12,13 +12,19 @@ import {
 import { theme } from '../styles';
 
 export const HomeScreen = ({ navigation, route }) => {
+  // Top Banner
   // Mock data - replace with real data from API/storage
-  const [userName] = useState('John');
+  const [userName] = useState('Coco Meme');
   const [stats] = useState({
     totalScans: 24,
     readyGourds: 18,
     pendingGourds: 6,
   });
+  
+  // Get user and handlers from route params
+  const user = route?.params?.user;
+  const onNotificationPress = route?.params?.onNotificationPress;
+  const onMenuPress = route?.params?.onMenuPress;
   
   const [recentScans] = useState([
     {
@@ -79,7 +85,12 @@ export const HomeScreen = ({ navigation, route }) => {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
-        <WelcomeHeader userName={userName} />
+        <WelcomeHeader 
+          userName={userName} 
+          user={user}
+          onNotificationPress={onNotificationPress}
+          onMenuPress={onMenuPress}
+        />
         
         <View style={styles.content}>
           {/* Featured Scan Card */}
@@ -95,6 +106,7 @@ export const HomeScreen = ({ navigation, route }) => {
               readyGourds={stats.readyGourds}
               pendingGourds={stats.pendingGourds}
               onStatsPress={handleStatsPress}
+              recentScans={recentScans}
             />
           </View>
 
@@ -181,24 +193,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
-    paddingTop: theme.spacing.md,
+    paddingHorizontal: theme.spacing.sm,
+    paddingBottom: theme.spacing.lg,
+    paddingTop: theme.spacing.sm,
   },
   section: {
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: theme.fonts.bold,
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
   viewAllButton: {
     fontSize: 14,
