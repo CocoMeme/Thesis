@@ -198,7 +198,8 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
         <Text style={styles.sectionTitle}>About</Text>
         <View style={styles.profileItems}>
           <ProfileItem icon="help-circle" title="Help & Support" value="Get help" />
-          <ProfileItem icon="information" title="About" value="App version 1.0.0" />
+          <ProfileItem icon="information" title="About" value="App v1.0.0" />
+          <ProfileItem icon="cube-outline" title="Model Version" value="Model v1.10.30" />
           <ProfileItem icon="file-document" title="Privacy Policy" value="Read policy" />
           <ProfileItem icon="shield-check" title="Terms of Service" value="Read terms" />
         </View>
