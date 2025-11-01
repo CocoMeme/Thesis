@@ -53,7 +53,8 @@
         {
           "photosPermission": "Allow EGourd to access your photos to select ampalaya flower images for classification."
         }
-      ]
+      ],
+      "react-native-fast-tflite"
     ],
     "assetBundlePatterns": [
       "**/*"
