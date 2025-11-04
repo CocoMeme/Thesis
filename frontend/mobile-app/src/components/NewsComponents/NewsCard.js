@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { theme } from '../styles';
+import { theme } from '../../styles';
 
 const { width } = Dimensions.get('window');
 

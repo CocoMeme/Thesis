@@ -74,7 +74,7 @@ const SplashScreen = ({ onFinish }) => {
           ]}
         >
           <Image
-            source={require('../../assets/logo/egourd-high-resolution-logo-transparent.png')}
+            source={require('../../../assets/logo/egourd-high-resolution-logo-transparent.png')}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -90,7 +90,7 @@ const SplashScreen = ({ onFinish }) => {
           ]}
         >
           <Image
-            source={require('../../assets/logo/egourd-high-resolution-logo-name-transparent.png')}
+            source={require('../../../assets/logo/egourd-high-resolution-logo-name-transparent.png')}
             style={styles.logoWithName}
             resizeMode="contain"
           />

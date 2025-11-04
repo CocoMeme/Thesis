@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { theme } from '../styles';
+import { theme } from '../../styles';
 
 export const CustomHeader = ({ 
   user, 

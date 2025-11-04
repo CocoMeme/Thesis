@@ -14,7 +14,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Markdown from 'react-native-markdown-display';
-import { theme } from '../styles';
+import { theme } from '../../styles';
 
 const { width, height } = Dimensions.get('window');
 

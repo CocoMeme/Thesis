@@ -1,9 +1,9 @@
-export { Button } from './Button';
-export { CustomHeader } from './CustomHeader';
-export { default as SplashScreen } from './SplashScreen';
-export { CustomAlert } from './CustomAlert';
-export { NewsCard } from './NewsCard';
-export { NewsModal } from './NewsModal';
+export { Button } from './CustomComponents/Button';
+export { CustomHeader } from './CustomComponents/CustomHeader';
+export { default as SplashScreen } from './CustomComponents/SplashScreen';
+export { CustomAlert } from './CustomComponents/CustomAlert';
+export { NewsCard } from './NewsComponents/NewsCard';
+export { NewsModal } from './NewsComponents/NewsModal';
 
 // Home Screen Components
 export {
@@ -14,4 +14,4 @@ export {
   TipCard,
   StatsSection,
   FeaturedScanCard,
-} from './HomeScreenComponents';
+} from './HomeComponents';
