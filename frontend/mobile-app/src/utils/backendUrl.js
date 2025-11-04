@@ -4,11 +4,12 @@
 // Note: React Native can't access localhost, so we use the computer's IP address
 // ⚠️ IMPORTANT: Each developer should set their own computer's IP address here
 // To find your IP: Run `ipconfig` (Windows) or `ifconfig` (Mac/Linux)
-const DEV_URL = 'http://192.168.1.66:5000/api';
+// Updated to your current mobile-data IP while you're on that network
+const DEV_URL = 'http://10.127.240.197:5000/api';
 
 // Production URL (replace with your deployed backend URL)
 // For now, we'll use the same as DEV_URL so preview builds work with local backend
-const PROD_URL = 'http://192.168.1.66:5000/api';
+const PROD_URL = 'http://10.127.240.197:5000/api';
 
 // Environment detection
 const isDevelopment = __DEV__; // React Native's built-in development flag

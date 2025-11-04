@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { 
   WelcomeHeader, 
   QuickActionCard, 
@@ -8,8 +8,12 @@ import {
   TipCard,
   CustomAlert,
   FeaturedScanCard,
+  NewsCard,
+  NewsModal,
 } from '../components';
 import { theme } from '../styles';
+import { getAllNews, getPopupNews, markNewsAsRead } from '../services/newsService';
+import { authService } from '../services';
 
 export const HomeScreen = ({ navigation, route }) => {
   // Top Banner
@@ -21,10 +25,39 @@ export const HomeScreen = ({ navigation, route }) => {
     pendingGourds: 6,
   });
   
-  // Get user and handlers from route params
-  const user = route?.params?.user;
-  const onNotificationPress = route?.params?.onNotificationPress;
-  const onMenuPress = route?.params?.onMenuPress;
+  // User state
+  const [user, setUser] = useState(null);
+  
+  // Load user data
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      const userData = await authService.getCurrentUser();
+      setUser(userData);
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
+  };
+
+  // Handlers for header buttons
+  const handleNotificationPress = () => {
+    Alert.alert('Notifications', 'Notification feature coming soon!');
+  };
+
+  const handleMenuPress = () => {
+    Alert.alert(
+      'Menu Options', 
+      'What would you like to do?',
+      [
+        { text: 'Settings', onPress: () => console.log('Settings pressed') },
+        { text: 'Help', onPress: () => console.log('Help pressed') },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  };
   
   const [recentScans] = useState([
     {
@@ -44,6 +77,11 @@ export const HomeScreen = ({ navigation, route }) => {
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
   const [showTip, setShowTip] = useState(true);
   const [alert, setAlert] = useState({ visible: false, type: 'info', title: '', message: '', buttons: [] });
+  const [news, setNews] = useState([]);
+  const [popupNews, setPopupNews] = useState([]);
+  const [currentPopupIndex, setCurrentPopupIndex] = useState(0);
+  const [selectedNews, setSelectedNews] = useState(null);
+  const [loadingNews, setLoadingNews] = useState(true);
   
   const tips = [
     'Take photos in good lighting for better analysis results.',
@@ -52,7 +90,40 @@ export const HomeScreen = ({ navigation, route }) => {
     'Clean the camera lens before scanning for clearer images.',
   ];
 
-  // Show welcome alert when user just logged in
+  // Fetch news on component mount
+  useEffect(() => {
+    fetchNews();
+  }, []);
+
+  const fetchNews = async () => {
+    try {
+      setLoadingNews(true);
+      
+      // Fetch latest news (limited to 5)
+      const newsResponse = await getAllNews({ limit: 5 });
+      if (newsResponse.success) {
+        setNews(newsResponse.data);
+      }
+
+      // Fetch popup news if user is logged in
+      if (user) {
+        try {
+          const popupResponse = await getPopupNews();
+          if (popupResponse.success && popupResponse.data.length > 0) {
+            setPopupNews(popupResponse.data);
+          }
+        } catch (error) {
+          console.log('No popup news or error fetching:', error);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching news:', error);
+    } finally {
+      setLoadingNews(false);
+    }
+  };
+
+  // Show welcome alert and then popup news when user just logged in
   useEffect(() => {
     if (route?.params?.showWelcome) {
       // Small delay to ensure smooth navigation transition
@@ -69,6 +140,56 @@ export const HomeScreen = ({ navigation, route }) => {
       return () => clearTimeout(timer);
     }
   }, [route?.params?.showWelcome]);
+
+  // Show popup news after welcome alert is closed
+  useEffect(() => {
+    if (!alert.visible && popupNews.length > 0 && route?.params?.showWelcome) {
+      // Delay to show popup news after welcome alert
+      const timer = setTimeout(() => {
+        if (currentPopupIndex < popupNews.length) {
+          setSelectedNews(popupNews[currentPopupIndex]);
+        }
+      }, 800);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [alert.visible, popupNews, currentPopupIndex, route?.params?.showWelcome]);
+
+  const handleNewsPress = (newsItem) => {
+    console.log('📰 News pressed:', {
+      id: newsItem._id,
+      title: newsItem.title,
+      hasBody: !!newsItem.body,
+      bodyLength: newsItem.body?.length,
+      category: newsItem.category
+    });
+    setSelectedNews(newsItem);
+  };
+
+  const handleNewsModalClose = () => {
+    // If there are more popup news to show
+    if (currentPopupIndex < popupNews.length - 1) {
+      const nextIndex = currentPopupIndex + 1;
+      setCurrentPopupIndex(nextIndex);
+      
+      // Show next popup news after a short delay
+      setTimeout(() => {
+        setSelectedNews(popupNews[nextIndex]);
+      }, 300);
+    } else {
+      setSelectedNews(null);
+      // Reset for next login
+      setCurrentPopupIndex(0);
+    }
+  };
+
+  const handleMarkAsRead = async (newsId) => {
+    try {
+      await markNewsAsRead(newsId);
+    } catch (error) {
+      console.log('Error marking news as read:', error);
+    }
+  };
 
   const handleNextTip = () => {
     setCurrentTipIndex((prev) => (prev + 1) % tips.length);
@@ -88,11 +209,38 @@ export const HomeScreen = ({ navigation, route }) => {
         <WelcomeHeader 
           userName={userName} 
           user={user}
-          onNotificationPress={onNotificationPress}
-          onMenuPress={onMenuPress}
+          onNotificationPress={handleNotificationPress}
+          onMenuPress={handleMenuPress}
         />
         
         <View style={styles.content}>
+          {/* News & Updates Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>News & Updates</Text>
+            </View>
+            
+            {loadingNews ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+              </View>
+            ) : news.length > 0 ? (
+              <>
+                {news.map((newsItem) => (
+                  <NewsCard
+                    key={newsItem._id}
+                    news={newsItem}
+                    onPress={() => handleNewsPress(newsItem)}
+                  />
+                ))}
+              </>
+            ) : (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>No updates available</Text>
+              </View>
+            )}
+          </View>
+
           {/* Featured Scan Card */}
           <View style={styles.section}>
             <FeaturedScanCard onPress={() => navigation.navigate('Camera')} />
@@ -180,6 +328,14 @@ export const HomeScreen = ({ navigation, route }) => {
         buttons={alert.buttons}
         onClose={() => setAlert({ ...alert, visible: false })}
       />
+
+      {/* News Modal */}
+      <NewsModal
+        visible={!!selectedNews}
+        news={selectedNews}
+        onClose={handleNewsModalClose}
+        onMarkAsRead={handleMarkAsRead}
+      />
     </SafeAreaView>
   );
 };
@@ -216,5 +372,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: theme.fonts.semiBold,
     color: theme.colors.primary,
+  },
+  loadingContainer: {
+    padding: theme.spacing.xl,
+    alignItems: 'center',
+  },
+  emptyState: {
+    padding: theme.spacing.lg,
+    alignItems: 'center',
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: 12,
+  },
+  emptyText: {
+    fontSize: 14,
+    fontFamily: theme.fonts.medium,
+    color: theme.colors.text.secondary,
   },
 });

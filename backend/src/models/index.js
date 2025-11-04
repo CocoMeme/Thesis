@@ -1,10 +1,8 @@
 // Export all models from a central location
 const User = require('./User');
-const Scan = require('./Scan');
-const GourdData = require('./GourdData');
+const News = require('./News');
 
 module.exports = {
   User,
-  Scan,
-  GourdData
+  News
 };

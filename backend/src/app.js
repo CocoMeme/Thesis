@@ -118,6 +118,7 @@ class App {
     this.app.use('/api/auth', require('./routes/googleAuth'));
     this.app.use('/api/auth/local', require('./routes/localAuth'));
     this.app.use('/api/verification', require('./routes/verification'));
+    this.app.use('/api/news', require('./routes/news'));
     // TODO: Add these when other route modules are created
     // this.app.use('/api/users', require('./routes/users'));
     // this.app.use('/api/scans', require('./routes/scans'));

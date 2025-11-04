@@ -13,37 +13,6 @@ const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
 const HomeStack = ({ route }) => {
-  const [user, setUser] = React.useState(null);
-
-  React.useEffect(() => {
-    loadUserData();
-  }, []);
-
-  const loadUserData = async () => {
-    try {
-      const userData = await authService.getCurrentUser();
-      setUser(userData);
-    } catch (error) {
-      console.error('Error loading user data:', error);
-    }
-  };
-
-  const handleNotificationPress = () => {
-    Alert.alert('Notifications', 'Notification feature coming soon!');
-  };
-
-  const handleMenuPress = () => {
-    Alert.alert(
-      'Menu Options', 
-      'What would you like to do?',
-      [
-        { text: 'Settings', onPress: () => console.log('Settings pressed') },
-        { text: 'Help', onPress: () => console.log('Help pressed') },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
-  };
-
   return (
     <Stack.Navigator
       screenOptions={{
@@ -58,9 +27,6 @@ const HomeStack = ({ route }) => {
         name="HomeMain" 
         initialParams={{ 
           showWelcome: route?.params?.showWelcome,
-          user: user,
-          onNotificationPress: handleNotificationPress,
-          onMenuPress: handleMenuPress,
         }}
       >
         {(props) => <HomeScreen {...props} />}
