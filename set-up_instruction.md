@@ -1,37 +1,17 @@
 # EGourd Application Setup Guide
 
-Quick guide to set up and run the EGourd app on your Android device.
+
+## NOTE
+
+- Connect your Android device using USB to your computer, then turn on USB debugging on your mobile device.
+- Both your computer and Android device must be on the same WiFi network.
+- If you change your computer's IP address, update the `.env` file accordingly.
 
 ---
 
-## Prerequisites
+## SETUP STEPS
 
-1. **Node.js** (v16 or higher) - [Download here](https://nodejs.org/)
-2. **Android Studio** - [Download here](https://developer.android.com/studio)
-3. **Android device** with USB debugging enabled
-4. **Same WiFi Network** - Your phone and computer must be connected to the same WiFi
-
----
-
-## Quick Start Commands
-
-# Backend (Terminal 1)
-cd backend
-npm run dev
-
-# Frontend (Terminal 2)
-cd frontend/mobile-app
-npx expo run:android
-
-# Utilities (Connect your mobile device using USB to computer, then turn on USB debugging on mobile device)
-ipconfig        # Get your IP address
-adb devices     # Check connected devices
-
----
-
-## Setup Instructions
-
-### 1. Install Dependencies
+### A. Install Dependencies
 
 **Backend:**
 
@@ -47,7 +27,7 @@ npm install
 
 ---
 
-### 2. Prepare Your Android Device
+### B. Prepare Your Android Device
 
 1. **Enable Developer Options:**
    - Settings > About Phone > Tap "Build Number" 7 times
@@ -63,7 +43,7 @@ npm install
 
 ---
 
-### 3. Configure Backend URL
+### C. Configure Backend URL
 
 **IMPORTANT:** You must update the backend URL to match your computer's IP address.
 
@@ -85,7 +65,7 @@ npm install
 
 ---
 
-### 4. Run the Application
+### D. Run the Application
 
 **Step 1: Start Backend Server (Terminal 1)**
 
@@ -111,46 +91,35 @@ This will:
 Once the app is installed, you can use the faster development workflow:
 
 1. **Start backend** (if not running):
-   
    cd backend
    npm run dev
 
 2. **Start Metro bundler**:
-   
    cd frontend/mobile-app
    npx expo start --dev-client
 
 3. **Open the app** on your device
-
 The app will hot-reload automatically when you save code changes!
 
 ---
 
 ## When Your IP Address Changes
-
 If you change WiFi networks or your IP address changes:
-
 1. **Find new IP:**
-   
    ipconfig
 
 2. **Update `frontend/mobile-app/.env`:**
-   
    EXPO_PUBLIC_API_URL=http://NEW_IP_ADDRESS:5000/api
 
 3. **Rebuild the app:**
-   
    cd frontend/mobile-app
    npx expo run:android
 
 ---
 
 ## Troubleshooting
-
 ### Network Error / Can't Connect to Backend
-
 **Problem:** App shows "Network Error" or can't fetch data
-
 **Solution:**
 1. Check both devices are on the **same WiFi network**
 2. Verify IP address is correct in `.env` file
@@ -160,9 +129,7 @@ If you change WiFi networks or your IP address changes:
 ---
 
 ### Device Not Detected
-
 **Problem:** `adb devices` shows nothing
-
 **Solution:**
 - Check USB cable connection
 - Enable USB debugging on your device
@@ -172,9 +139,7 @@ If you change WiFi networks or your IP address changes:
 ---
 
 ### Build Fails
-
 **Problem:** Build errors or crashes
-
 **Solution:**
 
 cd frontend/mobile-app
@@ -185,9 +150,7 @@ npx expo run:android
 ---
 
 ### Port Already in Use
-
 **Problem:** "Port 8081 is already in use"
-
 **Solution:**
 - Close other Metro bundler instances
 - Or accept using a different port when prompted
