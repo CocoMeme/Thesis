@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, SafeAreaView, Platform, StatusBar, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../styles';
 
 export const WelcomeHeader = ({ 
@@ -11,6 +12,8 @@ export const WelcomeHeader = ({
   onMenuPress,
   isRefreshing = false,
 }) => {
+  const insets = useSafeAreaInsets();
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good Morning';
@@ -27,13 +30,12 @@ export const WelcomeHeader = ({
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <LinearGradient
-        colors={[theme.colors.gradient.start, theme.colors.gradient.end]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.container}
-      >
+    <LinearGradient
+      colors={[theme.colors.gradient.start, theme.colors.gradient.end]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={[styles.container, { paddingTop: theme.spacing.md + insets.top }]}
+    >
         {/* Background Logo */}
         <Image 
           source={require('../../../assets/logo/egourd-high-resolution-logo-white-transparent.png')} 
@@ -68,8 +70,8 @@ export const WelcomeHeader = ({
               style={styles.iconButton}
               onPress={onNotificationPress}
             >
-              <MaterialCommunityIcons 
-                name="bell-outline" 
+              <Ionicons 
+                name="notifications-outline" 
                 size={24} 
                 color="#FFFFFF" 
               />
@@ -79,8 +81,8 @@ export const WelcomeHeader = ({
               style={styles.iconButton}
               onPress={onMenuPress}
             >
-              <MaterialCommunityIcons 
-                name="dots-vertical" 
+              <Ionicons 
+                name="ellipsis-vertical" 
                 size={24} 
                 color="#FFFFFF" 
               />
@@ -97,19 +99,13 @@ export const WelcomeHeader = ({
           />
           <Text style={styles.tagline}>Ready to scan your gourds?</Text>
         </View>
-      </LinearGradient>
-    </SafeAreaView>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    backgroundColor: theme.colors.gradient.start,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) : 0,
-  },
   container: {
     paddingHorizontal: theme.spacing.md,
-    paddingTop: theme.spacing.md,
     paddingBottom: theme.spacing.lg,
     position: 'relative',
     overflow: 'hidden',

@@ -11,7 +11,7 @@ import {
   Text,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { authService } from '../services';
 import { theme } from '../styles';
@@ -289,8 +289,8 @@ export const SignUpScreen = ({ navigation, onAuthSuccess }) => {
               {/* Name Inputs */}
               <View style={styles.nameRow}>
                 <View style={[styles.inputContainer, styles.nameInput]}>
-                  <MaterialCommunityIcons 
-                    name="account-outline" 
+                  <Ionicons 
+                    name="person-outline" 
                     size={20} 
                     color={theme.colors.text.secondary} 
                     style={styles.inputIcon}
@@ -319,8 +319,8 @@ export const SignUpScreen = ({ navigation, onAuthSuccess }) => {
 
               {/* Email Input */}
               <View style={styles.inputContainer}>
-                <MaterialCommunityIcons 
-                  name="email-outline" 
+                <Ionicons 
+                  name="mail-outline" 
                   size={20} 
                   color={theme.colors.text.secondary} 
                   style={styles.inputIcon}
@@ -339,8 +339,8 @@ export const SignUpScreen = ({ navigation, onAuthSuccess }) => {
 
               {/* Password Input */}
               <View style={styles.inputContainer}>
-                <MaterialCommunityIcons 
-                  name="lock-outline" 
+                <Ionicons 
+                  name="lock-closed-outline" 
                   size={20} 
                   color={theme.colors.text.secondary} 
                   style={styles.inputIcon}
@@ -358,7 +358,7 @@ export const SignUpScreen = ({ navigation, onAuthSuccess }) => {
                   onPress={() => setShowPassword(!showPassword)}
                   style={styles.eyeIcon}
                 >
-                  <MaterialCommunityIcons 
+                  <Ionicons 
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'} 
                     size={20} 
                     color={theme.colors.text.secondary} 
@@ -377,8 +377,8 @@ export const SignUpScreen = ({ navigation, onAuthSuccess }) => {
 
               {/* Confirm Password Input */}
               <View style={styles.inputContainer}>
-                <MaterialCommunityIcons 
-                  name="lock-check-outline" 
+                <Ionicons 
+                  name="lock-closed-outline" 
                   size={20} 
                   color={theme.colors.text.secondary} 
                   style={styles.inputIcon}
@@ -396,7 +396,7 @@ export const SignUpScreen = ({ navigation, onAuthSuccess }) => {
                   onPress={() => setShowConfirmPassword(!showConfirmPassword)}
                   style={styles.eyeIcon}
                 >
-                  <MaterialCommunityIcons 
+                  <Ionicons 
                     name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'} 
                     size={20} 
                     color={theme.colors.text.secondary} 
@@ -411,7 +411,7 @@ export const SignUpScreen = ({ navigation, onAuthSuccess }) => {
               >
                 <View style={[styles.checkbox, agreeToTerms && styles.checkboxChecked]}>
                   {agreeToTerms && (
-                    <MaterialCommunityIcons name="check" size={16} color="#FFFFFF" />
+                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
                   )}
                 </View>
                 <Text style={styles.checkboxText}>
@@ -455,8 +455,8 @@ export const SignUpScreen = ({ navigation, onAuthSuccess }) => {
                 disabled={loading}
                 style={[styles.googleButton, loading && styles.buttonDisabled]}
               >
-                <MaterialCommunityIcons 
-                  name="google" 
+                <Ionicons 
+                  name="logo-google" 
                   size={20} 
                   color={theme.colors.primary} 
                   style={styles.googleIcon}

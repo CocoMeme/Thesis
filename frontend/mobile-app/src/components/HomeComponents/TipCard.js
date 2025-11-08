@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../styles';
 
 export const TipCard = ({ tip, onDismiss, onNext }) => {
@@ -50,7 +50,7 @@ export const TipCard = ({ tip, onDismiss, onNext }) => {
               end={{ x: 1, y: 1 }}
               style={styles.iconContainer}
             >
-              <MaterialCommunityIcons name="lightbulb-on" size={20} color="#FFFFFF" />
+              <Ionicons name="bulb-outline" size={20} color="#FFFFFF" />
             </LinearGradient>
             <Text style={styles.title}>Pro Tip</Text>
           </View>
@@ -60,7 +60,7 @@ export const TipCard = ({ tip, onDismiss, onNext }) => {
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               style={styles.closeButton}
             >
-              <MaterialCommunityIcons name="close" size={20} color={theme.colors.text.secondary} />
+              <Ionicons name="close" size={20} color={theme.colors.text.secondary} />
             </TouchableOpacity>
           )}
         </View>
@@ -70,7 +70,7 @@ export const TipCard = ({ tip, onDismiss, onNext }) => {
         {onNext && (
           <TouchableOpacity style={styles.nextButton} onPress={onNext}>
             <Text style={styles.nextButtonText}>Next Tip</Text>
-            <MaterialCommunityIcons name="arrow-right" size={18} color={theme.colors.secondary} />
+            <Ionicons name="arrow-forward" size={18} color={theme.colors.secondary} />
           </TouchableOpacity>
         )}
       </LinearGradient>

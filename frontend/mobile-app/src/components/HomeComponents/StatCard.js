@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../styles';
 
 export const StatCard = ({ 
@@ -47,7 +47,7 @@ export const StatCard = ({
         >
           <View style={styles.headerSection}>
             <View style={styles.iconContainer}>
-              <MaterialCommunityIcons name={icon} size={isExpanded ? 36 : 28} color="#FFFFFF" />
+              <Ionicons name={icon} size={isExpanded ? 36 : 28} color="#FFFFFF" />
             </View>
             <View style={styles.headerText}>
               <Text style={[styles.value, isExpanded && styles.valueExpanded]}>{value}</Text>
@@ -87,8 +87,8 @@ export const StatCard = ({
           {isExpanded && details.length === 0 && (
             <View style={styles.emptyState}>
               <View style={styles.emptyContent}>
-                <MaterialCommunityIcons 
-                  name="information-outline" 
+                <Ionicons 
+                  name="information-circle-outline" 
                   size={40} 
                   color={theme.colors.text.tertiary} 
                 />

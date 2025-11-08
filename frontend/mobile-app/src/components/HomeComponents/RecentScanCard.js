@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../styles';
 
 export const RecentScanCard = ({ imageUri, result, date, onPress }) => {
@@ -10,20 +10,20 @@ export const RecentScanCard = ({ imageUri, result, date, onPress }) => {
       return {
         color: theme.colors.primary,
         gradient: [theme.colors.primary, '#4a8a3f'],
-        icon: 'check-circle',
+        icon: 'checkmark-circle',
       };
     }
     if (result?.toLowerCase().includes('almost')) {
       return {
         color: theme.colors.secondary,
         gradient: [theme.colors.secondary, '#c9c940'],
-        icon: 'clock-alert-outline',
+        icon: 'time-outline',
       };
     }
     return {
       color: theme.colors.info,
       gradient: [theme.colors.info, '#2874a6'],
-      icon: 'information',
+      icon: 'information-circle',
     };
   };
 
@@ -57,14 +57,14 @@ export const RecentScanCard = ({ imageUri, result, date, onPress }) => {
             colors={['#f5f5f5', '#e0e0e0']}
             style={[styles.image, styles.placeholderImage]}
           >
-            <MaterialCommunityIcons name="image-outline" size={32} color={theme.colors.text.secondary} />
+            <Ionicons name="image-outline" size={32} color={theme.colors.text.secondary} />
           </LinearGradient>
         )}
       </View>
       <View style={styles.infoContainer}>
         <Text style={styles.result} numberOfLines={1}>{result || 'Analysis Result'}</Text>
         <View style={styles.dateContainer}>
-          <MaterialCommunityIcons name="clock-outline" size={14} color={theme.colors.text.secondary} />
+          <Ionicons name="time-outline" size={14} color={theme.colors.text.secondary} />
           <Text style={styles.date}>{formatDate(date)}</Text>
         </View>
         <LinearGradient
@@ -73,13 +73,13 @@ export const RecentScanCard = ({ imageUri, result, date, onPress }) => {
           end={{ x: 1, y: 0 }}
           style={styles.statusBadge}
         >
-          <MaterialCommunityIcons name={statusConfig.icon} size={14} color={statusConfig.color} />
+          <Ionicons name={statusConfig.icon} size={14} color={statusConfig.color} />
           <Text style={[styles.statusText, { color: statusConfig.color }]}>
             {result?.split(' ')[0] || 'Completed'}
           </Text>
         </LinearGradient>
       </View>
-      <MaterialCommunityIcons name="chevron-right" size={22} color={theme.colors.text.secondary} />
+      <Ionicons name="chevron-forward" size={22} color={theme.colors.text.secondary} />
     </TouchableOpacity>
   );
 };

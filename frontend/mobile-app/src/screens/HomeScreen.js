@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, Alert, RefreshControl } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, RefreshControl, TouchableOpacity } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { 
   WelcomeHeader, 
   QuickActionCard, 
-  StatsSection,
   RecentScanCard,
   TipCard,
   CustomAlert,
-  FeaturedScanCard,
   NewsCard,
   NewsModal,
 } from '../components';
@@ -15,7 +15,10 @@ import { theme } from '../styles';
 import { getAllNews, getPopupNews, markNewsAsRead } from '../services/newsService';
 import { authService, connectionService } from '../services';
 
+const TAB_BAR_HEIGHT = 70;
+
 export const HomeScreen = ({ navigation, route }) => {
+  const insets = useSafeAreaInsets();
   // Top Banner
   // Mock data - replace with real data from API/storage
   const [userName] = useState('Coco Meme');
@@ -83,12 +86,42 @@ export const HomeScreen = ({ navigation, route }) => {
   const [selectedNews, setSelectedNews] = useState(null);
   const [loadingNews, setLoadingNews] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   
   const tips = [
     'Take photos in good lighting for better analysis results.',
     'Position the gourd within the guide frame for accurate scanning.',
     'Scan gourds regularly to track their ripeness progression.',
     'Clean the camera lens before scanning for clearer images.',
+  ];
+
+  const summaryStats = [
+    { id: 'total', label: 'Total scans', value: stats.totalScans || 0 },
+    { id: 'ready', label: 'Ready', value: stats.readyGourds || 0 },
+    { id: 'pending', label: 'Pending', value: stats.pendingGourds || 0 },
+  ];
+
+  const newsPreview = news.slice(0, showDetails ? 3 : 1);
+
+  const quickTools = [
+    {
+      id: 'history',
+      label: 'History',
+      icon: 'time-outline',
+      action: () => navigation.navigate('History'),
+    },
+    {
+      id: 'news',
+      label: 'News',
+      icon: 'newspaper-outline',
+      action: () => navigation.navigate('News'),
+    },
+    {
+      id: 'profile',
+      label: 'Profile',
+      icon: 'person-outline',
+      action: () => navigation.navigate('Profile'),
+    },
   ];
 
   // Fetch news on component mount
@@ -256,10 +289,22 @@ export const HomeScreen = ({ navigation, route }) => {
     navigation.navigate('History', { filter: type });
   };
 
+  const handleToggleDetails = () => {
+    setShowDetails((prev) => !prev);
+  };
+
+  const scrollContentPadding = useMemo(
+    () => ({ paddingBottom: theme.spacing.xl + insets.bottom + TAB_BAR_HEIGHT }),
+    [insets.bottom]
+  );
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <ScrollView 
         style={styles.scrollView}
+        contentInsetAdjustmentBehavior="never"
+        automaticallyAdjustContentInsets={false}
+        contentContainerStyle={scrollContentPadding}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -279,31 +324,81 @@ export const HomeScreen = ({ navigation, route }) => {
         />
         
         <View style={styles.content}>
-          {/* Featured Scan Card */}
-          <View style={styles.section}>
-            <FeaturedScanCard onPress={() => navigation.navigate('Camera')} />
+          <View style={styles.heroCard}>
+            <View style={styles.heroText}>
+              <Text style={styles.heroTitle}>Ready to scan?</Text>
+              <Text style={styles.heroSubtitle}>Capture a new gourd in seconds.</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.heroButton}
+              onPress={() => navigation.navigate('Camera')}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.heroButtonText}>Open Camera</Text>
+            </TouchableOpacity>
           </View>
 
-          {/* News & Updates Section */}
+          <View style={styles.section}>
+            <View style={styles.toolsCard}>
+              <Text style={styles.toolsHeading}>Quick tools</Text>
+              <View style={styles.toolsRow}>
+                {quickTools.map((tool, index) => (
+                  <TouchableOpacity
+                    key={tool.id}
+                    style={[styles.toolButton, index > 0 && styles.toolButtonSeparator]}
+                    onPress={tool.action}
+                    activeOpacity={0.85}
+                  >
+                    <View style={styles.toolIconWrap}>
+                      <Ionicons name={tool.icon} size={20} color={theme.colors.primary} />
+                    </View>
+                    <Text style={styles.toolLabel}>{tool.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, styles.sectionTitleStandalone]}>Snapshot</Text>
+            <View style={styles.statRow}>
+              {summaryStats.map((item, index) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[styles.statPill, index !== summaryStats.length - 1 && styles.statPillSpacer]}
+                  onPress={() => handleStatsPress(item.id)}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.statValue}>{item.value}</Text>
+                  <Text style={styles.statLabel}>{item.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>News & Updates</Text>
+              <Text style={styles.sectionTitle}>Latest Update</Text>
+              {news.length > 1 && !loadingNews && (
+                <TouchableOpacity onPress={() => news[0] && handleNewsPress(news[0])}>
+                  <Text style={styles.sectionAction}>Open feed</Text>
+                </TouchableOpacity>
+              )}
             </View>
-            
+
             {loadingNews ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="small" color={theme.colors.primary} />
               </View>
             ) : news.length > 0 ? (
-              <>
-                {news.map((newsItem) => (
-                  <NewsCard
-                    key={newsItem._id}
-                    news={newsItem}
-                    onPress={() => handleNewsPress(newsItem)}
-                  />
-                ))}
-              </>
+              newsPreview.map((newsItem) => (
+                <NewsCard
+                  key={newsItem._id}
+                  news={newsItem}
+                  onPress={() => handleNewsPress(newsItem)}
+                  compact
+                />
+              ))
             ) : (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyText}>No updates available</Text>
@@ -311,75 +406,71 @@ export const HomeScreen = ({ navigation, route }) => {
             )}
           </View>
 
-          {/* Stats Section */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Your Progress</Text>
-            <StatsSection
-              totalScans={stats.totalScans}
-              readyGourds={stats.readyGourds}
-              pendingGourds={stats.pendingGourds}
-              onStatsPress={handleStatsPress}
-              recentScans={recentScans}
-            />
-          </View>
+          <TouchableOpacity
+            style={[styles.toggleButton, showDetails && styles.toggleButtonActive]}
+            onPress={handleToggleDetails}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.toggleButtonText}>
+              {showDetails ? 'Show less' : 'Show more'}
+            </Text>
+          </TouchableOpacity>
 
-          {/* Quick Actions */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Quick Actions</Text>
-            <QuickActionCard
-              icon="history"
-              title="Scan History"
-              subtitle="View past scans and results"
-              color={theme.colors.info}
-              gradientColors={[theme.colors.info, '#2874a6']}
-              onPress={() => navigation.navigate('History')}
-            />
-            <QuickActionCard
-              icon="account"
-              title="My Profile"
-              subtitle="Manage account settings"
-              color={theme.colors.secondary}
-              gradientColors={[theme.colors.secondary, '#c9c940']}
-              onPress={() => navigation.navigate('Profile')}
-            />
-          </View>
-
-          {/* Tips */}
-          {showTip && (
-            <View style={styles.section}>
-              <TipCard
-                tip={tips[currentTipIndex]}
-                onDismiss={() => setShowTip(false)}
-                onNext={handleNextTip}
-              />
-            </View>
-          )}
-
-          {/* Recent Scans */}
-          {recentScans.length > 0 && (
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Recent Scans</Text>
-                <Text 
-                  style={styles.viewAllButton}
+          {showDetails && (
+            <>
+              <View style={styles.collapsibleSection}>
+                <Text style={[styles.sectionTitle, styles.sectionTitleStandalone]}>Quick Actions</Text>
+                <QuickActionCard
+                  icon="time-outline"
+                  title="Scan History"
+                  subtitle="View past scans and results"
+                  color={theme.colors.info}
+                  gradientColors={[theme.colors.info, '#2874a6']}
                   onPress={() => navigation.navigate('History')}
-                >
-                  View All
-                </Text>
-              </View>
-              {recentScans.map((scan) => (
-                <RecentScanCard
-                  key={scan.id}
-                  imageUri={scan.imageUri}
-                  result={scan.result}
-                  date={scan.date}
-                  onPress={() => {
-                    // Navigate to scan details
-                    // navigation.navigate('ScanDetails', { scanId: scan.id });
-                  }}
                 />
-              ))}
-            </View>
+                <QuickActionCard
+                  icon="person-outline"
+                  title="My Profile"
+                  subtitle="Manage account settings"
+                  color={theme.colors.secondary}
+                  gradientColors={[theme.colors.secondary, '#c9c940']}
+                  onPress={() => navigation.navigate('Profile')}
+                />
+              </View>
+
+              {showTip && (
+                <View style={styles.collapsibleSection}>
+                  <TipCard
+                    tip={tips[currentTipIndex]}
+                    onDismiss={() => setShowTip(false)}
+                    onNext={handleNextTip}
+                  />
+                </View>
+              )}
+
+              {recentScans.length > 0 && (
+                <View style={styles.collapsibleSection}>
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Recent Scans</Text>
+                    <Text
+                      style={styles.sectionAction}
+                      onPress={() => navigation.navigate('History')}
+                    >
+                      View all
+                    </Text>
+                  </View>
+                  {recentScans.map((scan) => (
+                    <RecentScanCard
+                      key={scan.id}
+                      imageUri={scan.imageUri}
+                      result={scan.result}
+                      date={scan.date}
+                      onPress={() => {}}
+                    />
+                  ))}
+                </View>
+              )}
+            </>
           )}
         </View>
       </ScrollView>
@@ -414,12 +505,50 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: theme.spacing.sm,
-    paddingBottom: theme.spacing.lg,
-    paddingTop: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.xl,
+    paddingTop: theme.spacing.md,
   },
   section: {
+    marginBottom: theme.spacing.xl,
+  },
+  heroCard: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.large,
+    padding: theme.spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.background.secondary,
+  },
+  heroText: {
+    flex: 1,
+    marginRight: theme.spacing.md,
+  },
+  heroTitle: {
+    fontSize: 22,
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  heroSubtitle: {
+    fontSize: 13,
+    fontFamily: theme.fonts.medium,
+    color: theme.colors.text.secondary,
+    lineHeight: 18,
+  },
+  heroButton: {
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.medium,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
+  },
+  heroButtonText: {
+    fontSize: 14,
+    fontFamily: theme.fonts.semiBold,
+    color: theme.colors.background.primary,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -428,15 +557,85 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: theme.fonts.bold,
     color: theme.colors.text.primary,
+  },
+  sectionTitleStandalone: {
     marginBottom: theme.spacing.sm,
   },
-  viewAllButton: {
-    fontSize: 14,
+  sectionAction: {
+    fontSize: 13,
     fontFamily: theme.fonts.semiBold,
     color: theme.colors.primary,
+  },
+  toolsCard: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.large,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.background.secondary,
+  },
+  toolsHeading: {
+    fontSize: 14,
+    fontFamily: theme.fonts.semiBold,
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  toolsRow: {
+    flexDirection: 'row',
+  },
+  toolButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+  },
+  toolButtonSeparator: {
+    borderLeftWidth: 1,
+    borderLeftColor: theme.colors.background.secondary,
+  },
+  toolIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: theme.borderRadius.medium,
+    backgroundColor: theme.colors.background.secondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.xs,
+  },
+  toolLabel: {
+    fontSize: 12,
+    fontFamily: theme.fonts.medium,
+    color: theme.colors.text.primary,
+  },
+  statRow: {
+    flexDirection: 'row',
+  },
+  statPill: {
+    flex: 1,
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.borderRadius.medium,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.sm,
+  },
+  statPillSpacer: {
+    marginRight: theme.spacing.sm,
+  },
+  statValue: {
+    fontSize: 20,
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.text.primary,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontFamily: theme.fonts.medium,
+    color: theme.colors.text.secondary,
+    marginTop: 4,
   },
   loadingContainer: {
     padding: theme.spacing.xl,
@@ -452,5 +651,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: theme.fonts.medium,
     color: theme.colors.text.secondary,
+  },
+  toggleButton: {
+    alignSelf: 'center',
+    backgroundColor: theme.colors.background.secondary,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.large,
+    marginBottom: theme.spacing.xl,
+  },
+  toggleButtonActive: {
+    marginBottom: theme.spacing.lg,
+  },
+  toggleButtonText: {
+    fontSize: 13,
+    fontFamily: theme.fonts.semiBold,
+    color: theme.colors.primary,
+  },
+  collapsibleSection: {
+    marginBottom: theme.spacing.lg,
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.borderRadius.large,
+    padding: theme.spacing.md,
   },
 });

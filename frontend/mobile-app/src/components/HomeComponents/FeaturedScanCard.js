@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../styles';
 
 export const FeaturedScanCard = ({ onPress }) => {
@@ -25,7 +25,7 @@ export const FeaturedScanCard = ({ onPress }) => {
             </Text>
           </View>
           <View style={styles.iconContainer}>
-            <MaterialCommunityIcons name="camera" size={40} color="#FFFFFF" />
+            <Ionicons name="camera-outline" size={40} color="#FFFFFF" />
           </View>
         </View>
         

@@ -5,12 +5,12 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
-  SafeAreaView,
   Platform,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../styles';
 
 export const CustomHeader = ({ 
@@ -71,8 +71,8 @@ export const CustomHeader = ({
             style={styles.iconButton}
             onPress={onNotificationPress}
           >
-            <MaterialCommunityIcons 
-              name="bell-outline" 
+            <Ionicons 
+              name="notifications-outline" 
               size={24} 
               color="#FFFFFF" 
             />
@@ -82,8 +82,8 @@ export const CustomHeader = ({
             style={styles.iconButton}
             onPress={onMenuPress}
           >
-            <MaterialCommunityIcons 
-              name="dots-vertical" 
+            <Ionicons 
+              name="ellipsis-vertical" 
               size={24} 
               color="#FFFFFF" 
             />

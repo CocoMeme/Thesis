@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../styles';
 
 export const QuickActionCard = ({ icon, title, subtitle, color, gradientColors, isPrimary, onPress }) => {
@@ -16,13 +16,13 @@ export const QuickActionCard = ({ icon, title, subtitle, color, gradientColors, 
           style={styles.primaryGradient}
         >
           <View style={styles.primaryIconContainer}>
-            <MaterialCommunityIcons name={icon} size={32} color="#FFFFFF" />
+            <Ionicons name={icon} size={32} color="#FFFFFF" />
           </View>
           <View style={styles.textContainer}>
             <Text style={styles.primaryTitle}>{title}</Text>
             <Text style={styles.primarySubtitle}>{subtitle}</Text>
           </View>
-          <MaterialCommunityIcons name="chevron-right" size={24} color="rgba(255, 255, 255, 0.8)" />
+          <Ionicons name="chevron-forward" size={24} color="rgba(255, 255, 255, 0.8)" />
         </LinearGradient>
       </TouchableOpacity>
     );
@@ -38,13 +38,13 @@ export const QuickActionCard = ({ icon, title, subtitle, color, gradientColors, 
           end={{ x: 1, y: 1 }}
           style={styles.iconGradient}
         >
-          <MaterialCommunityIcons name={icon} size={26} color={color} />
+          <Ionicons name={icon} size={26} color={color} />
         </LinearGradient>
         <View style={styles.textContainer}>
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.subtitle}>{subtitle}</Text>
         </View>
-        <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.text.secondary} />
+        <Ionicons name="chevron-forward" size={20} color={theme.colors.text.secondary} />
       </View>
     </TouchableOpacity>
   );

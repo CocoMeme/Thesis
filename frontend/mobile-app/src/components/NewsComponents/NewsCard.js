@@ -6,7 +6,7 @@ import {
   TouchableOpacity, 
   Dimensions 
 } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../styles';
 
@@ -19,16 +19,16 @@ export const NewsCard = ({
 }) => {
   const getCategoryIcon = (category) => {
     const icons = {
-      model_update: 'brain',
-      feature: 'star-circle',
-      bug_fix: 'bug',
-      maintenance: 'hammer-wrench',
-      announcement: 'bullhorn',
-      improvement: 'chart-line',
-      security: 'shield-check',
-      other: 'information'
+      model_update: 'analytics-outline',
+      feature: 'star-outline',
+      bug_fix: 'bug-outline',
+      maintenance: 'construct-outline',
+      announcement: 'megaphone-outline',
+      improvement: 'trending-up-outline',
+      security: 'shield-checkmark-outline',
+      other: 'information-circle-outline'
     };
-    return icons[category] || 'information';
+    return icons[category] || 'information-circle-outline';
   };
 
   const getCategoryColor = (category) => {
@@ -75,7 +75,7 @@ export const NewsCard = ({
           end={{ x: 1, y: 1 }}
           style={styles.compactIconContainer}
         >
-          <MaterialCommunityIcons 
+          <Ionicons 
             name={getCategoryIcon(news.category)}
             size={20}
             color="#FFFFFF"
@@ -96,8 +96,8 @@ export const NewsCard = ({
           <Text style={styles.compactDate}>{formatDate(news.releaseDate)}</Text>
         </View>
         
-        <MaterialCommunityIcons 
-          name="chevron-right"
+        <Ionicons 
+          name="chevron-forward"
           size={20}
           color={theme.colors.text.secondary}
         />
@@ -119,7 +119,7 @@ export const NewsCard = ({
       >
         <View style={styles.cardHeader}>
           <View style={styles.iconContainer}>
-            <MaterialCommunityIcons 
+            <Ionicons 
               name={getCategoryIcon(news.category)}
               size={24}
               color="#FFFFFF"
@@ -133,7 +133,7 @@ export const NewsCard = ({
               </View>
             )}
             {news.display?.isPinned && (
-              <MaterialCommunityIcons 
+              <Ionicons 
                 name="pin"
                 size={18}
                 color="#FFFFFF"
@@ -153,8 +153,8 @@ export const NewsCard = ({
 
         <View style={styles.footer}>
           <View style={styles.metaInfo}>
-            <MaterialCommunityIcons 
-              name="calendar"
+            <Ionicons 
+              name="calendar-outline"
               size={14}
               color="rgba(255,255,255,0.8)"
             />
@@ -164,8 +164,8 @@ export const NewsCard = ({
             
             {news.version?.modelVersion && (
               <>
-                <MaterialCommunityIcons 
-                  name="tag"
+                <Ionicons 
+                  name="pricetag-outline"
                   size={14}
                   color="rgba(255,255,255,0.8)"
                   style={styles.versionIcon}
@@ -178,8 +178,8 @@ export const NewsCard = ({
           </View>
 
           <View style={styles.engagement}>
-            <MaterialCommunityIcons 
-              name="eye"
+            <Ionicons 
+              name="eye-outline"
               size={14}
               color="rgba(255,255,255,0.8)"
             />

@@ -11,7 +11,7 @@ import {
   PanResponder,
   Animated
 } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Markdown from 'react-native-markdown-display';
 import { theme } from '../../styles';
@@ -136,16 +136,16 @@ export const NewsModal = ({
 
   const getCategoryIcon = (category) => {
     const icons = {
-      model_update: 'brain',
-      feature: 'star-circle',
-      bug_fix: 'bug',
-      maintenance: 'hammer-wrench',
-      announcement: 'bullhorn',
-      improvement: 'chart-line',
-      security: 'shield-check',
-      other: 'information'
+      model_update: 'analytics-outline',
+      feature: 'star-outline',
+      bug_fix: 'bug-outline',
+      maintenance: 'construct-outline',
+      announcement: 'megaphone-outline',
+      improvement: 'trending-up-outline',
+      security: 'shield-checkmark-outline',
+      other: 'information-circle-outline'
     };
-    return icons[category] || 'information';
+    return icons[category] || 'information-circle-outline';
   };
 
   const formatDate = (date) => {
@@ -269,7 +269,7 @@ export const NewsModal = ({
             <View {...panResponder.panHandlers}>
               <View style={styles.headerTop}>
                 <View style={styles.iconBadge}>
-                  <MaterialCommunityIcons 
+                  <Ionicons 
                     name={getCategoryIcon(news.category)}
                     size={24}
                     color="#FFFFFF"
@@ -280,7 +280,7 @@ export const NewsModal = ({
                   style={styles.closeButton}
                   onPress={onClose}
                 >
-                  <MaterialCommunityIcons 
+                  <Ionicons 
                     name="close"
                     size={24}
                     color="#FFFFFF"
@@ -292,8 +292,8 @@ export const NewsModal = ({
             
             <View style={styles.headerMeta}>
               <View style={styles.metaItem}>
-                <MaterialCommunityIcons 
-                  name="calendar"
+                <Ionicons 
+                  name="calendar-outline"
                   size={14}
                   color="rgba(255,255,255,0.9)"
                 />
@@ -304,8 +304,8 @@ export const NewsModal = ({
               
               {news.version?.modelVersion && (
                 <View style={styles.metaItem}>
-                  <MaterialCommunityIcons 
-                    name="tag"
+                  <Ionicons 
+                    name="pricetag-outline"
                     size={14}
                     color="rgba(255,255,255,0.9)"
                   />
@@ -317,8 +317,8 @@ export const NewsModal = ({
 
               {news.metadata?.datasetSize && (
                 <View style={styles.metaItem}>
-                  <MaterialCommunityIcons 
-                    name="database"
+                  <Ionicons 
+                    name="server-outline"
                     size={14}
                     color="rgba(255,255,255,0.9)"
                   />
@@ -369,8 +369,8 @@ export const NewsModal = ({
                 <Text style={styles.metadataTitle}>Key Improvements</Text>
                 {news.metadata.improvements.map((improvement, index) => (
                   <View key={index} style={styles.improvementItem}>
-                    <MaterialCommunityIcons 
-                      name="check-circle"
+                    <Ionicons 
+                      name="checkmark-circle"
                       size={18}
                       color={theme.colors.success}
                     />

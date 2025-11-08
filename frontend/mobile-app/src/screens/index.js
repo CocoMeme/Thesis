@@ -2,6 +2,7 @@ export { HomeScreen } from './HomeScreen';
 export { CameraScreen } from './CameraScreen';
 export { ResultsScreen } from './ResultsScreen';
 export { HistoryScreen } from './HistoryScreen';
+export { NewsScreen } from './NewsScreen';
 export { LoginScreen } from './LoginScreen';
 export { SignUpScreen } from './SignUpScreen';
 export { ProfileScreen } from './ProfileScreen';

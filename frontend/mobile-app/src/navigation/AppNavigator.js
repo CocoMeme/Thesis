@@ -1,12 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { NavigationContainer, useFocusEffect } from '@react-navigation/native';
+import { NavigationContainer, useFocusEffect, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, View, Alert } from 'react-native';
 
-import { HomeScreen, CameraScreen, ResultsScreen, HistoryScreen, LoginScreen, SignUpScreen, ProfileScreen } from '../screens';
+import { HomeScreen, CameraScreen, ResultsScreen, HistoryScreen, NewsScreen, LoginScreen, SignUpScreen, ProfileScreen } from '../screens';
+import { theme } from '../styles';
+
+const TAB_BAR_HEIGHT = 70;
+
+const navigationTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: theme.colors.background.primary,
+    card: theme.colors.surface,
+    border: theme.colors.background.secondary,
+  },
+};
 import { authService } from '../services';
 
 const Tab = createBottomTabNavigator();
@@ -21,6 +34,10 @@ const HomeStack = ({ route }) => {
           fontSize: 18,
         },
         headerShown: false,
+        statusBarTranslucent: true,
+        statusBarStyle: 'light',
+        statusBarColor: 'transparent',
+        contentStyle: { backgroundColor: theme.colors.background.primary },
       }}
     >
       <Stack.Screen 
@@ -78,6 +95,25 @@ const HistoryStack = () => {
   );
 };
 
+const NewsStack = () => {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerTitleStyle: {
+          fontFamily: 'Poppins_600SemiBold',
+          fontSize: 18,
+        },
+      }}
+    >
+      <Stack.Screen 
+        name="NewsMain" 
+        component={NewsScreen} 
+        options={{ title: 'News' }}
+      />
+    </Stack.Navigator>
+  );
+};
+
 const ProfileStack = ({ onAuthChange }) => {
   return (
     <Stack.Navigator
@@ -86,6 +122,11 @@ const ProfileStack = ({ onAuthChange }) => {
           fontFamily: 'Poppins_600SemiBold',
           fontSize: 18,
         },
+        headerShown: false,
+        statusBarTranslucent: true,
+        statusBarStyle: 'light',
+        statusBarColor: 'transparent',
+        contentStyle: { backgroundColor: theme.colors.background.secondary },
       }}
     >
       <Stack.Screen 
@@ -116,28 +157,38 @@ const AuthStack = ({ onAuthSuccess }) => {
 const MainTabs = ({ onAuthChange, showWelcome }) => {
   return (
     <Tab.Navigator
+      sceneContainerStyle={{ backgroundColor: theme.colors.background.primary }}
       screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
+        tabBarIcon: ({ focused, color }) => {
+          const iconMap = {
+            Home: { active: 'grid', inactive: 'grid-outline' },
+            News: { active: 'newspaper', inactive: 'newspaper-outline' },
+            Camera: { active: 'camera', inactive: 'camera-outline' },
+            History: { active: 'time', inactive: 'time-outline' },
+            Profile: { active: 'person', inactive: 'person-outline' },
+          };
 
-          if (route.name === 'Home') {
-            iconName = 'view-dashboard';
-          } else if (route.name === 'Camera') {
-            iconName = 'camera';
-          } else if (route.name === 'History') {
-            iconName = 'history';
-          } else if (route.name === 'Profile') {
-            iconName = 'account-box';
-          }
+          const { active, inactive } = iconMap[route.name] || {
+            active: 'ellipse',
+            inactive: 'ellipse-outline',
+          };
 
-          return <MaterialCommunityIcons name={iconName} size={size} color={color} />;
+          const iconName = focused ? active : inactive;
+          const iconSize = focused ? 24 : 20;
+          return <Ionicons name={iconName} size={iconSize} color={color} />;
         },
         tabBarActiveTintColor: '#4CAF50',
-        tabBarInactiveTintColor: 'gray',
-        tabBarLabelStyle: {
-          fontFamily: 'Poppins_500Medium',
-          fontSize: 12,
+        tabBarInactiveTintColor: '#9e9e9e',
+        tabBarShowLabel: false,
+        tabBarStyle: {
+          backgroundColor: theme.colors.surface,
+          borderTopWidth: 1,
+          borderTopColor: theme.colors.background.secondary,
+          height: TAB_BAR_HEIGHT,
+          paddingBottom: 12,
+          paddingTop: 8,
         },
+        tabBarHideOnKeyboard: true,
         headerShown: false,
       })}
     >
@@ -147,6 +198,7 @@ const MainTabs = ({ onAuthChange, showWelcome }) => {
       >
         {(props) => <HomeStack {...props} />}
       </Tab.Screen>
+      <Tab.Screen name="News" component={NewsStack} />
       <Tab.Screen name="Camera" component={CameraStack} />
       <Tab.Screen name="History" component={HistoryStack} />
       <Tab.Screen 
@@ -197,7 +249,7 @@ export const AppNavigator = () => {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={navigationTheme}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {isAuthenticated ? (
           <Stack.Screen 

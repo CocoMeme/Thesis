@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   Alert,
   ScrollView,
@@ -12,12 +11,16 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { authService } from '../services';
 import { theme } from '../styles';
 
+const TAB_BAR_HEIGHT = 70;
+
 export const ProfileScreen = ({ navigation, onAuthChange }) => {
+  const insets = useSafeAreaInsets();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
@@ -130,11 +133,21 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
     }
   };
 
-  const ProfileItem = ({ icon, title, value, onPress, badge, badgeColor }) => (
-    <TouchableOpacity style={styles.profileItem} onPress={onPress} disabled={!onPress}>
+  const ProfileItem = ({ icon, title, value, onPress, badge, badgeColor, isLast = false, description }) => (
+    <TouchableOpacity
+      style={[styles.profileItem, isLast && styles.profileItemLast]}
+      onPress={onPress}
+      disabled={!onPress}
+      activeOpacity={onPress ? 0.8 : 1}
+    >
       <View style={styles.profileItemLeft}>
-        <MaterialCommunityIcons name={icon} size={24} color={theme.colors.primary} />
-        <Text style={styles.profileItemTitle}>{title}</Text>
+        <View style={styles.profileIconWrap}>
+          <Ionicons name={icon} size={20} color={theme.colors.primary} />
+        </View>
+        <View style={styles.profileItemTextGroup}>
+          <Text style={styles.profileItemTitle}>{title}</Text>
+          {description && <Text style={styles.profileItemDescription}>{description}</Text>}
+        </View>
       </View>
       <View style={styles.profileItemRight}>
         {badge && (
@@ -142,9 +155,13 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
             <Text style={styles.badgeText}>{badge}</Text>
           </View>
         )}
-        <Text style={styles.profileItemValue}>{value}</Text>
+        {!!value && (
+          <Text style={styles.profileItemValue} numberOfLines={1}>
+            {value}
+          </Text>
+        )}
         {onPress && (
-          <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.text.secondary} />
+          <Ionicons name="chevron-forward" size={18} color={theme.colors.text.secondary} />
         )}
       </View>
     </TouchableOpacity>
@@ -152,76 +169,232 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
 
   const isVerified = user?.emailVerified || user?.isEmailVerified;
 
+  const profileDetails = [
+    { id: 'firstName', icon: 'person-outline', title: 'First Name', value: user?.firstName || '-' },
+    { id: 'lastName', icon: 'person-outline', title: 'Last Name', value: user?.lastName || '-' },
+    { id: 'email', icon: 'mail-outline', title: 'Email', value: user?.email || '-' },
+  ];
+
+  const quickActions = [
+    {
+      id: 'history',
+      icon: 'time-outline',
+      label: 'Scan History',
+      description: 'Review past scans and notes',
+      action: () => navigation.navigate('History'),
+    },
+    {
+      id: 'news',
+      icon: 'newspaper-outline',
+      label: 'News & Updates',
+      description: 'Stay up to date with releases',
+      action: () => navigation.navigate('News'),
+    },
+    {
+      id: 'support',
+      icon: 'help-circle-outline',
+      label: 'Support',
+      description: 'Need a hand? Get help here',
+      action: () => Alert.alert('Support', 'Support center coming soon.'),
+    },
+  ];
+
+  const preferenceItems = [
+    {
+      id: 'notifications',
+      icon: 'notifications-outline',
+      title: 'Notifications',
+      description: 'Manage push alerts and reminders',
+      badge: 'Soon',
+      badgeColor: theme.colors.warning,
+      action: () => Alert.alert('Notifications', 'Notification preferences are coming soon.'),
+    },
+    {
+      id: 'language',
+      icon: 'language-outline',
+      title: 'Language',
+      value: 'English',
+      description: 'Primary language for the interface',
+      action: () => Alert.alert('Language', 'Additional languages will be available soon.'),
+    },
+    {
+      id: 'appearance',
+      icon: 'contrast-outline',
+      title: 'Appearance',
+      value: 'Light',
+      description: 'Switch between light and dark themes',
+      action: () => Alert.alert('Appearance', 'Theme selection is coming soon.'),
+    },
+  ];
+
+  const aboutItems = [
+    {
+      id: 'version',
+      icon: 'information-circle-outline',
+      title: 'App Version',
+      value: 'v1.0.0',
+    },
+    {
+      id: 'support',
+      icon: 'help-circle-outline',
+      title: 'Help & Support',
+      description: 'Find answers and contact our team',
+      action: () => Alert.alert('Support', 'Support resources will be available here soon.'),
+    },
+    {
+      id: 'model',
+      icon: 'cube-outline',
+      title: 'Model Version',
+      value: 'v1.10.30',
+    },
+    {
+      id: 'privacy',
+      icon: 'document-text-outline',
+      title: 'Privacy Policy',
+      description: 'Understand how we handle your data',
+      action: () => Alert.alert('Privacy Policy', 'We will direct you to the privacy policy soon.'),
+    },
+    {
+      id: 'terms',
+      icon: 'shield-checkmark-outline',
+      title: 'Terms of Service',
+      description: 'Review our latest agreement',
+      action: () => Alert.alert('Terms of Service', 'Terms of service will be accessible here soon.'),
+    },
+  ];
+
+  const settingsSections = [
+    { id: 'preferences', title: 'Preferences', items: preferenceItems },
+    { id: 'about', title: 'About', items: aboutItems },
+  ];
+
+  const tabContentPadding = useMemo(
+    () => [
+      styles.tabContentContainer,
+      { paddingBottom: theme.spacing.xl + insets.bottom + TAB_BAR_HEIGHT },
+    ],
+    [insets.bottom]
+  );
+
   const renderProfileTab = () => (
-    <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Profile Information</Text>
-        <View style={styles.profileItems}>
-          <ProfileItem icon="account" title="First Name" value={user?.firstName || '-'} />
-          <ProfileItem icon="account-outline" title="Last Name" value={user?.lastName || '-'} />
-          <ProfileItem icon="email" title="Email" value={user?.email || '-'} />
-          <ProfileItem
-            icon="shield-check"
-            title="Account Status"
-            value={isVerified ? 'Verified' : 'Unverified'}
-            badge={isVerified ? 'Verified' : 'Not Verified'}
-            badgeColor={isVerified ? theme.colors.success : theme.colors.warning}
-            onPress={!isVerified ? handleVerifyEmail : undefined}
-          />
+    <ScrollView
+      style={styles.tabContent}
+      contentContainerStyle={tabContentPadding}
+      contentInsetAdjustmentBehavior="never"
+      automaticallyAdjustContentInsets={false}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={[styles.sectionCard, styles.statusCard]}>
+        <View style={styles.statusRow}>
+          <View style={styles.statusIconWrap}>
+            <Ionicons
+              name={isVerified ? 'shield-checkmark' : 'shield-outline'}
+              size={22}
+              color={isVerified ? theme.colors.success : theme.colors.warning}
+            />
+          </View>
+          <View style={styles.statusTextGroup}>
+            <Text style={styles.statusTitle}>Account status</Text>
+            <Text style={styles.statusDescription}>
+              {isVerified ? 'Your email is verified and secure.' : 'Verify your email to unlock all features.'}
+            </Text>
+          </View>
+          {!isVerified && (
+            <TouchableOpacity style={styles.statusButton} onPress={handleVerifyEmail}>
+              <Text style={styles.statusButtonText}>Verify now</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <View style={styles.profileItems}>
+
+      <View style={styles.sectionCard}>
+        <Text style={styles.sectionTitle}>Profile information</Text>
+        {profileDetails.map((item, index) => (
           <ProfileItem
-            icon="history"
-            title="Scan History"
-            value="View your scans"
-            onPress={() => navigation.navigate('History')}
+            key={item.id}
+            icon={item.icon}
+            title={item.title}
+            value={item.value}
           />
+        ))}
+        <ProfileItem
+          icon="shield-checkmark-outline"
+          title="Account Security"
+          value={isVerified ? 'Verified' : ''}
+          badge={isVerified ? 'Verified' : 'Needs action'}
+          badgeColor={isVerified ? theme.colors.success : theme.colors.warning}
+          onPress={!isVerified ? handleVerifyEmail : undefined}
+          isLast
+          description={isVerified ? 'Everything looks good.' : 'Tap to verify your email.'}
+        />
+      </View>
+
+      <View style={styles.sectionCard}>
+        <Text style={styles.sectionTitle}>Quick actions</Text>
+        <View style={styles.quickActionsRow}>
+          {quickActions.map((action) => (
+            <TouchableOpacity
+              key={action.id}
+              style={styles.quickAction}
+              onPress={action.action}
+              activeOpacity={0.85}
+            >
+              <View style={styles.quickActionIconWrap}>
+                <Ionicons name={action.icon} size={20} color={theme.colors.primary} />
+              </View>
+              <Text style={styles.quickActionLabel}>{action.label}</Text>
+              <Text style={styles.quickActionDescription}>{action.description}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </View>
     </ScrollView>
   );
 
   const renderSettingsTab = () => (
-    <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>App Settings</Text>
-        <View style={styles.profileItems}>
-          <ProfileItem icon="bell-outline" title="Notifications" value="Manage alerts" />
-          <ProfileItem icon="translate" title="Language" value="English" />
-          <ProfileItem icon="theme-light-dark" title="Theme" value="Light Mode" />
+    <ScrollView
+      style={styles.tabContent}
+      contentContainerStyle={tabContentPadding}
+      contentInsetAdjustmentBehavior="never"
+      automaticallyAdjustContentInsets={false}
+      showsVerticalScrollIndicator={false}
+    >
+      {settingsSections.map((section) => (
+        <View key={section.id} style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>{section.title}</Text>
+          {section.items.map((item, index) => (
+            <ProfileItem
+              key={item.id}
+              icon={item.icon}
+              title={item.title}
+              value={item.value}
+              description={item.description}
+              badge={item.badge}
+              badgeColor={item.badgeColor}
+              onPress={item.action}
+              isLast={index === section.items.length - 1}
+            />
+          ))}
         </View>
-      </View>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>About</Text>
-        <View style={styles.profileItems}>
-          <ProfileItem icon="help-circle" title="Help & Support" value="Get help" />
-          <ProfileItem icon="information" title="About" value="App v1.0.0" />
-          <ProfileItem icon="cube-outline" title="Model Version" value="Model v1.10.30" />
-          <ProfileItem icon="file-document" title="Privacy Policy" value="Read policy" />
-          <ProfileItem icon="shield-check" title="Terms of Service" value="Read terms" />
-        </View>
-      </View>
+      ))}
       <TouchableOpacity
         style={[styles.logoutButton, loading && styles.logoutButtonDisabled]}
         onPress={handleLogout}
         disabled={loading}
       >
-        <MaterialCommunityIcons name="logout" size={20} color="#FFFFFF" style={styles.logoutIcon} />
+        <Ionicons name="log-out-outline" size={20} color="#FFFFFF" style={styles.logoutIcon} />
         <Text style={styles.logoutText}>{loading ? 'Logging out...' : 'Logout'}</Text>
       </TouchableOpacity>
     </ScrollView>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <LinearGradient
         colors={[theme.colors.gradient.start, theme.colors.gradient.end]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.header}
+        style={[styles.header, { paddingTop: theme.spacing.xl + insets.top }]}
       >
         {/* Background Logo */}
         <Image
@@ -245,7 +418,7 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
               <Image source={{ uri: user.profilePicture }} style={styles.avatarImage} />
             ) : (
               <View style={styles.avatarPlaceholder}>
-                <MaterialCommunityIcons name="account" size={40} color="#FFFFFF" />
+                <Ionicons name="person" size={40} color="#FFFFFF" />
               </View>
             )}
           </View>
@@ -262,8 +435,8 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
           style={[styles.tab, activeTab === 'profile' && styles.activeTab]}
           onPress={() => setActiveTab('profile')}
         >
-          <MaterialCommunityIcons
-            name="account"
+          <Ionicons
+            name="person-outline"
             size={20}
             color={activeTab === 'profile' ? theme.colors.primary : theme.colors.text.secondary}
           />
@@ -275,8 +448,8 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
           style={[styles.tab, activeTab === 'settings' && styles.activeTab]}
           onPress={() => setActiveTab('settings')}
         >
-          <MaterialCommunityIcons
-            name="cog"
+          <Ionicons
+            name="settings-outline"
             size={20}
             color={activeTab === 'settings' ? theme.colors.primary : theme.colors.text.secondary}
           />
@@ -297,7 +470,7 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Verify Your Email</Text>
               <TouchableOpacity onPress={() => setVerificationModalVisible(false)}>
-                <MaterialCommunityIcons name="close" size={24} color={theme.colors.text.primary} />
+                <Ionicons name="close" size={24} color={theme.colors.text.primary} />
               </TouchableOpacity>
             </View>
             <Text style={styles.modalDescription}>
@@ -341,8 +514,9 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background.secondary },
-  header: { 
-    paddingVertical: theme.spacing.xl, 
+  header: {
+    paddingBottom: theme.spacing.xl,
+    paddingTop: theme.spacing.xl,
     paddingHorizontal: theme.spacing.lg,
     position: 'relative',
     overflow: 'hidden',
@@ -398,12 +572,72 @@ const styles = StyleSheet.create({
   },
   activeTabText: { color: theme.colors.primary, fontFamily: theme.fonts.semiBold },
   tabContent: { flex: 1 },
+  tabContentContainer: {
+    paddingBottom: theme.spacing.xl,
+  },
   section: { marginBottom: theme.spacing.lg, marginTop: theme.spacing.md },
+  sectionCard: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.large,
+    marginHorizontal: theme.spacing.lg,
+    marginTop: theme.spacing.lg,
+    padding: theme.spacing.lg,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  statusCard: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.large,
+    marginHorizontal: theme.spacing.lg,
+    marginTop: theme.spacing.lg,
+    padding: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(85, 156, 73, 0.15)',
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(85, 156, 73, 0.12)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: theme.spacing.md,
+  },
+  statusTextGroup: { flex: 1 },
+  statusTitle: {
+    fontSize: theme.typography.body.fontSize,
+    fontFamily: theme.fonts.semiBold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  statusDescription: {
+    fontSize: 13,
+    fontFamily: theme.typography.body.fontFamily,
+    color: theme.colors.text.secondary,
+  },
+  statusButton: {
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.medium,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    marginLeft: theme.spacing.md,
+  },
+  statusButtonText: {
+    color: '#FFFFFF',
+    fontFamily: theme.fonts.semiBold,
+    fontSize: 13,
+  },
   sectionTitle: {
     fontSize: theme.typography.h3.fontSize,
     fontFamily: theme.typography.h3.fontFamily,
     color: theme.colors.text.primary,
-    paddingHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.sm,
   },
   profileItems: { backgroundColor: theme.colors.surface },
@@ -412,16 +646,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: 0,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.background.secondary,
   },
+  profileItemLast: {
+    borderBottomWidth: 0,
+  },
   profileItemLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  profileIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(85, 156, 73, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileItemTextGroup: {
+    marginLeft: theme.spacing.md,
+    flex: 1,
+  },
   profileItemTitle: {
     fontSize: theme.typography.body.fontSize,
     fontFamily: theme.typography.body.fontFamily,
     color: theme.colors.text.primary,
-    marginLeft: theme.spacing.md,
+  },
+  profileItemDescription: {
+    fontSize: 13,
+    fontFamily: theme.typography.body.fontFamily,
+    color: theme.colors.text.secondary,
+    marginTop: 2,
   },
   profileItemRight: { flexDirection: 'row', alignItems: 'center' },
   profileItemValue: {
@@ -441,6 +695,40 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.body.fontFamily,
     color: '#FFFFFF',
     fontWeight: '600',
+  },
+  quickActionsRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+    flexWrap: 'wrap',
+  },
+  quickAction: {
+    flex: 1,
+    minWidth: '30%',
+    backgroundColor: theme.colors.background.primary,
+    borderRadius: theme.borderRadius.medium,
+    padding: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(85, 156, 73, 0.1)',
+  },
+  quickActionIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(85, 156, 73, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  quickActionLabel: {
+    fontSize: theme.typography.bodyMedium.fontSize,
+    fontFamily: theme.fonts.semiBold,
+    color: theme.colors.text.primary,
+  },
+  quickActionDescription: {
+    marginTop: theme.spacing.xs,
+    fontSize: 13,
+    fontFamily: theme.typography.body.fontFamily,
+    color: theme.colors.text.secondary,
   },
   logoutButton: {
     backgroundColor: theme.colors.error,

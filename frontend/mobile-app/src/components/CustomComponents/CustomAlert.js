@@ -8,7 +8,7 @@ import {
   Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../styles';
 
 export const CustomAlert = ({
@@ -81,25 +81,25 @@ export const CustomAlert = ({
     switch (type) {
       case 'success':
         return {
-          name: 'check-circle',
+          name: 'checkmark-circle',
           color: theme.colors.primary,
           gradientColors: [theme.colors.primary, '#4a8a3f'],
         };
       case 'error':
         return {
-          name: 'alert-circle',
+          name: 'close-circle',
           color: theme.colors.error,
           gradientColors: ['#e74c3c', '#c0392b'],
         };
       case 'warning':
         return {
-          name: 'alert',
+          name: 'warning',
           color: theme.colors.secondary,
           gradientColors: [theme.colors.secondary, '#c9c940'],
         };
       default:
         return {
-          name: 'information',
+          name: 'information-circle',
           color: theme.colors.info,
           gradientColors: [theme.colors.info, '#2874a6'],
         };
@@ -170,7 +170,7 @@ export const CustomAlert = ({
                 end={{ x: 1, y: 1 }}
                 style={styles.iconCircle}
               >
-                <MaterialCommunityIcons
+                <Ionicons
                   name={iconConfig.name}
                   size={32}
                   color="#FFFFFF"
@@ -185,7 +185,7 @@ export const CustomAlert = ({
               style={styles.closeButton}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <MaterialCommunityIcons
+              <Ionicons
                 name="close"
                 size={24}
                 color={theme.colors.text.secondary}

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, SafeAreaView } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts, Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold } from '@expo-google-fonts/poppins';
 import * as SplashScreenExpo from 'expo-splash-screen';
 import { AppNavigator } from './src/navigation';
@@ -41,14 +42,14 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      <SafeAreaView style={styles.container}>
-        <AppNavigator />
-        <StatusBar style="auto" />
-      </SafeAreaView>
-      
-      {showSplash && (
-        <SplashScreen onFinish={handleSplashFinish} />
-      )}
+      <SafeAreaProvider>
+  <AppNavigator />
+  <StatusBar style="auto" backgroundColor="transparent" translucent />
+
+        {showSplash && (
+          <SplashScreen onFinish={handleSplashFinish} />
+        )}
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }
