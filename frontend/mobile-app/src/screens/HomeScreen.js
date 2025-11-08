@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, Alert, RefreshControl } from 'react-native';
 import { 
   WelcomeHeader, 
   QuickActionCard, 
@@ -13,7 +13,7 @@ import {
 } from '../components';
 import { theme } from '../styles';
 import { getAllNews, getPopupNews, markNewsAsRead } from '../services/newsService';
-import { authService } from '../services';
+import { authService, connectionService } from '../services';
 
 export const HomeScreen = ({ navigation, route }) => {
   // Top Banner
@@ -82,6 +82,7 @@ export const HomeScreen = ({ navigation, route }) => {
   const [currentPopupIndex, setCurrentPopupIndex] = useState(0);
   const [selectedNews, setSelectedNews] = useState(null);
   const [loadingNews, setLoadingNews] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   
   const tips = [
     'Take photos in good lighting for better analysis results.',
@@ -118,8 +119,63 @@ export const HomeScreen = ({ navigation, route }) => {
       }
     } catch (error) {
       console.error('Error fetching news:', error);
+      throw error; // Re-throw to handle in onRefresh
     } finally {
       setLoadingNews(false);
+    }
+  };
+
+  // Pull-to-refresh handler
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      console.log('🔄 Refreshing data and reconnecting to backend...');
+      
+      // Check backend connection first
+      const connectionCheck = await connectionService.checkBackendConnection();
+      
+      if (!connectionCheck.connected) {
+        console.log('⚠️  Backend not connected, attempting to reconnect...');
+        
+        // Try to reconnect with retries
+        const reconnectResult = await connectionService.reconnectToBackend(3, 2000);
+        
+        if (!reconnectResult.success) {
+          throw new Error('Failed to reconnect to backend server');
+        }
+        
+        console.log(`✅ Reconnected after ${reconnectResult.attempts} attempt(s)`);
+      } else {
+        console.log('✅ Backend connection is healthy');
+      }
+      
+      // Reload user data
+      await loadUserData();
+      
+      // Reload news data
+      await fetchNews();
+      
+      console.log('✅ Refresh completed successfully');
+      
+    } catch (error) {
+      console.error('❌ Error refreshing data:', error);
+      
+      Alert.alert(
+        'Connection Error',
+        'Unable to reconnect to the server. Please check your connection and try again.',
+        [
+          { 
+            text: 'Retry', 
+            onPress: () => onRefresh() 
+          },
+          { 
+            text: 'Cancel', 
+            style: 'cancel' 
+          }
+        ]
+      );
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -205,15 +261,29 @@ export const HomeScreen = ({ navigation, route }) => {
       <ScrollView 
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[theme.colors.primary]} // Android
+            tintColor={theme.colors.primary} // iOS
+          />
+        }
       >
         <WelcomeHeader 
           userName={userName} 
           user={user}
           onNotificationPress={handleNotificationPress}
           onMenuPress={handleMenuPress}
+          isRefreshing={refreshing}
         />
         
         <View style={styles.content}>
+          {/* Featured Scan Card */}
+          <View style={styles.section}>
+            <FeaturedScanCard onPress={() => navigation.navigate('Camera')} />
+          </View>
+
           {/* News & Updates Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
@@ -239,11 +309,6 @@ export const HomeScreen = ({ navigation, route }) => {
                 <Text style={styles.emptyText}>No updates available</Text>
               </View>
             )}
-          </View>
-
-          {/* Featured Scan Card */}
-          <View style={styles.section}>
-            <FeaturedScanCard onPress={() => navigation.navigate('Camera')} />
           </View>
 
           {/* Stats Section */}

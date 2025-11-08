@@ -96,6 +96,26 @@ class App {
       }
     });
 
+    // Database health check endpoint
+    this.app.get('/api/health/database', async (req, res) => {
+      try {
+        const dbHealth = await database.healthCheck();
+        res.status(200).json({
+          success: true,
+          message: 'Database connection is healthy',
+          data: dbHealth,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        res.status(503).json({
+          success: false,
+          message: 'Database connection is unhealthy',
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+
     // API documentation endpoint
     this.app.get('/api', (req, res) => {
       res.json({

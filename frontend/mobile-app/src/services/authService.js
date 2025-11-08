@@ -1,9 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { BACKEND_URL } from '../utils/backendUrl';
+import { API_BASE_URL } from '../config/api';
 import { googleAuthService } from './googleAuthService';
 
 // Configuration
-const API_BASE_URL = BACKEND_URL;
 const TOKEN_KEY = 'userToken';
 const USER_KEY = 'user';
 

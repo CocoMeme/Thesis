@@ -64,8 +64,7 @@
     "extra": {
       "eas": {
         "projectId": "79fa9567-ea5a-4e31-a508-d5d97117d4f8"
-      },
-      "apiUrl": "http://192.168.171.93:5000/api"
+      }
     }
   }
 }

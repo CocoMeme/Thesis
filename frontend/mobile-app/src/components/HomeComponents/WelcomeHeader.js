@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, SafeAreaView, Platform, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, SafeAreaView, Platform, StatusBar, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { theme } from '../../styles';
@@ -8,7 +8,8 @@ export const WelcomeHeader = ({
   userName, 
   user,
   onNotificationPress,
-  onMenuPress 
+  onMenuPress,
+  isRefreshing = false,
 }) => {
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -202,5 +203,29 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.85)',
     marginTop: theme.spacing.xs,
     textAlign: 'center',
+  },
+  refreshOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  refreshContainer: {
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  refreshText: {
+    fontSize: 14,
+    fontFamily: theme.fonts.semiBold,
+    color: '#FFFFFF',
+    marginTop: 8,
   },
 });
