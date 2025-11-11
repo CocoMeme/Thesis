@@ -76,8 +76,6 @@ temp/
 # GitHub
 .github/
 
-# ML Models
-*.tflite
-*.h5
-*.pb
+# ML Models - Now included in repo for team access
+# Model files are small enough (<50MB) to commit safely
 !model_metadata.json
