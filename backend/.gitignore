@@ -5,3 +5,18 @@
 .env.development
 *.env
 .firebase-config-reference.env
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Uploads
+uploads/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
