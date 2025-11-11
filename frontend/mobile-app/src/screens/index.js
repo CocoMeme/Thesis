@@ -6,3 +6,6 @@ export { NewsScreen } from './NewsScreen';
 export { LoginScreen } from './LoginScreen';
 export { SignUpScreen } from './SignUpScreen';
 export { ProfileScreen } from './ProfileScreen';
+export { PollinationScreen } from './PollinationScreen';
+export { PlantFormScreen } from './PlantFormScreen';
+export { PlantDetailScreen } from './PlantDetailScreen';

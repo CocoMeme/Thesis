@@ -10,8 +10,12 @@
 node_modules/
 package-lock.json
 
-# Uploads
-uploads/
+# Uploads (temporary storage before Cloudinary upload)
+uploads/*
+!uploads/.gitkeep
+!uploads/pollination/
+uploads/pollination/*
+!uploads/pollination/.gitkeep
 
 # Logs
 logs/

@@ -370,6 +370,135 @@ const validateFileUpload = (req, res, next) => {
 };
 
 /**
+ * Pollination record validation
+ */
+const validatePollination = [
+  body('name')
+    .notEmpty()
+    .withMessage('Plant name is required')
+    .isIn(['ampalaya', 'patola', 'upo', 'kalabasa', 'kundol'])
+    .withMessage('Plant name must be one of: ampalaya, patola, upo, kalabasa, kundol'),
+
+  body('datePlanted')
+    .notEmpty()
+    .withMessage('Date planted is required')
+    .isISO8601()
+    .withMessage('Date planted must be a valid date')
+    .custom((value) => {
+      const plantedDate = new Date(value);
+      const now = new Date();
+      if (plantedDate > now) {
+        throw new Error('Date planted cannot be in the future');
+      }
+      return true;
+    }),
+
+  body('gender')
+    .optional()
+    .isIn(['male', 'female', 'undetermined'])
+    .withMessage('Gender must be one of: male, female, undetermined'),
+
+  body('location.garden')
+    .optional()
+    .isLength({ max: 100 })
+    .withMessage('Garden name cannot exceed 100 characters')
+    .trim(),
+
+  body('location.plot')
+    .optional()
+    .isLength({ max: 50 })
+    .withMessage('Plot name cannot exceed 50 characters')
+    .trim(),
+
+  body('location.coordinates.latitude')
+    .optional()
+    .isFloat({ min: -90, max: 90 })
+    .withMessage('Latitude must be between -90 and 90'),
+
+  body('location.coordinates.longitude')
+    .optional()
+    .isFloat({ min: -180, max: 180 })
+    .withMessage('Longitude must be between -180 and 180'),
+
+  body('notes')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('Notes cannot exceed 500 characters')
+    .trim(),
+
+  handleValidationErrors
+];
+
+/**
+ * Pollination note validation
+ */
+const validateNote = [
+  body('content')
+    .notEmpty()
+    .withMessage('Note content is required')
+    .isLength({ min: 1, max: 500 })
+    .withMessage('Note content must be between 1 and 500 characters')
+    .trim(),
+
+  body('type')
+    .optional()
+    .isIn(['observation', 'care', 'problem', 'milestone'])
+    .withMessage('Note type must be one of: observation, care, problem, milestone'),
+
+  handleValidationErrors
+];
+
+/**
+ * Flowering validation
+ */
+const validateFlowering = [
+  body('gender')
+    .notEmpty()
+    .withMessage('Gender is required')
+    .isIn(['male', 'female'])
+    .withMessage('Gender must be either male or female'),
+
+  body('date')
+    .optional()
+    .isISO8601()
+    .withMessage('Date must be a valid date')
+    .custom((value) => {
+      if (value) {
+        const floweringDate = new Date(value);
+        const now = new Date();
+        if (floweringDate > now) {
+          throw new Error('Flowering date cannot be in the future');
+        }
+      }
+      return true;
+    }),
+
+  handleValidationErrors
+];
+
+/**
+ * Pollination date validation
+ */
+const validatePollinationDate = [
+  body('date')
+    .optional()
+    .isISO8601()
+    .withMessage('Date must be a valid date')
+    .custom((value) => {
+      if (value) {
+        const pollinationDate = new Date(value);
+        const now = new Date();
+        if (pollinationDate > now) {
+          throw new Error('Pollination date cannot be in the future');
+        }
+      }
+      return true;
+    }),
+
+  handleValidationErrors
+];
+
+/**
  * Simple request body validation for required fields
  */
 const validateRequestBody = (requiredFields) => {
@@ -404,6 +533,10 @@ module.exports = {
   validateScanMetadata,
   validateUserFeedback,
   validateGourdData,
+  validatePollination,
+  validateNote,
+  validateFlowering,
+  validatePollinationDate,
   validateObjectId,
   validatePagination,
   validateSearch,

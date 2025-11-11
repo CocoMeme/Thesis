@@ -15,3 +15,11 @@ export {
   StatsSection,
   FeaturedScanCard,
 } from './HomeComponents';
+
+// Pollination Components
+export {
+  PlantCard,
+  PlantForm,
+  ImageCapture,
+  PlantFilter
+} from './PollinationComponents';
