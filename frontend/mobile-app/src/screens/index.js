@@ -9,3 +9,4 @@ export { ProfileScreen } from './ProfileScreen';
 export { PollinationScreen } from './PollinationScreen';
 export { PlantFormScreen } from './PlantFormScreen';
 export { PlantDetailScreen } from './PlantDetailScreen';
+export { default as HowToUseScreen } from './HowToUseScreen';

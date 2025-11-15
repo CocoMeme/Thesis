@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, View, Alert } from 'react-native';
 
-import { HomeScreen, CameraScreen, ResultsScreen, HistoryScreen, NewsScreen, LoginScreen, SignUpScreen, ProfileScreen, PollinationScreen, PlantFormScreen, PlantDetailScreen } from '../screens';
+import { HomeScreen, CameraScreen, ResultsScreen, HistoryScreen, NewsScreen, LoginScreen, SignUpScreen, ProfileScreen, PollinationScreen, PlantFormScreen, PlantDetailScreen, HowToUseScreen } from '../screens';
 import { theme } from '../styles';
 
 const TAB_BAR_HEIGHT = 70;
@@ -48,6 +48,11 @@ const HomeStack = ({ route }) => {
       >
         {(props) => <HomeScreen {...props} />}
       </Stack.Screen>
+      <Stack.Screen 
+        name="HowToUse" 
+        component={HowToUseScreen}
+        options={{ headerShown: false }}
+      />
     </Stack.Navigator>
   );
 };
