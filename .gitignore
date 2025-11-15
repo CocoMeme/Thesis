@@ -29,6 +29,19 @@ frontend/mobile-app/dist/
 frontend/mobile-app/web-build/
 frontend/mobile-app/.expo-shared/
 
+# Android / Gradle
+.gradle/
+**/build/
+**/.gradle/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+gradle-app.setting
+!gradle-wrapper.jar
+local.properties
+
 # OS generated files
 .DS_Store
 .DS_Store?
