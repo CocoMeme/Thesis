@@ -79,8 +79,6 @@ export const HomeScreen = ({ navigation, route }) => {
     },
   ]);
 
-  const [currentTipIndex, setCurrentTipIndex] = useState(0);
-  const [showTip, setShowTip] = useState(true);
   const [alert, setAlert] = useState({ visible: false, type: 'info', title: '', message: '', buttons: [] });
   const [news, setNews] = useState([]);
   const [popupNews, setPopupNews] = useState([]);
@@ -88,22 +86,14 @@ export const HomeScreen = ({ navigation, route }) => {
   const [selectedNews, setSelectedNews] = useState(null);
   const [loadingNews, setLoadingNews] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
   
-  const tips = [
-    'Take photos in good lighting for better analysis results.',
-    'Position the gourd within the guide frame for accurate scanning.',
-    'Scan gourds regularly to track their ripeness progression.',
-    'Clean the camera lens before scanning for clearer images.',
-  ];
-
   const summaryStats = [
     { id: 'total', label: 'Total scans', value: stats.totalScans || 0 },
     { id: 'ready', label: 'Ready', value: stats.readyGourds || 0 },
     { id: 'pending', label: 'Pending', value: stats.pendingGourds || 0 },
   ];
 
-  const newsPreview = news.slice(0, showDetails ? 3 : 1);
+  const newsPreview = news.slice(0, 3);
 
   const quickTools = [
     {
@@ -294,17 +284,9 @@ export const HomeScreen = ({ navigation, route }) => {
     }
   };
 
-  const handleNextTip = () => {
-    setCurrentTipIndex((prev) => (prev + 1) % tips.length);
-  };
-
   const handleStatsPress = (type) => {
     // Navigate to filtered history
     navigation.navigate('History', { filter: type });
-  };
-
-  const handleToggleDetails = () => {
-    setShowDetails((prev) => !prev);
   };
 
   const scrollContentPadding = useMemo(
@@ -422,71 +404,27 @@ export const HomeScreen = ({ navigation, route }) => {
             )}
           </View>
 
-          <TouchableOpacity
-            style={[styles.toggleButton, showDetails && styles.toggleButtonActive]}
-            onPress={handleToggleDetails}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.toggleButtonText}>
-              {showDetails ? 'Show less' : 'Show more'}
-            </Text>
-          </TouchableOpacity>
-
-          {showDetails && (
-            <>
-              <View style={styles.collapsibleSection}>
-                <Text style={[styles.sectionTitle, styles.sectionTitleStandalone]}>Quick Actions</Text>
-                <QuickActionCard
-                  icon="time-outline"
-                  title="Scan History"
-                  subtitle="View past scans and results"
-                  color={theme.colors.info}
-                  gradientColors={[theme.colors.info, '#2874a6']}
+          {recentScans.length > 0 && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Recent Scans</Text>
+                <Text
+                  style={styles.sectionAction}
                   onPress={() => navigation.navigate('History')}
-                />
-                <QuickActionCard
-                  icon="person-outline"
-                  title="My Profile"
-                  subtitle="Manage account settings"
-                  color={theme.colors.secondary}
-                  gradientColors={[theme.colors.secondary, '#c9c940']}
-                  onPress={() => navigation.navigate('Profile')}
-                />
+                >
+                  View all
+                </Text>
               </View>
-
-              {showTip && (
-                <View style={styles.collapsibleSection}>
-                  <TipCard
-                    tip={tips[currentTipIndex]}
-                    onDismiss={() => setShowTip(false)}
-                    onNext={handleNextTip}
-                  />
-                </View>
-              )}
-
-              {recentScans.length > 0 && (
-                <View style={styles.collapsibleSection}>
-                  <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Recent Scans</Text>
-                    <Text
-                      style={styles.sectionAction}
-                      onPress={() => navigation.navigate('History')}
-                    >
-                      View all
-                    </Text>
-                  </View>
-                  {recentScans.map((scan) => (
-                    <RecentScanCard
-                      key={scan.id}
-                      imageUri={scan.imageUri}
-                      result={scan.result}
-                      date={scan.date}
-                      onPress={() => {}}
-                    />
-                  ))}
-                </View>
-              )}
-            </>
+              {recentScans.map((scan) => (
+                <RecentScanCard
+                  key={scan.id}
+                  imageUri={scan.imageUri}
+                  result={scan.result}
+                  date={scan.date}
+                  onPress={() => {}}
+                />
+              ))}
+            </View>
           )}
         </View>
       </ScrollView>
@@ -647,27 +585,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: theme.fonts.medium,
     color: theme.colors.text.secondary,
-  },
-  toggleButton: {
-    alignSelf: 'center',
-    backgroundColor: theme.colors.background.secondary,
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.lg,
-    borderRadius: theme.borderRadius.large,
-    marginBottom: theme.spacing.xl,
-  },
-  toggleButtonActive: {
-    marginBottom: theme.spacing.lg,
-  },
-  toggleButtonText: {
-    fontSize: 13,
-    fontFamily: theme.fonts.semiBold,
-    color: theme.colors.primary,
-  },
-  collapsibleSection: {
-    marginBottom: theme.spacing.lg,
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.borderRadius.large,
-    padding: theme.spacing.md,
   },
 });
