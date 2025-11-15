@@ -138,7 +138,7 @@ const PollinationStack = () => {
   );
 };
 
-const HistoryStack = () => {
+const CommunityStack = () => {
   return (
     <Stack.Navigator
       screenOptions={{
@@ -146,31 +146,25 @@ const HistoryStack = () => {
           fontFamily: 'Poppins_600SemiBold',
           fontSize: 18,
         },
+        headerShown: false,
+        statusBarTranslucent: false,
+        contentStyle: { backgroundColor: theme.colors.background.primary },
       }}
     >
       <Stack.Screen 
-        name="HistoryMain" 
-        component={HistoryScreen} 
-        options={{ title: 'History' }}
+        name="CommunityMain" 
+        component={CommunityScreen} 
+        options={{ title: 'Community' }}
       />
-    </Stack.Navigator>
-  );
-};
-
-const NewsStack = () => {
-  return (
-    <Stack.Navigator
-      screenOptions={{
-        headerTitleStyle: {
-          fontFamily: 'Poppins_600SemiBold',
-          fontSize: 18,
-        },
-      }}
-    >
       <Stack.Screen 
-        name="NewsMain" 
-        component={NewsScreen} 
-        options={{ title: 'News' }}
+        name="CreatePost" 
+        component={CreatePostScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="PostDetail" 
+        component={PostDetailScreen}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );
@@ -224,10 +218,9 @@ const MainTabs = ({ onAuthChange, showWelcome }) => {
         tabBarIcon: ({ focused, color }) => {
           const iconMap = {
             Home: { active: 'grid', inactive: 'grid-outline' },
-            News: { active: 'newspaper', inactive: 'newspaper-outline' },
+            Community: { active: 'people', inactive: 'people-outline' },
             Camera: { active: 'camera', inactive: 'camera-outline' },
             Pollination: { active: 'leaf', inactive: 'leaf-outline' },
-            History: { active: 'time', inactive: 'time-outline' },
             Profile: { active: 'person', inactive: 'person-outline' },
           };
 
@@ -261,10 +254,9 @@ const MainTabs = ({ onAuthChange, showWelcome }) => {
       >
         {(props) => <HomeStack {...props} />}
       </Tab.Screen>
-      <Tab.Screen name="News" component={NewsStack} />
+      <Tab.Screen name="Community" component={CommunityStack} />
       <Tab.Screen name="Camera" component={CameraStack} />
       <Tab.Screen name="Pollination" component={PollinationStack} />
-      <Tab.Screen name="History" component={HistoryStack} />
       <Tab.Screen 
         name="Profile"
       >

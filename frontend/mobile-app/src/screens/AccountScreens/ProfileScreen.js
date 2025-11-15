@@ -16,6 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { authService } from '../../services';
 import { theme } from '../../styles';
+import { HistoryScreen } from '../HistoryScreens/HistoryScreen';
 
 const TAB_BAR_HEIGHT = 70;
 
@@ -445,6 +446,19 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
+          style={[styles.tab, activeTab === 'history' && styles.activeTab]}
+          onPress={() => setActiveTab('history')}
+        >
+          <Ionicons
+            name="time-outline"
+            size={20}
+            color={activeTab === 'history' ? theme.colors.primary : theme.colors.text.secondary}
+          />
+          <Text style={[styles.tabText, activeTab === 'history' && styles.activeTabText]}>
+            History
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'settings' && styles.activeTab]}
           onPress={() => setActiveTab('settings')}
         >
@@ -458,7 +472,9 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
           </Text>
         </TouchableOpacity>
       </View>
-      {activeTab === 'profile' ? renderProfileTab() : renderSettingsTab()}
+      {activeTab === 'profile' && renderProfileTab()}
+      {activeTab === 'history' && <HistoryScreen />}
+      {activeTab === 'settings' && renderSettingsTab()}
       <Modal
         visible={verificationModalVisible}
         transparent
