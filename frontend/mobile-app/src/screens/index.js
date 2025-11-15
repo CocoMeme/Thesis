@@ -10,3 +10,7 @@ export { PollinationScreen } from './PollinationScreen';
 export { PlantFormScreen } from './PlantFormScreen';
 export { PlantDetailScreen } from './PlantDetailScreen';
 export { default as HowToUseScreen } from './HowToUseScreen';
+export { default as EducationalScreen } from './EducationalScreen';
+export { default as CommunityScreen } from './CommunityScreen';
+export { default as CreatePostScreen } from './CreatePostScreen';
+export { default as PostDetailScreen } from './PostDetailScreen';

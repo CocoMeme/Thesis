@@ -142,6 +142,7 @@ class App {
     this.app.use('/api/verification', require('./routes/verification'));
     this.app.use('/api/news', require('./routes/news'));
     this.app.use('/api/pollination', require('./routes/pollination'));
+    this.app.use('/api/forum', require('./routes/forum'));
     // TODO: Add these when other route modules are created
     // this.app.use('/api/users', require('./routes/users'));
     // this.app.use('/api/scans', require('./routes/scans'));
