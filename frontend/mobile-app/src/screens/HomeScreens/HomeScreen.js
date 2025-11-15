@@ -119,12 +119,6 @@ export const HomeScreen = ({ navigation, route }) => {
       action: () => navigation.navigate('Educational'),
     },
     {
-      id: 'howto',
-      label: 'How to Use',
-      icon: 'help-circle-outline',
-      action: () => navigation.navigate('HowToUse'),
-    },
-    {
       id: 'news',
       label: 'News',
       icon: 'newspaper-outline',
@@ -135,6 +129,12 @@ export const HomeScreen = ({ navigation, route }) => {
       label: 'Profile',
       icon: 'person-outline',
       action: () => navigation.navigate('Profile'),
+    },
+    {
+      id: 'howto',
+      label: 'How to Use',
+      icon: 'help-circle-outline',
+      action: () => navigation.navigate('HowToUse'),
     },
   ];
 
@@ -353,24 +353,26 @@ export const HomeScreen = ({ navigation, route }) => {
           </View>
 
           <View style={styles.section}>
-            <View style={styles.toolsCard}>
-              <Text style={styles.toolsHeading}>Quick tools</Text>
-              <View style={styles.toolsRow}>
-                {quickTools.map((tool, index) => (
-                  <TouchableOpacity
-                    key={tool.id}
-                    style={[styles.toolButton, index > 0 && styles.toolButtonSeparator]}
-                    onPress={tool.action}
-                    activeOpacity={0.85}
-                  >
-                    <View style={styles.toolIconWrap}>
-                      <Ionicons name={tool.icon} size={20} color={theme.colors.primary} />
-                    </View>
-                    <Text style={styles.toolLabel}>{tool.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
+            <Text style={[styles.sectionTitle, styles.sectionTitleStandalone]}>Quick tools</Text>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.toolsScrollContent}
+            >
+              {quickTools.map((tool) => (
+                <TouchableOpacity
+                  key={tool.id}
+                  style={styles.toolButton}
+                  onPress={tool.action}
+                  activeOpacity={0.85}
+                >
+                  <View style={styles.toolIconWrap}>
+                    <Ionicons name={tool.icon} size={20} color={theme.colors.primary} />
+                  </View>
+                  <Text style={styles.toolLabel}>{tool.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
 
           <View style={styles.section}>
@@ -583,35 +585,15 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.semiBold,
     color: theme.colors.primary,
   },
-  toolsCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.large,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.background.secondary,
-  },
-  toolsHeading: {
-    fontSize: 14,
-    fontFamily: theme.fonts.semiBold,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.sm,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  toolsRow: {
-    flexDirection: 'row',
+  toolsScrollContent: {
+    paddingRight: theme.spacing.md,
   },
   toolButton: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: theme.spacing.sm,
     paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-  },
-  toolButtonSeparator: {
-    borderLeftWidth: 1,
-    borderLeftColor: theme.colors.background.secondary,
+    minWidth: 70,
   },
   toolIconWrap: {
     width: 44,
