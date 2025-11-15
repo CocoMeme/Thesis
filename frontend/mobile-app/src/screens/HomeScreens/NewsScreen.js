@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, FlatList, RefreshControl, View, Text, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet, FlatList, RefreshControl, View, Text, ActivityIndicator, TouchableOpacity, StatusBar } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../styles';
 import { NewsCard, NewsModal } from '../../components';
 import { getAllNews, markNewsAsRead } from '../../services/newsService';
 
-export const NewsScreen = () => {
+export const NewsScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const [newsItems, setNewsItems] = useState([]);
   const [selectedNews, setSelectedNews] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,7 +73,19 @@ export const NewsScreen = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
+      <StatusBar 
+        barStyle="dark-content" 
+        backgroundColor="transparent" 
+        translucent={true} 
+      />
+      <View style={[styles.headerRow, { paddingTop: theme.spacing.md + insets.top }]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={theme.colors.primary} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>News & Updates</Text>
+        <View style={styles.backButton} />
+      </View>
       <FlatList
         data={newsItems}
         keyExtractor={(item, index) => item._id || String(index)}
@@ -88,14 +102,6 @@ export const NewsScreen = () => {
           styles.listContent,
           newsItems.length === 0 && styles.emptyListContent,
         ]}
-        ListHeaderComponent={() => (
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>News & Updates</Text>
-            <Text style={styles.headerSubtitle}>
-              Stay in the loop with product improvements and announcements.
-            </Text>
-          </View>
-        )}
         ListEmptyComponent={() => (
           <View style={styles.emptyState}>
             <Text style={styles.emptyTitle}>No news yet</Text>
@@ -121,6 +127,27 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background.primary,
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.background.secondary,
+    backgroundColor: theme.colors.surface,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.text.primary,
+  },
   loadingContainer: {
     flex: 1,
     alignItems: 'center',
@@ -141,20 +168,6 @@ const styles = StyleSheet.create({
   emptyListContent: {
     flexGrow: 1,
     justifyContent: 'center',
-  },
-  header: {
-    paddingVertical: theme.spacing.lg,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontFamily: theme.fonts.bold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    fontFamily: theme.fonts.regular,
-    color: theme.colors.text.secondary,
   },
   emptyState: {
     alignItems: 'center',

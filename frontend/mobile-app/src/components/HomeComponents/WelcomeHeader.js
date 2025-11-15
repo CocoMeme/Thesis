@@ -8,6 +8,7 @@ import { theme } from '../../styles';
 export const WelcomeHeader = ({ 
   userName, 
   user,
+  navigation,
   onNotificationPress,
   onMenuPress,
   isRefreshing = false,
@@ -68,7 +69,13 @@ export const WelcomeHeader = ({
           <View style={styles.rightSection}>
             <TouchableOpacity 
               style={styles.iconButton}
-              onPress={onNotificationPress}
+              onPress={() => {
+                if (navigation) {
+                  navigation.navigate('NewsMain');
+                } else if (onNotificationPress) {
+                  onNotificationPress();
+                }
+              }}
             >
               <Ionicons 
                 name="notifications-outline" 

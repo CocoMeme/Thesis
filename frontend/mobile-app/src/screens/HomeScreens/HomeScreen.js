@@ -314,6 +314,7 @@ export const HomeScreen = ({ navigation, route }) => {
         <WelcomeHeader 
           userName={userName} 
           user={user}
+          navigation={navigation}
           onNotificationPress={handleNotificationPress}
           onMenuPress={handleMenuPress}
           isRefreshing={refreshing}

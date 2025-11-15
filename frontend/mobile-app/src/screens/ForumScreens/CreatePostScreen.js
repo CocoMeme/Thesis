@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
-  SafeAreaView, 
   View, 
   Text, 
   StyleSheet, 
@@ -10,20 +9,64 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert
+  Alert,
+  StatusBar,
+  Animated,
+  PanResponder,
+  Dimensions
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../styles';
 import { forumService } from '../../services';
 
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const DRAWER_HEIGHT = SCREEN_HEIGHT * 0.95;
+
 const CreatePostScreen = ({ navigation, route }) => {
+  const insets = useSafeAreaInsets();
   const { onPostCreated } = route.params || {};
+  
+  const translateY = useRef(new Animated.Value(0)).current;
+  const lastGestureDy = useRef(0);
   
   const [selectedCategory, setSelectedCategory] = useState('discussion');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [tags, setTags] = useState('');
   const [loading, setLoading] = useState(false);
+  const [categoryDropdownVisible, setCategoryDropdownVisible] = useState(false);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        const { dy } = gestureState;
+        return dy > 5; // Only respond to downward swipes
+      },
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dy > 0) {
+          translateY.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 150 || gestureState.vy > 0.5) {
+          // Swipe down to close
+          Animated.timing(translateY, {
+            toValue: DRAWER_HEIGHT,
+            duration: 250,
+            useNativeDriver: true,
+          }).start(() => navigation.goBack());
+        } else {
+          // Reset to original position
+          Animated.spring(translateY, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    })
+  ).current;
 
   const categories = [
     { id: 'tips', label: 'Tips & Tricks', icon: 'bulb-outline', color: theme.colors.success },
@@ -101,14 +144,42 @@ const CreatePostScreen = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <View style={styles.container}>
+      <StatusBar 
+        barStyle="light-content" 
+        backgroundColor="rgba(0,0,0,0.5)" 
+        translucent={true} 
+      />
+      
+      {/* Backdrop */}
+      <TouchableOpacity 
+        style={styles.backdrop}
+        activeOpacity={1}
+        onPress={() => navigation.goBack()}
+      />
+      
+      {/* Drawer */}
+      <Animated.View 
+        style={[
+          styles.drawer,
+          {
+            transform: [{ translateY }],
+          },
+        ]}
+      >
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        {/* Header */}
-        <View style={styles.header}>
+        {/* Drag Handle & Header - Combined draggable area */}
+        <View {...panResponder.panHandlers}>
+          <View style={styles.handleContainer}>
+            <View style={styles.handle} />
+          </View>
+          
+          {/* Header */}
+          <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeButton}>
             <Ionicons name="close" size={28} color={theme.colors.text.primary} />
           </TouchableOpacity>
@@ -119,11 +190,12 @@ const CreatePostScreen = ({ navigation, route }) => {
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator size="small" color={theme.colors.primary} />
+              <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
               <Text style={styles.submitButtonText}>Post</Text>
             )}
           </TouchableOpacity>
+        </View>
         </View>
 
         <ScrollView 
@@ -132,44 +204,70 @@ const CreatePostScreen = ({ navigation, route }) => {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Category Selection */}
+          {/* Category Selection - Dropdown */}
           <View style={styles.section}>
             <Text style={styles.label}>Category *</Text>
             <Text style={styles.hint}>Choose the best category for your post</Text>
-            <View style={styles.categoriesGrid}>
-              {categories.map((category) => (
-                <TouchableOpacity
-                  key={category.id}
-                  style={[
-                    styles.categoryCard,
-                    selectedCategory === category.id && {
-                      borderColor: category.color,
-                      backgroundColor: category.color + '10',
-                    },
-                  ]}
-                  onPress={() => setSelectedCategory(category.id)}
-                  activeOpacity={0.7}
-                >
+            <View style={styles.categoryDropdownWrapper}>
+              <TouchableOpacity 
+                style={styles.categoryDropdown}
+                onPress={() => setCategoryDropdownVisible(!categoryDropdownVisible)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.categoryDropdownContent}>
                   <Ionicons
-                    name={category.icon}
-                    size={28}
-                    color={selectedCategory === category.id ? category.color : theme.colors.text.secondary}
+                    name={categories.find(c => c.id === selectedCategory)?.icon || 'apps-outline'}
+                    size={20}
+                    color={categories.find(c => c.id === selectedCategory)?.color || theme.colors.primary}
                   />
-                  <Text
-                    style={[
-                      styles.categoryLabel,
-                      selectedCategory === category.id && { color: category.color },
-                    ]}
-                  >
-                    {category.label}
+                  <Text style={styles.categoryDropdownText}>
+                    {categories.find(c => c.id === selectedCategory)?.label || 'Select Category'}
                   </Text>
-                  {selectedCategory === category.id && (
-                    <View style={[styles.selectedBadge, { backgroundColor: category.color }]}>
-                      <Ionicons name="checkmark" size={16} color="#fff" />
-                    </View>
-                  )}
-                </TouchableOpacity>
-              ))}
+                </View>
+                <Ionicons 
+                  name={categoryDropdownVisible ? "chevron-up" : "chevron-down"} 
+                  size={20} 
+                  color={theme.colors.text.secondary} 
+                />
+              </TouchableOpacity>
+
+              {/* Category Dropdown List - Absolute positioned */}
+              {categoryDropdownVisible && (
+                <View style={styles.dropdownList}>
+                  {categories.map((category) => (
+                    <TouchableOpacity
+                      key={category.id}
+                      style={[
+                        styles.dropdownListItem,
+                        selectedCategory === category.id && styles.dropdownListItemSelected
+                      ]}
+                      onPress={() => {
+                        setSelectedCategory(category.id);
+                        setCategoryDropdownVisible(false);
+                      }}
+                    >
+                      <View style={styles.dropdownListItemContent}>
+                        <View style={[styles.dropdownListIconContainer, { backgroundColor: category.color + '15' }]}>
+                          <Ionicons
+                            name={category.icon}
+                            size={20}
+                            color={category.color}
+                          />
+                        </View>
+                        <Text style={[
+                          styles.dropdownListItemText,
+                          selectedCategory === category.id && { color: category.color, fontFamily: theme.fonts.bold }
+                        ]}>
+                          {category.label}
+                        </Text>
+                      </View>
+                      {selectedCategory === category.id && (
+                        <Ionicons name="checkmark-circle" size={22} color={category.color} />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
             </View>
           </View>
 
@@ -244,14 +342,43 @@ const CreatePostScreen = ({ navigation, route }) => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+      </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: 'transparent',
+    justifyContent: 'flex-end',
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  drawer: {
+    height: DRAWER_HEIGHT,
     backgroundColor: theme.colors.background.primary,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  handleContainer: {
+    paddingVertical: theme.spacing.xs,
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: theme.colors.text.secondary + '40',
   },
   keyboardView: {
     flex: 1,
@@ -261,35 +388,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.background.secondary,
     backgroundColor: theme.colors.surface,
   },
   closeButton: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: theme.fonts.bold,
     color: theme.colors.text.primary,
   },
   submitButton: {
-    width: 60,
-    height: 44,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing.md,
+    height: 36,
+    borderRadius: theme.borderRadius.medium,
     alignItems: 'center',
     justifyContent: 'center',
+    minWidth: 70,
   },
   submitButtonDisabled: {
     opacity: 0.5,
   },
   submitButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: theme.fonts.bold,
-    color: theme.colors.primary,
+    color: '#FFFFFF',
   },
   scrollView: {
     flex: 1,
@@ -313,40 +443,77 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     marginBottom: theme.spacing.md,
   },
-  categoriesGrid: {
+  categoryDropdown: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -6,
-  },
-  categoryCard: {
-    width: '48%',
-    aspectRatio: 1.2,
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.medium,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: theme.colors.background.secondary,
     padding: theme.spacing.md,
-    margin: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
+    minHeight: 56,
   },
-  categoryLabel: {
-    fontSize: 13,
-    fontFamily: theme.fonts.semiBold,
+  categoryDropdownContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  categoryDropdownText: {
+    fontSize: 15,
+    fontFamily: theme.fonts.medium,
     color: theme.colors.text.primary,
-    marginTop: theme.spacing.xs,
-    textAlign: 'center',
+    marginLeft: theme.spacing.sm,
   },
-  selectedBadge: {
+  categoryDropdownWrapper: {
+    position: 'relative',
+    zIndex: 1000,
+  },
+  dropdownList: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    top: 60,
+    left: 0,
+    right: 0,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.medium,
+    borderWidth: 1,
+    borderColor: theme.colors.background.secondary,
+    overflow: 'hidden',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    zIndex: 1001,
+  },
+  dropdownListItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: theme.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.background.secondary,
+  },
+  dropdownListItemSelected: {
+    backgroundColor: theme.colors.background.secondary,
+  },
+  dropdownListItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  dropdownListIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: theme.spacing.sm,
+  },
+  dropdownListItemText: {
+    fontSize: 15,
+    fontFamily: theme.fonts.medium,
+    color: theme.colors.text.primary,
   },
   titleInput: {
     backgroundColor: theme.colors.surface,

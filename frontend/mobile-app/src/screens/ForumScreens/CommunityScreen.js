@@ -178,17 +178,6 @@ const CommunityScreen = ({ navigation }) => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
         }
       >
-        {/* Welcome Banner */}
-        <View style={styles.welcomeBanner}>
-          <Ionicons name="people" size={40} color={theme.colors.primary} />
-          <View style={styles.welcomeTextContainer}>
-            <Text style={styles.welcomeTitle}>Welcome to the Community!</Text>
-            <Text style={styles.welcomeText}>
-              Connect with fellow gourd growers, share experiences, and learn together.
-            </Text>
-          </View>
-        </View>
-
         {/* Search Bar */}
         <View style={styles.searchContainer}>
           <Ionicons name="search" size={20} color={theme.colors.text.secondary} style={styles.searchIcon} />
@@ -239,9 +228,13 @@ const CommunityScreen = ({ navigation }) => {
             <View style={styles.topicsGrid}>
               {popularTopics.map((topic, index) => (
                 <TouchableOpacity key={index} style={styles.topicCard}>
-                  <Ionicons name="pricetag" size={24} color={theme.colors.primary} />
-                  <Text style={styles.topicName}>#{topic._id}</Text>
-                  <Text style={styles.topicCount}>{topic.count} posts</Text>
+                  <View style={styles.topicIconContainer}>
+                    <Ionicons name="pricetag" size={16} color={theme.colors.primary} />
+                  </View>
+                  <View style={styles.topicInfo}>
+                    <Text style={styles.topicName}>#{topic._id}</Text>
+                    <Text style={styles.topicCount}>{topic.count} posts</Text>
+                  </View>
                 </TouchableOpacity>
               ))}
             </View>
@@ -376,9 +369,7 @@ const CommunityScreen = ({ navigation }) => {
           <Ionicons name="arrow-back" size={24} color={theme.colors.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Community Forum</Text>
-        <TouchableOpacity onPress={handleCreatePost} style={styles.createButton}>
-          <Ionicons name="add-circle" size={24} color={theme.colors.primary} />
-        </TouchableOpacity>
+        <View style={{ width: 36 }} />
       </View>
 
       {renderContent()}
@@ -465,56 +456,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.background.secondary,
     backgroundColor: theme.colors.surface,
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: theme.fonts.bold,
     color: theme.colors.text.primary,
   },
   createButton: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
   },
   content: {
     padding: theme.spacing.lg,
     paddingBottom: 100,
-  },
-  welcomeBanner: {
-    flexDirection: 'row',
-    backgroundColor: theme.colors.primary + '10',
-    borderRadius: theme.borderRadius.large,
-    padding: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.primary + '30',
-  },
-  welcomeTextContainer: {
-    flex: 1,
-    marginLeft: theme.spacing.md,
-  },
-  welcomeTitle: {
-    fontSize: 18,
-    fontFamily: theme.fonts.bold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
-  },
-  welcomeText: {
-    fontSize: 13,
-    fontFamily: theme.fonts.regular,
-    color: theme.colors.text.secondary,
-    lineHeight: 18,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -594,24 +560,37 @@ const styles = StyleSheet.create({
     width: '48%',
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.medium,
-    padding: theme.spacing.md,
+    padding: theme.spacing.sm,
     margin: theme.spacing.xs,
     borderWidth: 1,
     borderColor: theme.colors.background.secondary,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  topicIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: theme.colors.primary + '15',
+    borderWidth: 1,
+    borderColor: theme.colors.primary + '30',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  topicInfo: {
+    flex: 1,
+    marginLeft: theme.spacing.sm,
   },
   topicName: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: theme.fonts.semiBold,
     color: theme.colors.text.primary,
-    marginTop: theme.spacing.sm,
-    textAlign: 'center',
   },
   topicCount: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: theme.fonts.regular,
     color: theme.colors.text.secondary,
-    marginTop: 4,
   },
   postCard: {
     backgroundColor: theme.colors.surface,
