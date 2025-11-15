@@ -13,9 +13,9 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { authService } from '../services';
-import { theme } from '../styles';
-import { CustomAlert } from '../components';
+import { authService } from '../../services';
+import { theme } from '../../styles';
+import { CustomAlert } from '../../components';
 
 export const LoginScreen = ({ navigation, onAuthSuccess }) => {
   const [email, setEmail] = useState('');
@@ -160,7 +160,7 @@ export const LoginScreen = ({ navigation, onAuthSuccess }) => {
             {/* Logo Section */}
             <View style={styles.logoContainer}>
               <Image 
-                source={require('../../assets/logo/egourd-high-resolution-logo-white-transparent.png')} 
+                source={require('../../../assets/logo/egourd-high-resolution-logo-white-transparent.png')} 
                 style={styles.logo}
                 resizeMode="contain"
               />

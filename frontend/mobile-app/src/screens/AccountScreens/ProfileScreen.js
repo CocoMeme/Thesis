@@ -14,8 +14,8 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { authService } from '../services';
-import { theme } from '../styles';
+import { authService } from '../../services';
+import { theme } from '../../styles';
 
 const TAB_BAR_HEIGHT = 70;
 
@@ -398,7 +398,7 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
       >
         {/* Background Logo */}
         <Image
-          source={require('../../assets/logo/egourd-high-resolution-logo-white-transparent.png')}
+          source={require('../../../assets/logo/egourd-high-resolution-logo-white-transparent.png')}
           style={[
             styles.backgroundLogo,
             {

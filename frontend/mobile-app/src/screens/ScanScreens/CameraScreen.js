@@ -3,8 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Ale
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '../styles';
-import { modelService } from '../services/modelService';
+import { theme } from '../../styles';
+import { modelService } from '../../services/modelService';
 
 export const CameraScreen = ({ navigation }) => {
   const [facing, setFacing] = useState('back');

@@ -8,9 +8,9 @@ import {
   Platform 
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { theme } from '../styles';
-import { pollinationService } from '../services';
-import { PlantForm } from '../components';
+import { theme } from '../../styles';
+import { pollinationService } from '../../services';
+import { PlantForm } from '../../components';
 
 export const PlantFormScreen = ({ navigation, route }) => {
   const { plant, mode = 'create', title } = route.params || {};

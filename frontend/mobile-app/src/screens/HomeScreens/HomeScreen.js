@@ -10,10 +10,10 @@ import {
   CustomAlert,
   NewsCard,
   NewsModal,
-} from '../components';
-import { theme } from '../styles';
-import { getAllNews, getPopupNews, markNewsAsRead } from '../services/newsService';
-import { authService, connectionService } from '../services';
+} from '../../components';
+import { theme } from '../../styles';
+import { getAllNews, getPopupNews, markNewsAsRead } from '../../services/newsService';
+import { authService, connectionService } from '../../services';
 
 const TAB_BAR_HEIGHT = 70;
 

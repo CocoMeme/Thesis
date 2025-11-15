@@ -1,16 +1,27 @@
-export { HomeScreen } from './HomeScreen';
-export { CameraScreen } from './CameraScreen';
-export { ResultsScreen } from './ResultsScreen';
-export { HistoryScreen } from './HistoryScreen';
-export { NewsScreen } from './NewsScreen';
-export { LoginScreen } from './LoginScreen';
-export { SignUpScreen } from './SignUpScreen';
-export { ProfileScreen } from './ProfileScreen';
-export { PollinationScreen } from './PollinationScreen';
-export { PlantFormScreen } from './PlantFormScreen';
-export { PlantDetailScreen } from './PlantDetailScreen';
-export { default as HowToUseScreen } from './HowToUseScreen';
-export { default as EducationalScreen } from './EducationalScreen';
-export { default as CommunityScreen } from './CommunityScreen';
-export { default as CreatePostScreen } from './CreatePostScreen';
-export { default as PostDetailScreen } from './PostDetailScreen';
+// Home Screens
+export { HomeScreen } from './HomeScreens/HomeScreen';
+export { NewsScreen } from './HomeScreens/NewsScreen';
+export { default as HowToUseScreen } from './HomeScreens/HowToUseScreen';
+export { default as EducationalScreen } from './HomeScreens/EducationalScreen';
+
+// Scan Screens
+export { CameraScreen } from './ScanScreens/CameraScreen';
+export { ResultsScreen } from './ScanScreens/ResultsScreen';
+
+// History Screens
+export { HistoryScreen } from './HistoryScreens/HistoryScreen';
+
+// Account Screens
+export { LoginScreen } from './AccountScreens/LoginScreen';
+export { SignUpScreen } from './AccountScreens/SignUpScreen';
+export { ProfileScreen } from './AccountScreens/ProfileScreen';
+
+// Pollination Screens
+export { PollinationScreen } from './PolinationScreens/PollinationScreen';
+export { PlantFormScreen } from './PolinationScreens/PlantFormScreen';
+export { PlantDetailScreen } from './PolinationScreens/PlantDetailScreen';
+
+// Forum Screens
+export { default as CommunityScreen } from './ForumScreens/CommunityScreen';
+export { default as CreatePostScreen } from './ForumScreens/CreatePostScreen';
+export { default as PostDetailScreen } from './ForumScreens/PostDetailScreen';

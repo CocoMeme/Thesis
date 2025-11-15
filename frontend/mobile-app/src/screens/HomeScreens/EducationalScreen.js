@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { SafeAreaView, View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '../styles';
+import { theme } from '../../styles';
 
 const EducationalScreen = ({ navigation }) => {
   const [expandedSection, setExpandedSection] = useState(null);

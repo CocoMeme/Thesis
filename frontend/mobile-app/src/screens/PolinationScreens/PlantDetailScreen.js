@@ -12,10 +12,10 @@ import {
   FlatList
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '../styles';
-import { pollinationService } from '../services';
-import { Button, ImageCapture } from '../components';
-import { CustomHeader } from '../components/CustomComponents/CustomHeader';
+import { theme } from '../../styles';
+import { pollinationService } from '../../services';
+import { Button, ImageCapture } from '../../components';
+import { CustomHeader } from '../../components/CustomComponents/CustomHeader';
 
 export const PlantDetailScreen = ({ navigation, route }) => {
   const { plantId, plant: initialPlant } = route.params;

@@ -13,8 +13,8 @@ import {
   Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '../styles';
-import { forumService } from '../services';
+import { theme } from '../../styles';
+import { forumService } from '../../services';
 
 const CreatePostScreen = ({ navigation, route }) => {
   const { onPostCreated } = route.params || {};

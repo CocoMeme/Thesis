@@ -11,10 +11,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { theme } from '../styles';
-import { pollinationService } from '../services';
-import { PlantCard, PlantFilter } from '../components';
-import { CustomHeader } from '../components/CustomComponents/CustomHeader';
+import { theme } from '../../styles';
+import { pollinationService } from '../../services';
+import { PlantCard, PlantFilter } from '../../components';
+import { CustomHeader } from '../../components/CustomComponents/CustomHeader';
 
 export const PollinationScreen = ({ navigation }) => {
   const [plants, setPlants] = useState([]);

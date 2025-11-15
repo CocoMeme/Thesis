@@ -1,7 +1,7 @@
 import React from 'react';
 import { SafeAreaView, View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '../styles';
+import { theme } from '../../styles';
 
 const HowToUseScreen = ({ navigation }) => {
   const steps = [

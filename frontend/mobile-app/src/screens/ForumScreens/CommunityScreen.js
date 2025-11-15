@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView, View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, RefreshControl, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '../styles';
-import { forumService } from '../services';
+import { theme } from '../../styles';
+import { forumService } from '../../services';
 
 const CommunityScreen = ({ navigation }) => {
   const [selectedCategory, setSelectedCategory] = useState('all');

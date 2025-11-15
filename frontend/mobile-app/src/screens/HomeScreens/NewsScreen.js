@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, FlatList, RefreshControl, View, Text, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { theme } from '../styles';
-import { NewsCard, NewsModal } from '../components';
-import { getAllNews, markNewsAsRead } from '../services/newsService';
+import { theme } from '../../styles';
+import { NewsCard, NewsModal } from '../../components';
+import { getAllNews, markNewsAsRead } from '../../services/newsService';
 
 export const NewsScreen = () => {
   const [newsItems, setNewsItems] = useState([]);
