@@ -2,9 +2,11 @@
 const User = require('./User');
 const News = require('./News');
 const Pollination = require('./Pollination');
+const ForumPost = require('./ForumPost');
 
 module.exports = {
   User,
   News,
-  Pollination
+  Pollination,
+  ForumPost,
 };

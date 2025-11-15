@@ -1,0 +1,528 @@
+import React, { useState, useEffect } from 'react';
+import {
+  SafeAreaView,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { theme } from '../styles';
+import { forumService } from '../services';
+
+const PostDetailScreen = ({ navigation, route }) => {
+  const { postId } = route.params;
+  
+  const [post, setPost] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [commentText, setCommentText] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const categories = [
+    { id: 'tips', label: 'Tips & Tricks', color: theme.colors.success },
+    { id: 'questions', label: 'Q&A', color: theme.colors.info },
+    { id: 'showcase', label: 'Showcase', color: theme.colors.warning },
+    { id: 'discussion', label: 'Discussion', color: theme.colors.primary },
+  ];
+
+  useEffect(() => {
+    fetchPost();
+  }, [postId]);
+
+  const fetchPost = async () => {
+    try {
+      setLoading(true);
+      const response = await forumService.getPostById(postId);
+      if (response.success) {
+        setPost(response.data);
+      } else {
+        Alert.alert('Error', 'Failed to load post');
+      }
+    } catch (error) {
+      console.error('Error fetching post:', error);
+      Alert.alert('Error', 'Failed to load post');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLike = async () => {
+    try {
+      const response = await forumService.toggleLike(postId);
+      if (response.success) {
+        setPost(prev => ({
+          ...prev,
+          likeCount: response.data.likes,
+          isLiked: response.data.isLiked,
+        }));
+      }
+    } catch (error) {
+      console.error('Error liking post:', error);
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!commentText.trim()) {
+      Alert.alert('Empty Comment', 'Please write something');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const response = await forumService.addComment(postId, commentText.trim());
+      
+      if (response.success) {
+        setCommentText('');
+        fetchPost(); // Refresh to get updated comments
+      } else {
+        Alert.alert('Error', response.message || 'Failed to add comment');
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      Alert.alert('Error', 'Failed to add comment');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const getCategoryColor = (category) => {
+    return categories.find(c => c.id === category)?.color || theme.colors.primary;
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={theme.colors.primary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Post</Text>
+          <View style={{ width: 40 }} />
+        </View>
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!post) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={theme.colors.primary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Post</Text>
+          <View style={{ width: 40 }} />
+        </View>
+        <View style={styles.centerContainer}>
+          <Ionicons name="alert-circle-outline" size={64} color={theme.colors.error} />
+          <Text style={styles.errorText}>Post not found</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={theme.colors.primary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Post Details</Text>
+          <View style={{ width: 40 }} />
+        </View>
+
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          {/* Post Content */}
+          <View style={styles.postContainer}>
+            {/* Author & Category */}
+            <View style={styles.postHeader}>
+              <View style={styles.authorInfo}>
+                <View style={styles.avatarPlaceholder}>
+                  <Ionicons name="person" size={24} color={theme.colors.text.secondary} />
+                </View>
+                <View style={styles.authorDetails}>
+                  <Text style={styles.authorName}>{post.author?.username || 'Anonymous'}</Text>
+                  <Text style={styles.postTime}>{post.timestamp || post.relativeTime}</Text>
+                </View>
+              </View>
+              <View style={[styles.categoryBadge, { backgroundColor: getCategoryColor(post.category) + '20' }]}>
+                <Text style={[styles.categoryBadgeText, { color: getCategoryColor(post.category) }]}>
+                  {categories.find(c => c.id === post.category)?.label.split(' ')[0]}
+                </Text>
+              </View>
+            </View>
+
+            {/* Title */}
+            <Text style={styles.postTitle}>{post.title}</Text>
+
+            {/* Content */}
+            <Text style={styles.postContent}>{post.content}</Text>
+
+            {/* Tags */}
+            {post.tags && post.tags.length > 0 && (
+              <View style={styles.tagsContainer}>
+                {post.tags.map((tag, index) => (
+                  <View key={index} style={styles.tag}>
+                    <Text style={styles.tagText}>#{tag}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* Stats & Actions */}
+            <View style={styles.statsContainer}>
+              <TouchableOpacity style={styles.statButton} onPress={handleLike}>
+                <Ionicons
+                  name={post.isLiked ? 'heart' : 'heart-outline'}
+                  size={24}
+                  color={post.isLiked ? theme.colors.error : theme.colors.text.secondary}
+                />
+                <Text style={styles.statText}>{post.likeCount || post.likes || 0}</Text>
+              </TouchableOpacity>
+              <View style={styles.statButton}>
+                <Ionicons name="chatbubble-outline" size={24} color={theme.colors.text.secondary} />
+                <Text style={styles.statText}>{post.commentCount || post.comments?.length || 0}</Text>
+              </View>
+              <View style={styles.statButton}>
+                <Ionicons name="eye-outline" size={24} color={theme.colors.text.secondary} />
+                <Text style={styles.statText}>{post.views || 0}</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Comments Section */}
+          <View style={styles.commentsSection}>
+            <Text style={styles.commentsTitle}>
+              Comments ({post.comments?.length || 0})
+            </Text>
+
+            {post.comments && post.comments.length > 0 ? (
+              post.comments.map((comment, index) => (
+                <View key={comment._id || index} style={styles.commentCard}>
+                  <View style={styles.commentHeader}>
+                    <View style={styles.commentAvatar}>
+                      <Ionicons name="person" size={16} color={theme.colors.text.secondary} />
+                    </View>
+                    <View style={styles.commentAuthorInfo}>
+                      <Text style={styles.commentAuthor}>
+                        {comment.user?.username || 'Anonymous'}
+                      </Text>
+                      <Text style={styles.commentTime}>{comment.timestamp}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.commentContent}>{comment.content}</Text>
+                  {comment.likes > 0 && (
+                    <View style={styles.commentLikes}>
+                      <Ionicons name="heart" size={14} color={theme.colors.error} />
+                      <Text style={styles.commentLikesText}>{comment.likes}</Text>
+                    </View>
+                  )}
+                </View>
+              ))
+            ) : (
+              <View style={styles.noComments}>
+                <Ionicons name="chatbubbles-outline" size={48} color={theme.colors.text.secondary} />
+                <Text style={styles.noCommentsText}>No comments yet</Text>
+                <Text style={styles.noCommentsSubtext}>Be the first to comment!</Text>
+              </View>
+            )}
+          </View>
+        </ScrollView>
+
+        {/* Comment Input */}
+        <View style={styles.commentInputContainer}>
+          <TextInput
+            style={styles.commentInput}
+            placeholder="Write a comment..."
+            placeholderTextColor={theme.colors.text.secondary}
+            value={commentText}
+            onChangeText={setCommentText}
+            multiline
+            maxLength={1000}
+          />
+          <TouchableOpacity
+            style={[styles.sendButton, (!commentText.trim() || submitting) && styles.sendButtonDisabled]}
+            onPress={handleAddComment}
+            disabled={!commentText.trim() || submitting}
+          >
+            {submitting ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Ionicons name="send" size={20} color="#fff" />
+            )}
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background.primary,
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.xl,
+  },
+  errorText: {
+    fontSize: 16,
+    fontFamily: theme.fonts.medium,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.md,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.background.secondary,
+    backgroundColor: theme.colors.surface,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.text.primary,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  postContainer: {
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.lg,
+    borderBottomWidth: 8,
+    borderBottomColor: theme.colors.background.secondary,
+  },
+  postHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: theme.spacing.md,
+  },
+  authorInfo: {
+    flexDirection: 'row',
+    flex: 1,
+  },
+  avatarPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: theme.colors.background.secondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: theme.spacing.sm,
+  },
+  authorDetails: {
+    flex: 1,
+  },
+  authorName: {
+    fontSize: 16,
+    fontFamily: theme.fonts.semiBold,
+    color: theme.colors.text.primary,
+  },
+  postTime: {
+    fontSize: 13,
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.text.secondary,
+    marginTop: 2,
+  },
+  categoryBadge: {
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  categoryBadgeText: {
+    fontSize: 11,
+    fontFamily: theme.fonts.bold,
+    textTransform: 'uppercase',
+  },
+  postTitle: {
+    fontSize: 22,
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.md,
+    lineHeight: 30,
+  },
+  postContent: {
+    fontSize: 15,
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.text.secondary,
+    lineHeight: 24,
+    marginBottom: theme.spacing.md,
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: theme.spacing.md,
+  },
+  tag: {
+    backgroundColor: theme.colors.primary + '15',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: theme.spacing.xs,
+    marginBottom: theme.spacing.xs,
+  },
+  tagText: {
+    fontSize: 13,
+    fontFamily: theme.fonts.medium,
+    color: theme.colors.primary,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    paddingTop: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.background.secondary,
+  },
+  statButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: theme.spacing.xl,
+  },
+  statText: {
+    fontSize: 15,
+    fontFamily: theme.fonts.semiBold,
+    color: theme.colors.text.primary,
+    marginLeft: 6,
+  },
+  commentsSection: {
+    padding: theme.spacing.lg,
+  },
+  commentsTitle: {
+    fontSize: 18,
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.md,
+  },
+  commentCard: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.medium,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.background.secondary,
+  },
+  commentHeader: {
+    flexDirection: 'row',
+    marginBottom: theme.spacing.sm,
+  },
+  commentAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: theme.colors.background.secondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: theme.spacing.sm,
+  },
+  commentAuthorInfo: {
+    flex: 1,
+  },
+  commentAuthor: {
+    fontSize: 14,
+    fontFamily: theme.fonts.semiBold,
+    color: theme.colors.text.primary,
+  },
+  commentTime: {
+    fontSize: 12,
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.text.secondary,
+    marginTop: 2,
+  },
+  commentContent: {
+    fontSize: 14,
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.text.secondary,
+    lineHeight: 20,
+  },
+  commentLikes: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: theme.spacing.sm,
+  },
+  commentLikesText: {
+    fontSize: 12,
+    fontFamily: theme.fonts.medium,
+    color: theme.colors.text.secondary,
+    marginLeft: 4,
+  },
+  noComments: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.xxl,
+  },
+  noCommentsText: {
+    fontSize: 16,
+    fontFamily: theme.fonts.semiBold,
+    color: theme.colors.text.primary,
+    marginTop: theme.spacing.md,
+  },
+  noCommentsSubtext: {
+    fontSize: 14,
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.text.secondary,
+    marginTop: 4,
+  },
+  commentInputContainer: {
+    flexDirection: 'row',
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.background.secondary,
+    alignItems: 'flex-end',
+  },
+  commentInput: {
+    flex: 1,
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.borderRadius.medium,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    fontSize: 14,
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.text.primary,
+    maxHeight: 100,
+    marginRight: theme.spacing.sm,
+  },
+  sendButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendButtonDisabled: {
+    opacity: 0.5,
+  },
+});
+
+PostDetailScreen.routeName = 'PostDetail';
+export default PostDetailScreen;

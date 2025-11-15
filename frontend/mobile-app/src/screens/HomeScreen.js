@@ -55,6 +55,8 @@ export const HomeScreen = ({ navigation, route }) => {
       'Menu Options', 
       'What would you like to do?',
       [
+        { text: 'How to Use', onPress: () => navigation.navigate('HowToUse') },
+        { text: 'Educational Resources', onPress: () => navigation.navigate('Educational') },
         { text: 'Settings', onPress: () => console.log('Settings pressed') },
         { text: 'Help', onPress: () => console.log('Help pressed') },
         { text: 'Cancel', style: 'cancel' },
@@ -109,6 +111,18 @@ export const HomeScreen = ({ navigation, route }) => {
       label: 'History',
       icon: 'time-outline',
       action: () => navigation.navigate('History'),
+    },
+    {
+      id: 'educational',
+      label: 'Learn',
+      icon: 'school-outline',
+      action: () => navigation.navigate('Educational'),
+    },
+    {
+      id: 'howto',
+      label: 'How to Use',
+      icon: 'help-circle-outline',
+      action: () => navigation.navigate('HowToUse'),
     },
     {
       id: 'news',
