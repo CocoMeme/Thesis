@@ -60,7 +60,7 @@ export const WelcomeHeader = ({
             </View>
             <View style={styles.nameSection}>
               <Text style={styles.greeting}>{getGreeting()},</Text>
-              <Text style={styles.userName}>{userName || user?.firstName || 'User'}!</Text>
+              <Text style={styles.userName}>{user?.username || user?.firstName || userName || 'User'}!</Text>
             </View>
           </View>
 
