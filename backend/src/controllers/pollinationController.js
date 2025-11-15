@@ -1,0 +1,661 @@
+const { Pollination } = require('../models');
+const cloudinary = require('cloudinary').v2;
+
+// @desc    Get all pollination records for authenticated user
+// @route   GET /api/pollination
+// @access  Private
+const getPollinations = async (req, res) => {
+  try {
+    const { status, name, sort = 'newest' } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Build query
+    const query = { user: req.user.id };
+    
+    if (status) {
+      query.status = status;
+    }
+    
+    if (name) {
+      query.name = name;
+    }
+
+    // Build sort object
+    let sortObj = {};
+    switch (sort) {
+      case 'oldest':
+        sortObj = { datePlanted: 1 };
+        break;
+      case 'name':
+        sortObj = { name: 1, datePlanted: -1 };
+        break;
+      case 'status':
+        sortObj = { status: 1, datePlanted: -1 };
+        break;
+      case 'pollination':
+        sortObj = { 'estimatedDates.pollinationWindow.earliest': 1 };
+        break;
+      default: // newest
+        sortObj = { datePlanted: -1 };
+    }
+
+    const pollinations = await Pollination.find(query)
+      .sort(sortObj)
+      .limit(limit)
+      .skip(skip)
+      .populate('user', 'username email');
+
+    const total = await Pollination.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      data: pollinations,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Get pollinations error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching pollination records',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get single pollination record
+// @route   GET /api/pollination/:id
+// @access  Private
+const getPollination = async (req, res) => {
+  try {
+    const pollination = await Pollination.findOne({
+      _id: req.params.id,
+      user: req.user.id
+    }).populate('user', 'username email');
+
+    if (!pollination) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pollination record not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: pollination
+    });
+  } catch (error) {
+    console.error('Get pollination error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching pollination record',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Create new pollination record
+// @route   POST /api/pollination
+// @access  Private
+const createPollination = async (req, res) => {
+  try {
+    const {
+      name,
+      datePlanted,
+      gender,
+      location,
+      notes
+    } = req.body;
+
+    // Validate required fields
+    if (!name || !datePlanted) {
+      return res.status(400).json({
+        success: false,
+        message: 'Plant name and planting date are required'
+      });
+    }
+
+    // Get display names for the plant
+    const displayNames = Pollination.getDisplayNames();
+    
+    console.log('Creating pollination with:', {
+      name,
+      displayName: displayNames[name],
+      datePlanted,
+      gender: gender || 'undetermined',
+      userId: req.user.id
+    });
+    
+    // Create new pollination record
+    const pollination = new Pollination({
+      name,
+      displayName: displayNames[name],
+      datePlanted: new Date(datePlanted),
+      gender: gender || 'undetermined',
+      user: req.user.id
+    });    // Add initial note if provided
+    if (notes) {
+      pollination.notes.push({
+        content: notes,
+        type: 'observation',
+        date: new Date()
+      });
+    }
+
+    await pollination.save();
+
+    // Populate user data before sending response
+    await pollination.populate('user', 'username email');
+
+    res.status(201).json({
+      success: true,
+      message: 'Pollination record created successfully',
+      data: pollination
+    });
+  } catch (error) {
+    console.error('Create pollination error:', error);
+    res.status(400).json({
+      success: false,
+      message: 'Error creating pollination record',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Update pollination record
+// @route   PUT /api/pollination/:id
+// @access  Private
+const updatePollination = async (req, res) => {
+  try {
+    const pollination = await Pollination.findOne({
+      _id: req.params.id,
+      user: req.user.id
+    });
+
+    if (!pollination) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pollination record not found'
+      });
+    }
+
+    // Update allowed fields
+    const allowedUpdates = [
+      'gender', 'dateFirstFlowering', 'datePollinated', 'status',
+      'location', 'growth', 'careSchedule'
+    ];
+
+    allowedUpdates.forEach(update => {
+      if (req.body[update] !== undefined) {
+        pollination[update] = req.body[update];
+      }
+    });
+
+    await pollination.save();
+    await pollination.populate('user', 'username email');
+
+    res.status(200).json({
+      success: true,
+      message: 'Pollination record updated successfully',
+      data: pollination
+    });
+  } catch (error) {
+    console.error('Update pollination error:', error);
+    res.status(400).json({
+      success: false,
+      message: 'Error updating pollination record',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Delete pollination record
+// @route   DELETE /api/pollination/:id
+// @access  Private
+const deletePollination = async (req, res) => {
+  try {
+    const pollination = await Pollination.findOne({
+      _id: req.params.id,
+      user: req.user.id
+    });
+
+    if (!pollination) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pollination record not found'
+      });
+    }
+
+    // Delete image from cloudinary if it exists
+    if (pollination.image && pollination.image.cloudinaryId) {
+      try {
+        await cloudinary.uploader.destroy(pollination.image.cloudinaryId);
+      } catch (cloudinaryError) {
+        console.error('Error deleting image from cloudinary:', cloudinaryError);
+      }
+    }
+
+    await Pollination.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Pollination record deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete pollination error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting pollination record',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Add image to pollination record
+// @route   POST /api/pollination/:id/images
+// @access  Private
+const addImage = async (req, res) => {
+  try {
+    console.log('📸 Add image request for plant:', req.params.id);
+    console.log('📸 User:', req.user.id);
+    console.log('📸 File:', req.file);
+    console.log('📸 Body:', req.body);
+    
+    const pollination = await Pollination.findOne({
+      _id: req.params.id,
+      user: req.user.id
+    });
+
+    if (!pollination) {
+      console.log('❌ Pollination record not found');
+      return res.status(404).json({
+        success: false,
+        message: 'Pollination record not found'
+      });
+    }
+
+    if (!req.file) {
+      console.log('❌ No image file provided');
+      return res.status(400).json({
+        success: false,
+        message: 'No image file provided'
+      });
+    }
+
+    console.log('📤 Uploading to Cloudinary...');
+    // Upload to cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: 'pollination',
+      transformation: [
+        { width: 800, height: 600, crop: 'limit' },
+        { quality: 'auto:good' }
+      ]
+    });
+
+    console.log('✅ Cloudinary upload successful:', result.public_id);
+
+    // Delete the temporary file after successful upload to Cloudinary
+    const fs = require('fs').promises;
+    try {
+      await fs.unlink(req.file.path);
+      console.log('🗑️ Temporary file deleted:', req.file.path);
+    } catch (unlinkError) {
+      console.error('⚠️ Failed to delete temporary file:', unlinkError);
+      // Don't throw error, image was still uploaded successfully
+    }
+
+    // Add image to pollination record
+    const imageData = {
+      url: result.secure_url,
+      cloudinaryId: result.public_id,
+      caption: req.body.caption || ''
+    };
+
+    await pollination.addImage(imageData);
+
+    console.log('✅ Image added to pollination record');
+
+    res.status(200).json({
+      success: true,
+      message: 'Image added successfully',
+      data: pollination
+    });
+
+  } catch (error) {
+    console.error('❌ Error adding image:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to add image',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Delete image from pollination record
+// @route   DELETE /api/pollination/:id/images/:imageId
+// @access  Private
+const deleteImage = async (req, res) => {
+  try {
+    const pollination = await Pollination.findOne({
+      _id: req.params.id,
+      user: req.user.id
+    });
+
+    if (!pollination) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pollination record not found'
+      });
+    }
+
+    const image = pollination.image;
+    if (!image) {
+      return res.status(404).json({
+        success: false,
+        message: 'Image not found'
+      });
+    }
+
+    // Delete from cloudinary if it exists
+    if (image.cloudinaryId) {
+      try {
+        await cloudinary.uploader.destroy(image.cloudinaryId);
+      } catch (cloudinaryError) {
+        console.error('Error deleting image from cloudinary:', cloudinaryError);
+      }
+    }
+
+    // Remove image from pollination record
+    pollination.image = undefined;
+    await pollination.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Image deleted successfully',
+      data: pollination
+    });
+
+  } catch (error) {
+    console.error('Error deleting image:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete image',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Add note to pollination record
+// @route   POST /api/pollination/:id/notes
+// @access  Private
+const addNote = async (req, res) => {
+  try {
+    const { content, type } = req.body;
+
+    if (!content) {
+      return res.status(400).json({
+        success: false,
+        message: 'Note content is required'
+      });
+    }
+
+    const pollination = await Pollination.findOne({
+      _id: req.params.id,
+      user: req.user.id
+    });
+
+    if (!pollination) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pollination record not found'
+      });
+    }
+
+    await pollination.addNote(content, type);
+
+    res.status(200).json({
+      success: true,
+      message: 'Note added successfully',
+      data: pollination.notes[pollination.notes.length - 1]
+    });
+  } catch (error) {
+    console.error('Add note error:', error);
+    res.status(400).json({
+      success: false,
+      message: 'Error adding note',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Mark flowering
+// @route   POST /api/pollination/:id/flowering
+// @access  Private
+const markFlowering = async (req, res) => {
+  try {
+    const { gender, date } = req.body;
+
+    if (!gender || !['male', 'female'].includes(gender)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid gender (male/female) is required'
+      });
+    }
+
+    const pollination = await Pollination.findOne({
+      _id: req.params.id,
+      user: req.user.id
+    });
+
+    if (!pollination) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pollination record not found'
+      });
+    }
+
+    await pollination.markFlowering(gender, date ? new Date(date) : new Date());
+
+    res.status(200).json({
+      success: true,
+      message: `${gender.charAt(0).toUpperCase() + gender.slice(1)} flowering marked successfully`,
+      data: pollination
+    });
+  } catch (error) {
+    console.error('Mark flowering error:', error);
+    res.status(400).json({
+      success: false,
+      message: 'Error marking flowering',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Mark pollination
+// @route   POST /api/pollination/:id/pollinate
+// @access  Private
+const markPollinated = async (req, res) => {
+  try {
+    const { date } = req.body;
+
+    const pollination = await Pollination.findOne({
+      _id: req.params.id,
+      user: req.user.id
+    });
+
+    if (!pollination) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pollination record not found'
+      });
+    }
+
+    await pollination.markPollinated(date ? new Date(date) : new Date());
+
+    res.status(200).json({
+      success: true,
+      message: 'Pollination marked successfully',
+      data: pollination
+    });
+  } catch (error) {
+    console.error('Mark pollination error:', error);
+    res.status(400).json({
+      success: false,
+      message: 'Error marking pollination',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get plants needing attention
+// @route   GET /api/pollination/attention
+// @access  Private
+const getPlantsNeedingAttention = async (req, res) => {
+  try {
+    const plants = await Pollination.getPlantsNeedingAttention(req.user.id);
+
+    res.status(200).json({
+      success: true,
+      data: plants
+    });
+  } catch (error) {
+    console.error('Get plants needing attention error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching plants needing attention',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get upcoming pollinations
+// @route   GET /api/pollination/upcoming
+// @access  Private
+const getUpcomingPollinations = async (req, res) => {
+  try {
+    const days = parseInt(req.query.days) || 7;
+    const pollinations = await Pollination.getUpcomingPollinations(req.user.id, days);
+
+    res.status(200).json({
+      success: true,
+      data: pollinations
+    });
+  } catch (error) {
+    console.error('Get upcoming pollinations error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching upcoming pollinations',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get plant types and their display names
+// @route   GET /api/pollination/plant-types
+// @access  Public
+const getPlantTypes = async (req, res) => {
+  try {
+    const plantTypes = Pollination.getDisplayNames();
+
+    res.status(200).json({
+      success: true,
+      data: plantTypes
+    });
+  } catch (error) {
+    console.error('Get plant types error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching plant types',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get dashboard statistics
+// @route   GET /api/pollination/dashboard
+// @access  Private
+const getDashboardStats = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Get basic counts
+    const totalPlants = await Pollination.countDocuments({ user: userId });
+    const activePlants = await Pollination.countDocuments({ 
+      user: userId, 
+      status: { $in: ['planted', 'flowering', 'pollinated', 'fruiting'] }
+    });
+    
+    // Get status breakdown
+    const statusCounts = await Pollination.aggregate([
+      { $match: { user: userId } },
+      { $group: { _id: '$status', count: { $sum: 1 } } }
+    ]);
+
+    // Get plant type breakdown
+    const plantTypeCounts = await Pollination.aggregate([
+      { $match: { user: userId } },
+      { $group: { _id: '$name', count: { $sum: 1 } } }
+    ]);
+
+    // Get plants needing attention
+    const needsAttention = await Pollination.getPlantsNeedingAttention(userId);
+
+    // Get recent activity (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const recentActivity = await Pollination.find({
+      user: userId,
+      $or: [
+        { datePollinated: { $gte: sevenDaysAgo } },
+        { dateFirstFlowering: { $gte: sevenDaysAgo } },
+        { updatedAt: { $gte: sevenDaysAgo } }
+      ]
+    }).sort({ updatedAt: -1 }).limit(10);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        counts: {
+          total: totalPlants,
+          active: activePlants,
+          needsAttention: needsAttention.length
+        },
+        statusBreakdown: statusCounts,
+        plantTypeBreakdown: plantTypeCounts,
+        needsAttention: needsAttention.slice(0, 5), // Limit to 5 for dashboard
+        recentActivity
+      }
+    });
+  } catch (error) {
+    console.error('Get dashboard stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching dashboard statistics',
+      error: error.message
+    });
+  }
+};
+
+module.exports = {
+  getPollinations,
+  getPollination,
+  createPollination,
+  updatePollination,
+  deletePollination,
+  addImage,
+  deleteImage,
+  addNote,
+  markFlowering,
+  markPollinated,
+  getPlantsNeedingAttention,
+  getUpcomingPollinations,
+  getPlantTypes,
+  getDashboardStats
+};

@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, View, Alert } from 'react-native';
 
-import { HomeScreen, CameraScreen, ResultsScreen, HistoryScreen, NewsScreen, LoginScreen, SignUpScreen, ProfileScreen } from '../screens';
+import { HomeScreen, CameraScreen, ResultsScreen, HistoryScreen, NewsScreen, LoginScreen, SignUpScreen, ProfileScreen, PollinationScreen, PlantFormScreen, PlantDetailScreen, HowToUseScreen, EducationalScreen, CommunityScreen, CreatePostScreen, PostDetailScreen } from '../screens';
 import { theme } from '../styles';
 
 const TAB_BAR_HEIGHT = 70;
@@ -48,6 +48,31 @@ const HomeStack = ({ route }) => {
       >
         {(props) => <HomeScreen {...props} />}
       </Stack.Screen>
+      <Stack.Screen 
+        name="HowToUse" 
+        component={HowToUseScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="Educational" 
+        component={EducationalScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="Community" 
+        component={CommunityScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="CreatePost" 
+        component={CreatePostScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="PostDetail" 
+        component={PostDetailScreen}
+        options={{ headerShown: false }}
+      />
     </Stack.Navigator>
   );
 };
@@ -71,6 +96,43 @@ const CameraStack = () => {
         name="Results" 
         component={ResultsScreen} 
         options={{ title: 'Scan Results' }}
+      />
+    </Stack.Navigator>
+  );
+};
+
+const PollinationStack = () => {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerTitleStyle: {
+          fontFamily: 'Poppins_600SemiBold',
+          fontSize: 18,
+        },
+        headerShown: false,
+      }}
+    >
+      <Stack.Screen 
+        name="PollinationMain" 
+        component={PollinationScreen} 
+        options={{ title: 'Pollination Management' }}
+      />
+      <Stack.Screen 
+        name="PlantForm" 
+        component={PlantFormScreen} 
+        options={{ 
+          title: 'Plant Form',
+          headerShown: true,
+          presentation: 'modal'
+        }}
+      />
+      <Stack.Screen 
+        name="PlantDetail" 
+        component={PlantDetailScreen} 
+        options={{ 
+          title: 'Plant Details',
+          headerShown: false
+        }}
       />
     </Stack.Navigator>
   );
@@ -164,6 +226,7 @@ const MainTabs = ({ onAuthChange, showWelcome }) => {
             Home: { active: 'grid', inactive: 'grid-outline' },
             News: { active: 'newspaper', inactive: 'newspaper-outline' },
             Camera: { active: 'camera', inactive: 'camera-outline' },
+            Pollination: { active: 'leaf', inactive: 'leaf-outline' },
             History: { active: 'time', inactive: 'time-outline' },
             Profile: { active: 'person', inactive: 'person-outline' },
           };
@@ -200,6 +263,7 @@ const MainTabs = ({ onAuthChange, showWelcome }) => {
       </Tab.Screen>
       <Tab.Screen name="News" component={NewsStack} />
       <Tab.Screen name="Camera" component={CameraStack} />
+      <Tab.Screen name="Pollination" component={PollinationStack} />
       <Tab.Screen name="History" component={HistoryStack} />
       <Tab.Screen 
         name="Profile"

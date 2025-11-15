@@ -1,0 +1,767 @@
+import React, { useState, useEffect } from 'react';
+import { SafeAreaView, View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, RefreshControl, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { theme } from '../styles';
+import { forumService } from '../services';
+
+const CommunityScreen = ({ navigation }) => {
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [posts, setPosts] = useState([]);
+  const [popularTopics, setPopularTopics] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(null);
+
+  const categories = [
+    { id: 'all', label: 'All Posts', icon: 'apps-outline' },
+    { id: 'tips', label: 'Tips & Tricks', icon: 'bulb-outline' },
+    { id: 'questions', label: 'Q&A', icon: 'help-circle-outline' },
+    { id: 'showcase', label: 'Showcase', icon: 'image-outline' },
+    { id: 'discussion', label: 'Discussion', icon: 'chatbubbles-outline' },
+  ];
+
+  // Fetch posts from backend
+  const fetchPosts = async () => {
+    try {
+      setError(null);
+      const params = {
+        sortBy: 'recent',
+        limit: 20,
+      };
+
+      if (selectedCategory !== 'all') {
+        params.category = selectedCategory;
+      }
+
+      if (searchQuery.trim()) {
+        params.search = searchQuery.trim();
+      }
+
+      const response = await forumService.getAllPosts(params);
+
+      if (response.success) {
+        console.log('Fetched posts:', response.data?.slice(0, 2)); // Log first 2 posts
+        setPosts(response.data || []);
+      } else {
+        setError(response.message || 'Failed to load posts');
+      }
+    } catch (err) {
+      console.error('Error fetching posts:', err);
+      setError('Unable to connect to server');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Fetch popular topics
+  const fetchPopularTopics = async () => {
+    try {
+      const response = await forumService.getPopularTopics(4);
+      if (response.success) {
+        setPopularTopics(response.data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching topics:', err);
+    }
+  };
+
+  // Initial load
+  useEffect(() => {
+    fetchPosts();
+    fetchPopularTopics();
+  }, [selectedCategory]);
+
+  // Search debounce effect
+  useEffect(() => {
+    const delaySearch = setTimeout(() => {
+      if (searchQuery.trim()) {
+        fetchPosts();
+      } else if (searchQuery === '') {
+        fetchPosts();
+      }
+    }, 500);
+
+    return () => clearTimeout(delaySearch);
+  }, [searchQuery]);
+
+  // Pull to refresh
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchPosts();
+    fetchPopularTopics();
+  };
+
+  // Handle like post
+  const handleLikePost = async (postId) => {
+    try{
+      console.log('Liking post with ID:', postId);
+      if (!postId) {
+        console.error('Post ID is undefined');
+        return;
+      }
+      const response = await forumService.toggleLike(postId);
+      if (response.success) {
+        // Update post in local state - only update like count and status
+        setPosts(prevPosts =>
+          prevPosts.map(post =>
+            post._id === postId ? {
+              ...post,
+              likeCount: response.data.likes,
+              isLiked: response.data.isLiked,
+            } : post
+          )
+        );
+      }
+    } catch (err) {
+      console.error('Error liking post:', err);
+    }
+  };
+
+  const getCategoryColor = (category) => {
+    const colors = {
+      tips: theme.colors.success,
+      questions: theme.colors.info,
+      showcase: theme.colors.warning,
+      discussion: theme.colors.primary,
+    };
+    return colors[category] || theme.colors.text.secondary;
+  };
+
+  const handlePostPress = (post) => {
+    if (!post._id && !post.id) {
+      console.error('Post ID is missing');
+      return;
+    }
+    navigation.navigate('PostDetail', { postId: post._id || post.id });
+  };
+
+  const handleCreatePost = () => {
+    // Navigate to create post screen (to be implemented)
+    navigation.navigate('CreatePost', {
+      onPostCreated: () => {
+        fetchPosts();
+      }
+    });
+  };
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={styles.loadingText}>Loading posts...</Text>
+        </View>
+      );
+    }
+
+    if (error) {
+      return (
+        <View style={styles.centerContainer}>
+          <Ionicons name="alert-circle-outline" size={48} color={theme.colors.error} />
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchPosts}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return (
+      <ScrollView 
+        contentContainerStyle={styles.content} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
+        }
+      >
+        {/* Welcome Banner */}
+        <View style={styles.welcomeBanner}>
+          <Ionicons name="people" size={40} color={theme.colors.primary} />
+          <View style={styles.welcomeTextContainer}>
+            <Text style={styles.welcomeTitle}>Welcome to the Community!</Text>
+            <Text style={styles.welcomeText}>
+              Connect with fellow gourd growers, share experiences, and learn together.
+            </Text>
+          </View>
+        </View>
+
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color={theme.colors.text.secondary} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search posts, topics, or users..."
+            placeholderTextColor={theme.colors.text.secondary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+
+        {/* Category Filters */}
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={styles.categoriesContainer}
+          contentContainerStyle={styles.categoriesContent}
+        >
+          {categories.map((category) => (
+            <TouchableOpacity
+              key={category.id}
+              style={[
+                styles.categoryChip,
+                selectedCategory === category.id && styles.categoryChipActive
+              ]}
+              onPress={() => setSelectedCategory(category.id)}
+            >
+              <Ionicons 
+                name={category.icon} 
+                size={18} 
+                color={selectedCategory === category.id ? '#fff' : theme.colors.text.secondary} 
+              />
+              <Text style={[
+                styles.categoryChipText,
+                selectedCategory === category.id && styles.categoryChipTextActive
+              ]}>
+                {category.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {/* Popular Topics */}
+        {popularTopics.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Popular Topics</Text>
+            <View style={styles.topicsGrid}>
+              {popularTopics.map((topic, index) => (
+                <TouchableOpacity key={index} style={styles.topicCard}>
+                  <Ionicons name="pricetag" size={24} color={theme.colors.primary} />
+                  <Text style={styles.topicName}>#{topic._id}</Text>
+                  <Text style={styles.topicCount}>{topic.count} posts</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Forum Posts */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recent Posts</Text>
+            {posts.length > 10 && (
+              <TouchableOpacity>
+                <Text style={styles.sectionAction}>See All</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {posts.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="document-text-outline" size={64} color={theme.colors.text.secondary} />
+              <Text style={styles.emptyStateTitle}>No posts yet</Text>
+              <Text style={styles.emptyStateText}>
+                Be the first to share with the community!
+              </Text>
+              <TouchableOpacity style={styles.createFirstButton} onPress={handleCreatePost}>
+                <Text style={styles.createFirstButtonText}>Create Post</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            posts.map((post) => (
+              <TouchableOpacity
+                key={post._id || post.id}
+                style={styles.postCard}
+                onPress={() => handlePostPress(post)}
+                activeOpacity={0.7}
+              >
+                {/* Post Header */}
+                <View style={styles.postHeader}>
+                  <View style={styles.authorInfo}>
+                    <View style={styles.avatarPlaceholder}>
+                      <Ionicons name="person" size={20} color={theme.colors.text.secondary} />
+                    </View>
+                    <View style={styles.authorDetails}>
+                      <View style={styles.authorNameRow}>
+                        <Text style={styles.authorName}>{post.author?.username || 'Anonymous'}</Text>
+                      </View>
+                      <Text style={styles.postTimestamp}>{post.relativeTime || 'Just now'}</Text>
+                    </View>
+                  </View>
+                  <View style={[styles.categoryBadge, { backgroundColor: getCategoryColor(post.category) + '20' }]}>
+                    <Text style={[styles.categoryBadgeText, { color: getCategoryColor(post.category) }]}>
+                      {categories.find(c => c.id === post.category)?.label.split(' ')[0]}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Post Content */}
+                <View style={styles.postContent}>
+                  <Text style={styles.postTitle}>{post.title}</Text>
+                  <Text style={styles.postText} numberOfLines={3}>{post.content}</Text>
+                  
+                  {/* Tags */}
+                  {post.tags && post.tags.length > 0 && (
+                    <View style={styles.tagsContainer}>
+                      {post.tags.slice(0, 3).map((tag, index) => (
+                        <View key={index} style={styles.tag}>
+                          <Text style={styles.tagText}>#{tag}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
+
+                {/* Post Footer */}
+                <View style={styles.postFooter}>
+                  <View style={styles.postStats}>
+                    <TouchableOpacity 
+                      style={styles.statItem}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleLikePost(post._id);
+                      }}
+                    >
+                      <Ionicons 
+                        name={post.isLiked ? "heart" : "heart-outline"} 
+                        size={18} 
+                        color={post.isLiked ? theme.colors.error : theme.colors.text.secondary} 
+                      />
+                      <Text style={styles.statText}>{post.likeCount || 0}</Text>
+                    </TouchableOpacity>
+                    <View style={styles.statItem}>
+                      <Ionicons name="chatbubble-outline" size={18} color={theme.colors.text.secondary} />
+                      <Text style={styles.statText}>{post.commentCount || 0}</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <Ionicons name="eye-outline" size={18} color={theme.colors.text.secondary} />
+                      <Text style={styles.statText}>{post.views || 0}</Text>
+                    </View>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))
+          )}
+        </View>
+
+        {/* Community Guidelines */}
+        <View style={styles.guidelinesCard}>
+          <Ionicons name="information-circle" size={24} color={theme.colors.info} />
+          <View style={styles.guidelinesContent}>
+            <Text style={styles.guidelinesTitle}>Community Guidelines</Text>
+            <Text style={styles.guidelinesText}>
+              Be respectful, share knowledge, and help fellow growers. Keep discussions relevant and constructive.
+            </Text>
+            <TouchableOpacity>
+              <Text style={styles.guidelinesLink}>Read full guidelines →</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    );
+  };
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={theme.colors.primary} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Community Forum</Text>
+        <TouchableOpacity onPress={handleCreatePost} style={styles.createButton}>
+          <Ionicons name="add-circle" size={24} color={theme.colors.primary} />
+        </TouchableOpacity>
+      </View>
+
+      {renderContent()}
+
+      {/* Floating Action Button */}
+      {!loading && !error && (
+        <TouchableOpacity style={styles.fab} onPress={handleCreatePost}>
+          <Ionicons name="add" size={28} color="#fff" />
+        </TouchableOpacity>
+      )}
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background.primary,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.xl,
+  },
+  loadingText: {
+    fontSize: 14,
+    fontFamily: theme.fonts.medium,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.md,
+  },
+  errorText: {
+    fontSize: 15,
+    fontFamily: theme.fonts.medium,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.md,
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: theme.spacing.lg,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.medium,
+  },
+  retryButtonText: {
+    fontSize: 14,
+    fontFamily: theme.fonts.semiBold,
+    color: '#fff',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: theme.spacing.xxl,
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.text.primary,
+    marginTop: theme.spacing.md,
+  },
+  emptyStateText: {
+    fontSize: 14,
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.xs,
+    textAlign: 'center',
+  },
+  createFirstButton: {
+    marginTop: theme.spacing.lg,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.medium,
+  },
+  createFirstButtonText: {
+    fontSize: 14,
+    fontFamily: theme.fonts.semiBold,
+    color: '#fff',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.background.secondary,
+    backgroundColor: theme.colors.surface,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.text.primary,
+  },
+  createButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  content: {
+    padding: theme.spacing.lg,
+    paddingBottom: 100,
+  },
+  welcomeBanner: {
+    flexDirection: 'row',
+    backgroundColor: theme.colors.primary + '10',
+    borderRadius: theme.borderRadius.large,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.primary + '30',
+  },
+  welcomeTextContainer: {
+    flex: 1,
+    marginLeft: theme.spacing.md,
+  },
+  welcomeTitle: {
+    fontSize: 18,
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  welcomeText: {
+    fontSize: 13,
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.text.secondary,
+    lineHeight: 18,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.medium,
+    paddingHorizontal: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.background.secondary,
+  },
+  searchIcon: {
+    marginRight: theme.spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    height: 48,
+    fontSize: 14,
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.text.primary,
+  },
+  categoriesContainer: {
+    marginBottom: theme.spacing.lg,
+  },
+  categoriesContent: {
+    paddingRight: theme.spacing.lg,
+  },
+  categoryChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.large,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    marginRight: theme.spacing.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.background.secondary,
+  },
+  categoryChipActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  categoryChipText: {
+    fontSize: 13,
+    fontFamily: theme.fonts.medium,
+    color: theme.colors.text.secondary,
+    marginLeft: theme.spacing.xs,
+  },
+  categoryChipTextActive: {
+    color: '#fff',
+  },
+  section: {
+    marginBottom: theme.spacing.xl,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.text.primary,
+  },
+  sectionAction: {
+    fontSize: 13,
+    fontFamily: theme.fonts.semiBold,
+    color: theme.colors.primary,
+  },
+  topicsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -theme.spacing.xs,
+  },
+  topicCard: {
+    width: '48%',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.medium,
+    padding: theme.spacing.md,
+    margin: theme.spacing.xs,
+    borderWidth: 1,
+    borderColor: theme.colors.background.secondary,
+    alignItems: 'center',
+  },
+  topicName: {
+    fontSize: 14,
+    fontFamily: theme.fonts.semiBold,
+    color: theme.colors.text.primary,
+    marginTop: theme.spacing.sm,
+    textAlign: 'center',
+  },
+  topicCount: {
+    fontSize: 12,
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.text.secondary,
+    marginTop: 4,
+  },
+  postCard: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.medium,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.background.secondary,
+  },
+  postHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: theme.spacing.sm,
+  },
+  authorInfo: {
+    flexDirection: 'row',
+    flex: 1,
+  },
+  avatarPlaceholder: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.colors.background.secondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: theme.spacing.sm,
+  },
+  authorDetails: {
+    flex: 1,
+  },
+  authorNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  authorName: {
+    fontSize: 14,
+    fontFamily: theme.fonts.semiBold,
+    color: theme.colors.text.primary,
+    marginRight: 4,
+  },
+  postTimestamp: {
+    fontSize: 12,
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.text.secondary,
+    marginTop: 2,
+  },
+  categoryBadge: {
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  categoryBadgeText: {
+    fontSize: 11,
+    fontFamily: theme.fonts.semiBold,
+    textTransform: 'uppercase',
+  },
+  postContent: {
+    marginBottom: theme.spacing.sm,
+  },
+  postTitle: {
+    fontSize: 16,
+    fontFamily: theme.fonts.bold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  postText: {
+    fontSize: 14,
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.text.secondary,
+    lineHeight: 20,
+    marginBottom: theme.spacing.sm,
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: theme.spacing.xs,
+  },
+  tag: {
+    backgroundColor: theme.colors.background.secondary,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 4,
+    borderRadius: 4,
+    marginRight: theme.spacing.xs,
+    marginBottom: theme.spacing.xs,
+  },
+  tagText: {
+    fontSize: 11,
+    fontFamily: theme.fonts.medium,
+    color: theme.colors.primary,
+  },
+  postFooter: {
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.background.secondary,
+    paddingTop: theme.spacing.sm,
+  },
+  postStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: theme.spacing.lg,
+  },
+  statText: {
+    fontSize: 13,
+    fontFamily: theme.fonts.medium,
+    color: theme.colors.text.secondary,
+    marginLeft: 4,
+  },
+  guidelinesCard: {
+    flexDirection: 'row',
+    backgroundColor: theme.colors.info + '10',
+    borderRadius: theme.borderRadius.medium,
+    padding: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.info + '30',
+  },
+  guidelinesContent: {
+    flex: 1,
+    marginLeft: theme.spacing.md,
+  },
+  guidelinesTitle: {
+    fontSize: 15,
+    fontFamily: theme.fonts.semiBold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  guidelinesText: {
+    fontSize: 13,
+    fontFamily: theme.fonts.regular,
+    color: theme.colors.text.secondary,
+    lineHeight: 18,
+    marginBottom: theme.spacing.xs,
+  },
+  guidelinesLink: {
+    fontSize: 13,
+    fontFamily: theme.fonts.semiBold,
+    color: theme.colors.info,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: theme.spacing.xl,
+    right: theme.spacing.xl,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+});
+
+CommunityScreen.routeName = 'Community';
+export default CommunityScreen;

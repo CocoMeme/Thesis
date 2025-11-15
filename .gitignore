@@ -29,6 +29,19 @@ frontend/mobile-app/dist/
 frontend/mobile-app/web-build/
 frontend/mobile-app/.expo-shared/
 
+# Android / Gradle
+.gradle/
+**/build/
+**/.gradle/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+gradle-app.setting
+!gradle-wrapper.jar
+local.properties
+
 # OS generated files
 .DS_Store
 .DS_Store?
@@ -79,21 +92,3 @@ temp/
 # ML Models - Now included in repo for team access
 # Model files are small enough (<50MB) to commit safely
 !model_metadata.json
-
-# Build artifacts and cache files
-*.lock
-*.bin
-frontend/mobile-app/fileHashes.bin
-frontend/mobile-app/fileHashes.lock
-frontend/mobile-app/checksums.lock
-buildOutputCleanup.lock
-
-# Expo build artifacts
-frontend/mobile-app/.expo/
-frontend/mobile-app/dist/
-frontend/mobile-app/web-build/
-frontend/mobile-app/.expo-shared/
-frontend/mobile-app/android/app/build/
-frontend/mobile-app/android/.gradle/
-frontend/mobile-app/android/build/
-frontend/mobile-app/ios/build/
