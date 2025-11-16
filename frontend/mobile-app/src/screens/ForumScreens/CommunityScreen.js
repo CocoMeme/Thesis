@@ -131,6 +131,46 @@ const CommunityScreen = ({ navigation }) => {
     return colors[category] || theme.colors.text.secondary;
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Just now';
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMs = now - date;
+    const diffInMinutes = Math.floor(diffInMs / 60000);
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    // If less than 1 hour, show relative time
+    if (diffInMinutes < 60) {
+      if (diffInMinutes < 1) return 'Just now';
+      return `${diffInMinutes}m ago`;
+    }
+
+    // If less than 24 hours, show hours
+    if (diffInHours < 24) {
+      return `${diffInHours}h ago`;
+    }
+
+    // If less than 7 days, show days
+    if (diffInDays < 7) {
+      return `${diffInDays}d ago`;
+    }
+
+    // Otherwise show full date
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const month = months[date.getMonth()];
+    const day = date.getDate();
+    const year = date.getFullYear();
+    const currentYear = now.getFullYear();
+
+    // Don't show year if it's current year
+    if (year === currentYear) {
+      return `${month} ${day}`;
+    }
+    return `${month} ${day}, ${year}`;
+  };
+
   const handlePostPress = (post) => {
     if (!post._id && !post.id) {
       console.error('Post ID is missing');
@@ -281,7 +321,7 @@ const CommunityScreen = ({ navigation }) => {
                       <View style={styles.authorNameRow}>
                         <Text style={styles.authorName}>{post.author?.username || 'Anonymous'}</Text>
                       </View>
-                      <Text style={styles.postTimestamp}>{post.relativeTime || 'Just now'}</Text>
+                      <Text style={styles.postTimestamp}>{formatDate(post.createdAt)}</Text>
                     </View>
                   </View>
                   <View style={[styles.categoryBadge, { backgroundColor: getCategoryColor(post.category) + '20' }]}>
@@ -295,6 +335,30 @@ const CommunityScreen = ({ navigation }) => {
                 <View style={styles.postContent}>
                   <Text style={styles.postTitle}>{post.title}</Text>
                   <Text style={styles.postText} numberOfLines={3}>{post.content}</Text>
+                  
+                  {/* Post Images */}
+                  {post.images && post.images.length > 0 && (
+                    <View style={styles.postImagesContainer}>
+                      {post.images.slice(0, 2).map((img, index) => (
+                        <View key={index} style={styles.imageWrapper}>
+                          <Image 
+                            source={{ uri: img.url }} 
+                            style={[
+                              styles.postImage,
+                              post.images.length === 1 && styles.postImageSingle,
+                              post.images.length > 1 && styles.postImageMultiple
+                            ]}
+                            resizeMode="cover"
+                          />
+                          {index === 1 && post.images.length > 2 && (
+                            <View style={styles.moreImagesOverlay}>
+                              <Text style={styles.moreImagesText}>+{post.images.length - 2}</Text>
+                            </View>
+                          )}
+                        </View>
+                      ))}
+                    </View>
+                  )}
                   
                   {/* Tags */}
                   {post.tags && post.tags.length > 0 && (
@@ -663,6 +727,45 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     lineHeight: 20,
     marginBottom: theme.spacing.sm,
+  },
+  postImagesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+    marginHorizontal: -2,
+  },
+  imageWrapper: {
+    position: 'relative',
+    margin: 2,
+  },
+  postImage: {
+    borderRadius: theme.borderRadius.medium,
+    backgroundColor: theme.colors.background.secondary,
+  },
+  postImageSingle: {
+    width: '100%',
+    height: 200,
+  },
+  postImageMultiple: {
+    width: 172,
+    height: 120,
+  },
+  moreImagesOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: theme.borderRadius.medium,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  moreImagesText: {
+    fontSize: 16,
+    fontFamily: theme.fonts.bold,
+    color: '#fff',
   },
   tagsContainer: {
     flexDirection: 'row',

@@ -22,10 +22,10 @@ const forumPostSchema = new mongoose.Schema({
     required: true,
     maxlength: 5000,
   },
-  image: {
+  images: [{
     url: String,
     publicId: String,
-  },
+  }],
   tags: [{
     type: String,
     trim: true,

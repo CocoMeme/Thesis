@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Alert,
   StatusBar,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -97,6 +98,50 @@ const PostDetailScreen = ({ navigation, route }) => {
     return categories.find(c => c.id === category)?.color || theme.colors.primary;
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Just now';
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMs = now - date;
+    const diffInMinutes = Math.floor(diffInMs / 60000);
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    // If less than 1 hour, show relative time
+    if (diffInMinutes < 60) {
+      if (diffInMinutes < 1) return 'Just now';
+      return `${diffInMinutes}m ago`;
+    }
+
+    // If less than 24 hours, show hours
+    if (diffInHours < 24) {
+      return `${diffInHours}h ago`;
+    }
+
+    // If less than 7 days, show days
+    if (diffInDays < 7) {
+      return `${diffInDays}d ago`;
+    }
+
+    // Otherwise show full date with time
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const month = months[date.getMonth()];
+    const day = date.getDate();
+    const year = date.getFullYear();
+    const currentYear = now.getFullYear();
+    const hours = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+
+    // Show year only if different from current year
+    if (year === currentYear) {
+      return `${month} ${day} at ${displayHours}:${minutes} ${ampm}`;
+    }
+    return `${month} ${day}, ${year} at ${displayHours}:${minutes} ${ampm}`;
+  };
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -174,7 +219,7 @@ const PostDetailScreen = ({ navigation, route }) => {
                 </View>
                 <View style={styles.authorDetails}>
                   <Text style={styles.authorName}>{post.author?.username || 'Anonymous'}</Text>
-                  <Text style={styles.postTime}>{post.timestamp || post.relativeTime}</Text>
+                  <Text style={styles.postTime}>{formatDate(post.createdAt)}</Text>
                 </View>
               </View>
               <View style={[styles.categoryBadge, { backgroundColor: getCategoryColor(post.category) + '20' }]}>
@@ -189,6 +234,25 @@ const PostDetailScreen = ({ navigation, route }) => {
 
             {/* Content */}
             <Text style={styles.postContent}>{post.content}</Text>
+
+            {/* Images */}
+            {post.images && post.images.length > 0 && (
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                style={styles.imagesScroll}
+                contentContainerStyle={styles.imagesScrollContent}
+              >
+                {post.images.map((img, index) => (
+                  <Image 
+                    key={index}
+                    source={{ uri: img.url }} 
+                    style={styles.postImage}
+                    resizeMode="cover"
+                  />
+                ))}
+              </ScrollView>
+            )}
 
             {/* Tags */}
             {post.tags && post.tags.length > 0 && (
@@ -239,7 +303,7 @@ const PostDetailScreen = ({ navigation, route }) => {
                       <Text style={styles.commentAuthor}>
                         {comment.user?.username || 'Anonymous'}
                       </Text>
-                      <Text style={styles.commentTime}>{comment.timestamp}</Text>
+                      <Text style={styles.commentTime}>{formatDate(comment.createdAt)}</Text>
                     </View>
                   </View>
                   <Text style={styles.commentContent}>{comment.content}</Text>
@@ -413,6 +477,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: theme.fonts.medium,
     color: theme.colors.primary,
+  },
+  imagesScroll: {
+    marginVertical: theme.spacing.md,
+  },
+  imagesScrollContent: {
+    paddingRight: theme.spacing.md,
+  },
+  postImage: {
+    width: 300,
+    height: 200,
+    borderRadius: theme.borderRadius.medium,
+    marginRight: theme.spacing.sm,
+    backgroundColor: theme.colors.background.secondary,
   },
   statsContainer: {
     flexDirection: 'row',

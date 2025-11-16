@@ -1,5 +1,6 @@
 const ForumPost = require('../models/ForumPost');
 const User = require('../models/User');
+const { cloudinary } = require('../config/cloudinary');
 
 /**
  * Forum Controller
@@ -161,7 +162,7 @@ exports.getPostById = async (req, res) => {
 // Create new post
 exports.createPost = async (req, res) => {
   try {
-    const { category, title, content, tags, image } = req.body;
+    const { category, title, content, tags, images } = req.body;
     const userId = req.user._id;
 
     console.log('Creating post - User ID:', userId);
@@ -184,6 +185,44 @@ exports.createPost = async (req, res) => {
       });
     }
 
+    // Handle multiple images upload if provided
+    let uploadedImages = [];
+    if (images && Array.isArray(images) && images.length > 0) {
+      try {
+        // Limit to 5 images
+        const imagesToUpload = images.slice(0, 5);
+        
+        // Upload all images to Cloudinary
+        const uploadPromises = imagesToUpload.map(img => {
+          if (img.base64) {
+            return cloudinary.uploader.upload(img.base64, {
+              folder: 'forum-posts',
+              transformation: [
+                { width: 1200, height: 800, crop: 'limit', quality: 'auto' },
+                { format: 'jpg' }
+              ]
+            });
+          }
+          return null;
+        });
+
+        const uploadResults = await Promise.all(uploadPromises);
+        
+        uploadedImages = uploadResults
+          .filter(result => result !== null)
+          .map(result => ({
+            url: result.secure_url,
+            publicId: result.public_id,
+          }));
+      } catch (uploadError) {
+        console.error('Error uploading images:', uploadError);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to upload images',
+        });
+      }
+    }
+
     // Create post
     const post = new ForumPost({
       author: userId,
@@ -191,7 +230,7 @@ exports.createPost = async (req, res) => {
       title,
       content,
       tags: tags || [],
-      image: image || null,
+      images: uploadedImages,
     });
 
     await post.save();

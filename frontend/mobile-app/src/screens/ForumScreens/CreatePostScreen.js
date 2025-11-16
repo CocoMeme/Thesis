@@ -13,10 +13,12 @@ import {
   StatusBar,
   Animated,
   PanResponder,
-  Dimensions
+  Dimensions,
+  Image
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { theme } from '../../styles';
 import { forumService } from '../../services';
 
@@ -34,6 +36,8 @@ const CreatePostScreen = ({ navigation, route }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [tags, setTags] = useState('');
+  const [images, setImages] = useState([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [loading, setLoading] = useState(false);
   const [categoryDropdownVisible, setCategoryDropdownVisible] = useState(false);
 
@@ -114,6 +118,11 @@ const CreatePostScreen = ({ navigation, route }) => {
         tags: tagArray,
       };
 
+      // Add images if present
+      if (images.length > 0) {
+        postData.images = images;
+      }
+
       const response = await forumService.createPost(postData);
 
       if (response.success) {
@@ -141,6 +150,51 @@ const CreatePostScreen = ({ navigation, route }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePickImage = async () => {
+    try {
+      if (images.length >= 5) {
+        Alert.alert('Maximum Images', 'You can only upload up to 5 images per post.');
+        return;
+      }
+
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Please grant permission to access your photos.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setUploadingImage(true);
+        
+        // Create image object with base64 data
+        const imageData = {
+          url: result.assets[0].uri,
+          base64: `data:image/jpeg;base64,${result.assets[0].base64}`,
+        };
+        
+        setImages([...images, imageData]);
+        setUploadingImage(false);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image');
+      setUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = (index) => {
+    setImages(images.filter((_, i) => i !== index));
   };
 
   return (
@@ -302,6 +356,49 @@ const CreatePostScreen = ({ navigation, route }) => {
               textAlignVertical="top"
             />
             <Text style={styles.charCount}>{content.length}/2000</Text>
+          </View>
+
+          {/* Image Upload */}
+          <View style={styles.section}>
+            <Text style={styles.label}>Images (Optional)</Text>
+            <Text style={styles.hint}>Add up to 5 photos to your post</Text>
+            
+            {/* Image Gallery */}
+            {images.length > 0 && (
+              <View style={styles.imagesGallery}>
+                {images.map((img, index) => (
+                  <View key={index} style={styles.imagePreviewContainer}>
+                    <Image source={{ uri: img.url }} style={styles.imagePreview} />
+                    <TouchableOpacity 
+                      style={styles.removeImageButton} 
+                      onPress={() => handleRemoveImage(index)}
+                    >
+                      <Ionicons name="close-circle" size={28} color={theme.colors.error} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* Add Image Button */}
+            {images.length < 5 && (
+              <TouchableOpacity 
+                style={styles.imagePickerButton} 
+                onPress={handlePickImage}
+                disabled={uploadingImage}
+              >
+                {uploadingImage ? (
+                  <ActivityIndicator size="small" color={theme.colors.primary} />
+                ) : (
+                  <>
+                    <Ionicons name="image-outline" size={32} color={theme.colors.primary} />
+                    <Text style={styles.imagePickerText}>
+                      {images.length === 0 ? 'Tap to add images' : `Add more (${images.length}/5)`}
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Tags Input */}
@@ -549,6 +646,49 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.regular,
     color: theme.colors.text.primary,
     height: 48,
+  },
+  imagePickerButton: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.medium,
+    borderWidth: 2,
+    borderColor: theme.colors.primary + '40',
+    borderStyle: 'dashed',
+    padding: theme.spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 150,
+  },
+  imagePickerText: {
+    fontSize: 14,
+    fontFamily: theme.fonts.medium,
+    color: theme.colors.primary,
+    marginTop: theme.spacing.sm,
+  },
+  imagesGallery: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -4,
+    marginBottom: theme.spacing.sm,
+  },
+  imagePreviewContainer: {
+    position: 'relative',
+    borderRadius: theme.borderRadius.medium,
+    overflow: 'hidden',
+    width: '48%',
+    margin: 4,
+  },
+  imagePreview: {
+    width: '100%',
+    height: 150,
+    borderRadius: theme.borderRadius.medium,
+    backgroundColor: theme.colors.background.secondary,
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: theme.colors.surface,
+    borderRadius: 14,
   },
   charCount: {
     fontSize: 12,
