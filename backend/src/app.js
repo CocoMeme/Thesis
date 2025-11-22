@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
 
+
 // Import configurations
 const database = require('./config/database');
 const { configureCloudinary } = require('./config/cloudinary');
@@ -143,6 +144,7 @@ class App {
     this.app.use('/api/news', require('./routes/news'));
     this.app.use('/api/pollination', require('./routes/pollination'));
     this.app.use('/api/forum', require('./routes/forum'));
+    this.app.use('/api/admin', require('./routes/admin'));
     // TODO: Add these when other route modules are created
     // this.app.use('/api/users', require('./routes/users'));
     // this.app.use('/api/scans', require('./routes/scans'));

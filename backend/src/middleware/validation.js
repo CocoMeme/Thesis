@@ -524,6 +524,84 @@ const validateRequestBody = (requiredFields) => {
   };
 };
 
+/**
+ * Admin user update validation
+ */
+const validateUserUpdate = [
+  body('username')
+    .optional()
+    .isLength({ min: 3, max: 30 })
+    .withMessage('Username must be between 3 and 30 characters')
+    .matches(/^[a-zA-Z0-9_]+$/)
+    .withMessage('Username can only contain letters, numbers, and underscores')
+    .trim(),
+
+  body('email')
+    .optional()
+    .isEmail()
+    .withMessage('Please provide a valid email address')
+    .normalizeEmail()
+    .isLength({ max: 100 })
+    .withMessage('Email cannot exceed 100 characters'),
+
+  body('firstName')
+    .optional()
+    .isLength({ max: 50 })
+    .withMessage('First name cannot exceed 50 characters')
+    .trim(),
+
+  body('lastName')
+    .optional()
+    .isLength({ max: 50 })
+    .withMessage('Last name cannot exceed 50 characters')
+    .trim(),
+
+  body('role')
+    .optional()
+    .isIn(['user', 'admin', 'researcher'])
+    .withMessage('Role must be one of: user, admin, researcher'),
+
+  body('isActive')
+    .optional()
+    .isBoolean()
+    .withMessage('isActive must be a boolean'),
+
+  body('isEmailVerified')
+    .optional()
+    .isBoolean()
+    .withMessage('isEmailVerified must be a boolean'),
+
+  handleValidationErrors
+];
+
+/**
+ * Bulk user update validation
+ */
+const validateBulkUpdate = [
+  body('userIds')
+    .isArray({ min: 1 })
+    .withMessage('User IDs must be a non-empty array'),
+
+  body('userIds.*')
+    .isMongoId()
+    .withMessage('Each user ID must be a valid MongoDB ObjectId'),
+
+  body('action')
+    .notEmpty()
+    .withMessage('Action is required')
+    .isIn(['activate', 'deactivate', 'changeRole', 'verifyEmail'])
+    .withMessage('Action must be one of: activate, deactivate, changeRole, verifyEmail'),
+
+  body('value')
+    .if(body('action').equals('changeRole'))
+    .notEmpty()
+    .withMessage('Value is required when action is changeRole')
+    .isIn(['user', 'admin', 'researcher'])
+    .withMessage('Role value must be one of: user, admin, researcher'),
+
+  handleValidationErrors
+];
+
 module.exports = {
   handleValidationErrors,
   validateUserRegistration,
@@ -541,5 +619,7 @@ module.exports = {
   validatePagination,
   validateSearch,
   validateFileUpload,
-  validateRequestBody
+  validateRequestBody,
+  validateUserUpdate,
+  validateBulkUpdate
 };

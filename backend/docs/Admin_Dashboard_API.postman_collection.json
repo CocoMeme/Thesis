@@ -1,0 +1,499 @@
+{
+  "info": {
+    "name": "Admin Dashboard API",
+    "description": "Complete Admin Dashboard API collection for user management",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "ADMIN_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "USER_ID",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('ADMIN_TOKEN', response.data.accessToken);",
+                  "    pm.collectionVariables.set('ADMIN_TOKEN', response.data.accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"admin@example.com\",\n  \"password\": \"AdminPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/auth/local/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "auth", "local", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard Overview",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/admin/dashboard",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "admin", "dashboard"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "User Management",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/admin/users?page=1&limit=10&sortBy=createdAt&sortOrder=desc",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "admin", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/admin/users?search=john",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "admin", "users"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "john"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter Active Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/admin/users?isActive=true",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "admin", "users"],
+              "query": [
+                {
+                  "key": "isActive",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter by Role",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/admin/users?role=user",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "admin", "users"],
+              "query": [
+                {
+                  "key": "role",
+                  "value": "user"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/admin/users/{{USER_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "admin", "users", "{{USER_ID}}"]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"isEmailVerified\": true\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/admin/users/{{USER_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "admin", "users", "{{USER_ID}}"]
+            }
+          }
+        },
+        {
+          "name": "Activate User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/admin/users/{{USER_ID}}/activate",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "admin", "users", "{{USER_ID}}", "activate"]
+            }
+          }
+        },
+        {
+          "name": "Deactivate User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Policy violation\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/admin/users/{{USER_ID}}/deactivate",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "admin", "users", "{{USER_ID}}", "deactivate"]
+            }
+          }
+        },
+        {
+          "name": "Suspend User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Temporary suspension\",\n  \"duration\": 30\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/admin/users/{{USER_ID}}/suspend",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "admin", "users", "{{USER_ID}}", "suspend"]
+            }
+          }
+        },
+        {
+          "name": "Delete User (Soft)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/admin/users/{{USER_ID}}?permanent=false",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "admin", "users", "{{USER_ID}}"],
+              "query": [
+                {
+                  "key": "permanent",
+                  "value": "false"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete User (Permanent)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/admin/users/{{USER_ID}}?permanent=true",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "admin", "users", "{{USER_ID}}"],
+              "query": [
+                {
+                  "key": "permanent",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Change User Role",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"researcher\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/admin/users/{{USER_ID}}/role",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "admin", "users", "{{USER_ID}}", "role"]
+            }
+          }
+        },
+        {
+          "name": "Get User Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/admin/users/{{USER_ID}}/stats",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "admin", "users", "{{USER_ID}}", "stats"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bulk Operations",
+      "item": [
+        {
+          "name": "Bulk Activate Users",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userIds\": [\n    \"USER_ID_1\",\n    \"USER_ID_2\",\n    \"USER_ID_3\"\n  ],\n  \"action\": \"activate\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/admin/users/bulk-update",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "admin", "users", "bulk-update"]
+            }
+          }
+        },
+        {
+          "name": "Bulk Deactivate Users",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userIds\": [\n    \"USER_ID_1\",\n    \"USER_ID_2\"\n  ],\n  \"action\": \"deactivate\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/admin/users/bulk-update",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "admin", "users", "bulk-update"]
+            }
+          }
+        },
+        {
+          "name": "Bulk Change Role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userIds\": [\n    \"USER_ID_1\",\n    \"USER_ID_2\"\n  ],\n  \"action\": \"changeRole\",\n  \"value\": \"researcher\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/admin/users/bulk-update",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "admin", "users", "bulk-update"]
+            }
+          }
+        },
+        {
+          "name": "Bulk Verify Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userIds\": [\n    \"USER_ID_1\",\n    \"USER_ID_2\"\n  ],\n  \"action\": \"verifyEmail\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/admin/users/bulk-update",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "admin", "users", "bulk-update"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

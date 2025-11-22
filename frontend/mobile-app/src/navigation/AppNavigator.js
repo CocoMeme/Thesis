@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, View, Alert } from 'react-native';
 
 import { HomeScreen, CameraScreen, ResultsScreen, HistoryScreen, NewsScreen, LoginScreen, SignUpScreen, ProfileScreen, PollinationScreen, PlantFormScreen, PlantDetailScreen, HowToUseScreen, EducationalScreen, CommunityScreen, CreatePostScreen, PostDetailScreen } from '../screens';
+import { AdminDashboardScreen, UserManagementScreen, UserDetailScreen } from '../screens/AdminScreens';
 import { theme } from '../styles';
 
 const TAB_BAR_HEIGHT = 70;
@@ -236,6 +237,41 @@ const ProfileStack = ({ onAuthChange }) => {
   );
 };
 
+// Admin Stack for admin dashboard and user management
+const AdminStack = () => {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerTitleStyle: {
+          fontFamily: 'Poppins_600SemiBold',
+          fontSize: 18,
+        },
+        headerShown: false,
+        statusBarTranslucent: true,
+        statusBarStyle: 'light',
+        statusBarColor: 'transparent',
+        contentStyle: { backgroundColor: theme.colors.background.secondary },
+      }}
+    >
+      <Stack.Screen 
+        name="AdminDashboardMain" 
+        component={AdminDashboardScreen}
+        options={{ title: 'Admin Dashboard' }}
+      />
+      <Stack.Screen 
+        name="UserManagement" 
+        component={UserManagementScreen}
+        options={{ title: 'User Management' }}
+      />
+      <Stack.Screen 
+        name="UserDetail" 
+        component={UserDetailScreen}
+        options={{ title: 'User Details' }}
+      />
+    </Stack.Navigator>
+  );
+};
+
 // Auth Stack for login/signup screens
 const AuthStack = ({ onAuthSuccess }) => {
   return (
@@ -251,7 +287,57 @@ const AuthStack = ({ onAuthSuccess }) => {
 };
 
 // Main Tab Navigator (protected)
-const MainTabs = ({ onAuthChange, showWelcome }) => {
+const MainTabs = ({ onAuthChange, showWelcome, userRole }) => {
+  // Admin users see only admin dashboard and profile
+  if (userRole === 'admin') {
+    return (
+      <Tab.Navigator
+        sceneContainerStyle={{ backgroundColor: theme.colors.background.primary }}
+        screenOptions={({ route }) => ({
+          tabBarIcon: ({ focused, color }) => {
+            const iconMap = {
+              Admin: { active: 'shield', inactive: 'shield-outline' },
+              Profile: { active: 'person', inactive: 'person-outline' },
+            };
+
+            const { active, inactive } = iconMap[route.name] || {
+              active: 'ellipse',
+              inactive: 'ellipse-outline',
+            };
+
+            const iconName = focused ? active : inactive;
+            const iconSize = focused ? 24 : 20;
+            return <Ionicons name={iconName} size={iconSize} color={color} />;
+          },
+          tabBarActiveTintColor: '#F44336',
+          tabBarInactiveTintColor: '#9e9e9e',
+          tabBarShowLabel: false,
+          tabBarStyle: {
+            backgroundColor: theme.colors.surface,
+            borderTopWidth: 1,
+            borderTopColor: theme.colors.background.secondary,
+            height: TAB_BAR_HEIGHT,
+            paddingBottom: 12,
+            paddingTop: 8,
+          },
+          tabBarHideOnKeyboard: true,
+          headerShown: false,
+        })}
+      >
+        <Tab.Screen 
+          name="Admin" 
+          component={AdminStack}
+        />
+        <Tab.Screen 
+          name="Profile"
+        >
+          {(props) => <ProfileStack {...props} onAuthChange={onAuthChange} />}
+        </Tab.Screen>
+      </Tab.Navigator>
+    );
+  }
+
+  // Regular users see all normal features
   return (
     <Tab.Navigator
       sceneContainerStyle={{ backgroundColor: theme.colors.background.primary }}
@@ -311,6 +397,7 @@ export const AppNavigator = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [userRole, setUserRole] = useState(null);
 
   // Check authentication status on app start
   useEffect(() => {
@@ -321,9 +408,21 @@ export const AppNavigator = () => {
     try {
       const isAuth = await authService.initialize();
       setIsAuthenticated(isAuth);
+      
+      // Get user role if authenticated
+      if (isAuth) {
+        const userData = await AsyncStorage.getItem('user');
+        if (userData) {
+          const user = JSON.parse(userData);
+          console.log('👤 User Data:', user);
+          console.log('🔑 User Role:', user.role);
+          setUserRole(user.role);
+        }
+      }
     } catch (error) {
       console.error('Error checking auth status:', error);
       setIsAuthenticated(false);
+      setUserRole(null);
     } finally {
       setIsLoading(false);
     }
@@ -353,7 +452,7 @@ export const AppNavigator = () => {
             name="Main"
             initialParams={{ showWelcome }}
           >
-            {(props) => <MainTabs {...props} onAuthChange={handleAuthChange} showWelcome={showWelcome} />}
+            {(props) => <MainTabs {...props} onAuthChange={handleAuthChange} showWelcome={showWelcome} userRole={userRole} />}
           </Stack.Screen>
         ) : (
           <Stack.Screen name="Auth">
