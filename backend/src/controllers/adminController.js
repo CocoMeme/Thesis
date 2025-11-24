@@ -1,4 +1,5 @@
 const { User } = require('../models');
+const ForumPost = require('../models/ForumPost');
 const mongoose = require('mongoose');
 
 /**
@@ -60,6 +61,15 @@ exports.getDashboardOverview = async (req, res) => {
     const verifiedUsers = await User.countDocuments({ isEmailVerified: true });
     const unverifiedUsers = await User.countDocuments({ isEmailVerified: false });
 
+    // Get forum post stats
+    const totalPosts = await ForumPost.countDocuments();
+    const activePosts = await ForumPost.countDocuments({ status: 'active' });
+    const pendingPosts = await ForumPost.countDocuments({ status: 'pending' });
+    const flaggedPosts = await ForumPost.countDocuments({ status: 'flagged' });
+    const rejectedPosts = await ForumPost.countDocuments({ status: 'rejected' });
+    const deletedPosts = await ForumPost.countDocuments({ status: 'deleted' });
+    const pinnedPosts = await ForumPost.countDocuments({ isPinned: true });
+
     // Get recent registrations (last 10)
     const recentRegistrations = await User.find()
       .select('username email firstName lastName createdAt provider isActive')
@@ -78,6 +88,15 @@ exports.getDashboardOverview = async (req, res) => {
           unverifiedUsers,
           newUsers30Days,
           newUsers7Days
+        },
+        forumStats: {
+          totalPosts,
+          activePosts,
+          pendingPosts,
+          flaggedPosts,
+          rejectedPosts,
+          deletedPosts,
+          pinnedPosts
         },
         usersByRole: usersByRole.reduce((acc, item) => {
           acc[item._id] = item.count;
@@ -750,6 +769,445 @@ exports.getUserStats = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to retrieve user statistics',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get all forum posts with pagination and filters
+ * @route GET /api/admin/forum/posts
+ * @access Private/Admin
+ */
+exports.getAllForumPosts = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 20,
+      search = '',
+      category = '',
+      status = '',
+      isPinned,
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = req.query;
+
+    // Build filter query
+    const filter = {};
+
+    // Search by title or content
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { content: { $regex: search, $options: 'i' } },
+        { tags: { $in: [new RegExp(search, 'i')] } }
+      ];
+    }
+
+    // Filter by category
+    if (category) {
+      filter.category = category;
+    }
+
+    // Filter by status
+    if (status) {
+      filter.status = status;
+    }
+
+    // Filter by pinned status if specified
+    if (isPinned !== undefined) {
+      filter.isPinned = isPinned === 'true';
+    }
+
+    // Calculate pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const sortOptions = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
+
+    // Get posts with pagination
+    const posts = await ForumPost.find(filter)
+      .populate('author', 'username firstName lastName email emailVerified')
+      .populate('comments.user', 'username firstName lastName')
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    // Get total count for pagination
+    const total = await ForumPost.countDocuments(filter);
+
+    // Format posts
+    const formattedPosts = posts.map(post => ({
+      ...post,
+      likeCount: post.likes?.length || 0,
+      commentCount: post.comments?.length || 0,
+    }));
+
+    res.status(200).json({
+      success: true,
+      message: 'Forum posts retrieved successfully',
+      data: {
+        posts: formattedPosts,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(total / parseInt(limit)),
+          totalPosts: total,
+          postsPerPage: parseInt(limit),
+          hasNextPage: skip + posts.length < total,
+          hasPrevPage: parseInt(page) > 1
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Get all forum posts error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve forum posts',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get forum post by ID
+ * @route GET /api/admin/forum/posts/:postId
+ * @access Private/Admin
+ */
+exports.getForumPostById = async (req, res) => {
+  try {
+    const { postId } = req.params;
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(postId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid post ID format'
+      });
+    }
+
+    const post = await ForumPost.findById(postId)
+      .populate('author', 'username firstName lastName email emailVerified')
+      .populate('comments.user', 'username firstName lastName email')
+      .populate('likes.user', 'username firstName lastName');
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: 'Forum post not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Forum post retrieved successfully',
+      data: { post }
+    });
+  } catch (error) {
+    console.error('Get forum post error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve forum post',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Update forum post status (active, archived, deleted, flagged)
+ * @route PATCH /api/admin/forum/posts/:postId/status
+ * @access Private/Admin
+ */
+exports.updateForumPostStatus = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const { status } = req.body;
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(postId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid post ID format'
+      });
+    }
+
+    // Validate status
+    const validStatuses = ['active', 'archived', 'deleted', 'flagged'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+      });
+    }
+
+    const post = await ForumPost.findByIdAndUpdate(
+      postId,
+      { $set: { status } },
+      { new: true }
+    ).populate('author', 'username firstName lastName email');
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: 'Forum post not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Forum post status updated to ${status}`,
+      data: { post }
+    });
+  } catch (error) {
+    console.error('Update forum post status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update forum post status',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Delete forum post (soft delete only)
+ * @route DELETE /api/admin/forum/posts/:postId
+ * @access Private/Admin
+ */
+exports.deleteForumPost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(postId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid post ID format'
+      });
+    }
+
+    // Soft delete - just change status to 'deleted'
+    const post = await ForumPost.findByIdAndUpdate(
+      postId,
+      { $set: { status: 'deleted' } },
+      { new: true }
+    );
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: 'Forum post not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Forum post removed from community (soft delete)',
+      data: { post }
+    });
+  } catch (error) {
+    console.error('Delete forum post error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete forum post',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Pin/Unpin forum post
+ * @route PATCH /api/admin/forum/posts/:postId/pin
+ * @access Private/Admin
+ */
+exports.togglePinPost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(postId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid post ID format'
+      });
+    }
+
+    const post = await ForumPost.findById(postId);
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: 'Forum post not found'
+      });
+    }
+
+    post.isPinned = !post.isPinned;
+    await post.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Forum post ${post.isPinned ? 'pinned' : 'unpinned'}`,
+      data: { post }
+    });
+  } catch (error) {
+    console.error('Toggle pin post error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to toggle pin status',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Lock/Unlock forum post
+ * @route PATCH /api/admin/forum/posts/:postId/lock
+ * @access Private/Admin
+ */
+exports.toggleLockPost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(postId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid post ID format'
+      });
+    }
+
+    const post = await ForumPost.findById(postId);
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: 'Forum post not found'
+      });
+    }
+
+    post.isLocked = !post.isLocked;
+    await post.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Forum post ${post.isLocked ? 'locked' : 'unlocked'}`,
+      data: { post }
+    });
+  } catch (error) {
+    console.error('Toggle lock post error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to toggle lock status',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Approve pending forum post
+ * @route PATCH /api/admin/forum/posts/:postId/approve
+ * @access Private/Admin
+ */
+exports.approvePost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const { note } = req.body;
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(postId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid post ID format'
+      });
+    }
+
+    const post = await ForumPost.findByIdAndUpdate(
+      postId,
+      {
+        $set: {
+          status: 'active',
+          moderatedBy: req.user._id,
+          moderatedAt: new Date(),
+          ...(note && { moderationNote: note })
+        }
+      },
+      { new: true }
+    ).populate('author', 'username firstName lastName email');
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: 'Forum post not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Post approved and published to community',
+      data: { post }
+    });
+  } catch (error) {
+    console.error('Approve post error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to approve post',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Reject pending forum post
+ * @route PATCH /api/admin/forum/posts/:postId/reject
+ * @access Private/Admin
+ */
+exports.rejectPost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const { reason } = req.body;
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(postId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid post ID format'
+      });
+    }
+
+    if (!reason || reason.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Rejection reason is required'
+      });
+    }
+
+    const post = await ForumPost.findByIdAndUpdate(
+      postId,
+      {
+        $set: {
+          status: 'rejected',
+          moderatedBy: req.user._id,
+          moderatedAt: new Date(),
+          moderationNote: reason.trim()
+        }
+      },
+      { new: true }
+    ).populate('author', 'username firstName lastName email');
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: 'Forum post not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Post rejected',
+      data: { post }
+    });
+  } catch (error) {
+    console.error('Reject post error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to reject post',
       error: error.message
     });
   }

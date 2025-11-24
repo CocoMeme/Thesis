@@ -1,6 +1,7 @@
 const ForumPost = require('../models/ForumPost');
 const User = require('../models/User');
 const { cloudinary } = require('../config/cloudinary');
+const filter = require('leo-profanity');
 
 /**
  * Forum Controller
@@ -16,7 +17,8 @@ exports.getAllPosts = async (req, res) => {
       tags, 
       sortBy = 'recent', 
       page = 1, 
-      limit = 10 
+      limit = 10,
+      isPinned
     } = req.query;
 
     // Build query
@@ -39,23 +41,32 @@ exports.getAllPosts = async (req, res) => {
       query.tags = { $in: tagArray };
     }
 
-    // Build sort
-    let sort = {};
+    // Filter by pinned status if specified
+    if (isPinned !== undefined) {
+      query.isPinned = isPinned === 'true';
+    }
+
+    // Build sort - always show pinned posts first
+    let sort = { isPinned: -1 }; // Pinned posts first
+    
     switch (sortBy) {
       case 'recent':
-        sort = { createdAt: -1 };
+        sort.createdAt = -1;
         break;
       case 'popular':
-        sort = { likes: -1, createdAt: -1 };
+        sort.likes = -1;
+        sort.createdAt = -1;
         break;
       case 'mostCommented':
-        sort = { comments: -1, createdAt: -1 };
+        sort.comments = -1;
+        sort.createdAt = -1;
         break;
       case 'views':
-        sort = { views: -1, createdAt: -1 };
+        sort.views = -1;
+        sort.createdAt = -1;
         break;
       default:
-        sort = { createdAt: -1 };
+        sort.createdAt = -1;
     }
 
     // Execute query with pagination
@@ -185,6 +196,10 @@ exports.createPost = async (req, res) => {
       });
     }
 
+    // Filter profanity from title and content
+    const cleanTitle = filter.clean(title);
+    const cleanContent = filter.clean(content);
+
     // Handle multiple images upload if provided
     let uploadedImages = [];
     if (images && Array.isArray(images) && images.length > 0) {
@@ -223,14 +238,15 @@ exports.createPost = async (req, res) => {
       }
     }
 
-    // Create post
+    // Create post with pending status (requires admin approval)
     const post = new ForumPost({
       author: userId,
       category,
-      title,
-      content,
+      title: cleanTitle,
+      content: cleanContent,
       tags: tags || [],
       images: uploadedImages,
+      status: 'pending', // Requires admin approval
     });
 
     await post.save();
@@ -254,7 +270,7 @@ exports.createPost = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Post created successfully',
+      message: 'Post submitted successfully and is pending admin approval',
       data: formattedPost,
     });
   } catch (error) {
@@ -291,9 +307,9 @@ exports.updatePost = async (req, res) => {
       });
     }
 
-    // Update fields
-    if (title) post.title = title;
-    if (content) post.content = content;
+    // Update fields with profanity filtering
+    if (title) post.title = filter.clean(title);
+    if (content) post.content = filter.clean(content);
     if (tags) post.tags = tags;
     if (image !== undefined) post.image = image;
 
@@ -434,10 +450,13 @@ exports.addComment = async (req, res) => {
       });
     }
 
+    // Filter profanity from comment content
+    const cleanContent = filter.clean(content.trim());
+
     // Add comment
     post.comments.push({
       user: userId,
-      content: content.trim(),
+      content: cleanContent,
     });
 
     await post.save();
@@ -515,3 +534,115 @@ function getRelativeTime(date) {
   if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
   return 'Just now';
 }
+
+// Get user's own posts (including pending)
+exports.getMyPosts = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { page = 1, limit = 20, status = '' } = req.query;
+
+    // Build query
+    const query = { author: userId };
+
+    // Filter by status if provided
+    if (status) {
+      query.status = status;
+    }
+
+    // Calculate pagination
+    const skip = (page - 1) * limit;
+
+    // Get user's posts
+    const posts = await ForumPost.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .populate('moderatedBy', 'username firstName lastName')
+      .lean();
+
+    // Get total count
+    const total = await ForumPost.countDocuments(query);
+
+    // Format posts
+    const formattedPosts = posts.map(post => ({
+      _id: post._id,
+      title: post.title,
+      content: post.content,
+      category: post.category,
+      status: post.status,
+      images: post.images,
+      tags: post.tags,
+      likeCount: post.likes?.length || 0,
+      commentCount: post.comments?.length || 0,
+      views: post.views,
+      isPinned: post.isPinned,
+      isLocked: post.isLocked,
+      createdAt: post.createdAt,
+      timestamp: getRelativeTime(post.createdAt),
+      moderationNote: post.moderationNote,
+      moderatedBy: post.moderatedBy,
+      moderatedAt: post.moderatedAt,
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: formattedPosts,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(total / limit),
+        totalPosts: total,
+        hasMore: skip + posts.length < total,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching user posts:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch your posts',
+      error: error.message,
+    });
+  }
+};
+
+// Report a post for inappropriate content
+exports.reportPost = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user._id;
+
+    // Find the post
+    const post = await ForumPost.findById(id);
+    
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: 'Post not found',
+      });
+    }
+
+    // Prevent users from reporting their own posts
+    if (post.author.toString() === userId.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'You cannot report your own post',
+      });
+    }
+
+    // Update post status to flagged
+    post.status = 'flagged';
+    await post.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Post has been reported. Our moderators will review it shortly.',
+    });
+  } catch (error) {
+    console.error('Error reporting post:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to report post',
+      error: error.message,
+    });
+  }
+};
+

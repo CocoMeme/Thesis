@@ -81,8 +81,19 @@ const forumPostSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['active', 'archived', 'deleted', 'flagged'],
-    default: 'active',
+    enum: ['pending', 'active', 'archived', 'deleted', 'flagged', 'rejected'],
+    default: 'pending',
+  },
+  moderationNote: {
+    type: String,
+    maxlength: 500,
+  },
+  moderatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  },
+  moderatedAt: {
+    type: Date,
   },
 }, {
   timestamps: true,
@@ -94,6 +105,7 @@ forumPostSchema.index({ category: 1, createdAt: -1 });
 forumPostSchema.index({ tags: 1 });
 forumPostSchema.index({ createdAt: -1 });
 forumPostSchema.index({ 'likes.user': 1 });
+forumPostSchema.index({ status: 1 });
 
 // Virtual for like count
 forumPostSchema.virtual('likeCount').get(function() {

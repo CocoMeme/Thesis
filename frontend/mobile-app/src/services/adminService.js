@@ -339,6 +339,252 @@ class AdminService {
       };
     }
   }
+
+  /**
+   * Get all forum posts with pagination and filters
+   */
+  async getAllForumPosts(params = {}) {
+    try {
+      const queryParams = new URLSearchParams();
+      
+      if (params.page) queryParams.append('page', params.page);
+      if (params.limit) queryParams.append('limit', params.limit);
+      if (params.search) queryParams.append('search', params.search);
+      if (params.category) queryParams.append('category', params.category);
+      if (params.status) queryParams.append('status', params.status);
+      if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+      if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+
+      const response = await fetch(`${API_BASE_URL}/admin/forum/posts?${queryParams}`, {
+        method: 'GET',
+        headers: authService.getAuthHeaders(),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to fetch forum posts');
+      }
+
+      return {
+        success: true,
+        posts: data.data.posts,
+        pagination: data.data.pagination,
+      };
+    } catch (error) {
+      console.error('Get all forum posts error:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to fetch forum posts',
+      };
+    }
+  }
+
+  /**
+   * Get forum post by ID
+   */
+  async getForumPostById(postId) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/forum/posts/${postId}`, {
+        method: 'GET',
+        headers: authService.getAuthHeaders(),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to fetch forum post');
+      }
+
+      return {
+        success: true,
+        post: data.data.post,
+      };
+    } catch (error) {
+      console.error('Get forum post error:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to fetch forum post',
+      };
+    }
+  }
+
+  /**
+   * Update forum post status
+   */
+  async updateForumPostStatus(postId, status) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/forum/posts/${postId}/status`, {
+        method: 'PATCH',
+        headers: authService.getAuthHeaders(),
+        body: JSON.stringify({ status }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to update forum post status');
+      }
+
+      return {
+        success: true,
+        post: data.data.post,
+      };
+    } catch (error) {
+      console.error('Update forum post status error:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to update forum post status',
+      };
+    }
+  }
+
+  /**
+   * Delete forum post (soft delete only)
+   */
+  async deleteForumPost(postId) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/forum/posts/${postId}`, {
+        method: 'DELETE',
+        headers: authService.getAuthHeaders(),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to delete forum post');
+      }
+
+      return {
+        success: true,
+        message: data.message,
+      };
+    } catch (error) {
+      console.error('Delete forum post error:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to delete forum post',
+      };
+    }
+  }
+
+  /**
+   * Toggle pin status of forum post
+   */
+  async togglePinPost(postId) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/forum/posts/${postId}/pin`, {
+        method: 'PATCH',
+        headers: authService.getAuthHeaders(),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to toggle pin status');
+      }
+
+      return {
+        success: true,
+        post: data.data.post,
+      };
+    } catch (error) {
+      console.error('Toggle pin post error:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to toggle pin status',
+      };
+    }
+  }
+
+  /**
+   * Toggle lock status of forum post
+   */
+  async toggleLockPost(postId) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/forum/posts/${postId}/lock`, {
+        method: 'PATCH',
+        headers: authService.getAuthHeaders(),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to toggle lock status');
+      }
+
+      return {
+        success: true,
+        post: data.data.post,
+      };
+    } catch (error) {
+      console.error('Toggle lock post error:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to toggle lock status',
+      };
+    }
+  }
+
+  /**
+   * Approve pending forum post
+   */
+  async approvePost(postId, note = '') {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/forum/posts/${postId}/approve`, {
+        method: 'PATCH',
+        headers: authService.getAuthHeaders(),
+        body: JSON.stringify({ note }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to approve post');
+      }
+
+      return {
+        success: true,
+        post: data.data.post,
+      };
+    } catch (error) {
+      console.error('Approve post error:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to approve post',
+      };
+    }
+  }
+
+  /**
+   * Reject pending forum post
+   */
+  async rejectPost(postId, reason) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/forum/posts/${postId}/reject`, {
+        method: 'PATCH',
+        headers: authService.getAuthHeaders(),
+        body: JSON.stringify({ reason }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to reject post');
+      }
+
+      return {
+        success: true,
+        post: data.data.post,
+      };
+    } catch (error) {
+      console.error('Reject post error:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to reject post',
+      };
+    }
+  }
 }
 
 // Create and export singleton instance

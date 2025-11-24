@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, RefreshControl, ActivityIndicator, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, RefreshControl, ActivityIndicator, StatusBar, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../styles';
@@ -119,6 +119,37 @@ const CommunityScreen = ({ navigation }) => {
     } catch (err) {
       console.error('Error liking post:', err);
     }
+  };
+
+  const handleReportPost = (postId) => {
+    Alert.alert(
+      'Report Post',
+      'Report this post for inappropriate content? Our moderators will review it.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Report',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const response = await forumService.reportPost(postId);
+              if (response.success) {
+                Alert.alert(
+                  'Thank You',
+                  'Your report has been submitted. Our team will review this post shortly.',
+                  [{ text: 'OK' }]
+                );
+              } else {
+                Alert.alert('Error', response.message || 'Failed to report post');
+              }
+            } catch (error) {
+              console.error('Error reporting post:', error);
+              Alert.alert('Error', 'Failed to submit report. Please try again.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const getCategoryColor = (category) => {
@@ -307,10 +338,21 @@ const CommunityScreen = ({ navigation }) => {
             posts.map((post) => (
               <TouchableOpacity
                 key={post._id || post.id}
-                style={styles.postCard}
+                style={[
+                  styles.postCard,
+                  post.isPinned && styles.pinnedPostCard
+                ]}
                 onPress={() => handlePostPress(post)}
                 activeOpacity={0.7}
               >
+                {/* Pinned Badge */}
+                {post.isPinned && (
+                  <View style={styles.pinnedBadge}>
+                    <Ionicons name="pin" size={14} color="#fff" />
+                    <Text style={styles.pinnedBadgeText}>Pinned</Text>
+                  </View>
+                )}
+
                 {/* Post Header */}
                 <View style={styles.postHeader}>
                   <View style={styles.authorInfo}>
@@ -398,6 +440,15 @@ const CommunityScreen = ({ navigation }) => {
                       <Text style={styles.statText}>{post.views || 0}</Text>
                     </View>
                   </View>
+                  <TouchableOpacity
+                    style={styles.reportButton}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleReportPost(post._id);
+                    }}
+                  >
+                    <Ionicons name="flag-outline" size={18} color={theme.colors.text.secondary} />
+                  </TouchableOpacity>
                 </View>
               </TouchableOpacity>
             ))
@@ -664,6 +715,29 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.background.secondary,
   },
+  pinnedPostCard: {
+    borderWidth: 2,
+    borderColor: theme.colors.primary + '40',
+    backgroundColor: theme.colors.primary + '08',
+  },
+  pinnedBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+    zIndex: 10,
+  },
+  pinnedBadgeText: {
+    fontSize: 11,
+    fontFamily: theme.fonts.semiBold,
+    color: '#fff',
+  },
   postHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -789,10 +863,17 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: theme.colors.background.secondary,
     paddingTop: theme.spacing.sm,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   postStats: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  reportButton: {
+    padding: theme.spacing.xs,
+    borderRadius: theme.borderRadius.small,
   },
   statItem: {
     flexDirection: 'row',

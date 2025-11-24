@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, View, Alert } from 'react-native';
 
 import { HomeScreen, CameraScreen, ResultsScreen, HistoryScreen, NewsScreen, ChatbotScreen, LoginScreen, SignUpScreen, ProfileScreen, PollinationScreen, PlantFormScreen, PlantDetailScreen, HowToUseScreen, EducationalScreen, CommunityScreen, CreatePostScreen, PostDetailScreen } from '../screens';
-import { AdminDashboardScreen, UserManagementScreen, UserDetailScreen } from '../screens/AdminScreens';
+import { AdminDashboardScreen, UserManagementScreen, UserDetailScreen, ForumManagementScreen } from '../screens/AdminScreens';
 import { theme } from '../styles';
 
 const TAB_BAR_HEIGHT = 70;
@@ -272,6 +272,11 @@ const AdminStack = () => {
         name="UserDetail" 
         component={UserDetailScreen}
         options={{ title: 'User Details' }}
+      />
+      <Stack.Screen 
+        name="ForumManagement" 
+        component={ForumManagementScreen}
+        options={{ title: 'Forum Management' }}
       />
     </Stack.Navigator>
   );

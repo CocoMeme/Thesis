@@ -84,11 +84,8 @@ const PostDetailScreen = ({ navigation, route }) => {
         setCommentText('');
         fetchPost(); // Refresh to get updated comments
       } else {
-        Alert.alert('Error', response.message || 'Failed to add comment');
+        Alert.alert('Unable to Comment', response.message || 'Failed to add comment');
       }
-    } catch (error) {
-      console.error('Error adding comment:', error);
-      Alert.alert('Error', 'Failed to add comment');
     } finally {
       setSubmitting(false);
     }
@@ -326,28 +323,35 @@ const PostDetailScreen = ({ navigation, route }) => {
         </ScrollView>
 
         {/* Comment Input */}
-        <View style={styles.commentInputContainer}>
-          <TextInput
-            style={styles.commentInput}
-            placeholder="Write a comment..."
-            placeholderTextColor={theme.colors.text.secondary}
-            value={commentText}
-            onChangeText={setCommentText}
-            multiline
-            maxLength={1000}
-          />
-          <TouchableOpacity
-            style={[styles.sendButton, (!commentText.trim() || submitting) && styles.sendButtonDisabled]}
-            onPress={handleAddComment}
-            disabled={!commentText.trim() || submitting}
-          >
-            {submitting ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Ionicons name="send" size={20} color="#fff" />
-            )}
-          </TouchableOpacity>
-        </View>
+        {post?.isLocked ? (
+          <View style={styles.lockedCommentContainer}>
+            <Ionicons name="lock-closed" size={20} color={theme.colors.text.secondary} />
+            <Text style={styles.lockedCommentText}>This post is locked. No new comments allowed.</Text>
+          </View>
+        ) : (
+          <View style={styles.commentInputContainer}>
+            <TextInput
+              style={styles.commentInput}
+              placeholder="Write a comment..."
+              placeholderTextColor={theme.colors.text.secondary}
+              value={commentText}
+              onChangeText={setCommentText}
+              multiline
+              maxLength={1000}
+            />
+            <TouchableOpacity
+              style={[styles.sendButton, (!commentText.trim() || submitting) && styles.sendButtonDisabled]}
+              onPress={handleAddComment}
+              disabled={!commentText.trim() || submitting}
+            >
+              {submitting ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Ionicons name="send" size={20} color="#fff" />
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
       </KeyboardAvoidingView>
     </View>
   );
@@ -615,6 +619,21 @@ const styles = StyleSheet.create({
   },
   sendButtonDisabled: {
     opacity: 0.5,
+  },
+  lockedCommentContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.background.secondary,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    gap: theme.spacing.sm,
+  },
+  lockedCommentText: {
+    fontSize: 14,
+    fontFamily: theme.fonts.medium,
+    color: theme.colors.text.secondary,
   },
 });
 

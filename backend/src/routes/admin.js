@@ -76,4 +76,48 @@ router.get('/users/:userId/stats', adminController.getUserStats);
 // @access  Private/Admin
 router.post('/users/bulk-update', validateBulkUpdate, adminController.bulkUpdateUsers);
 
+/**
+ * Forum Management Routes
+ */
+
+// @route   GET /api/admin/forum/posts
+// @desc    Get all forum posts with pagination, filtering, and sorting
+// @access  Private/Admin
+router.get('/forum/posts', adminController.getAllForumPosts);
+
+// @route   GET /api/admin/forum/posts/:postId
+// @desc    Get specific forum post by ID
+// @access  Private/Admin
+router.get('/forum/posts/:postId', adminController.getForumPostById);
+
+// @route   PATCH /api/admin/forum/posts/:postId/status
+// @desc    Update forum post status (active, archived, deleted, flagged)
+// @access  Private/Admin
+router.patch('/forum/posts/:postId/status', adminController.updateForumPostStatus);
+
+// @route   DELETE /api/admin/forum/posts/:postId
+// @desc    Delete forum post (soft delete or permanent)
+// @access  Private/Admin
+router.delete('/forum/posts/:postId', adminController.deleteForumPost);
+
+// @route   PATCH /api/admin/forum/posts/:postId/pin
+// @desc    Pin or unpin forum post
+// @access  Private/Admin
+router.patch('/forum/posts/:postId/pin', adminController.togglePinPost);
+
+// @route   PATCH /api/admin/forum/posts/:postId/lock
+// @desc    Lock or unlock forum post
+// @access  Private/Admin
+router.patch('/forum/posts/:postId/lock', adminController.toggleLockPost);
+
+// @route   PATCH /api/admin/forum/posts/:postId/approve
+// @desc    Approve pending forum post
+// @access  Private/Admin
+router.patch('/forum/posts/:postId/approve', adminController.approvePost);
+
+// @route   PATCH /api/admin/forum/posts/:postId/reject
+// @desc    Reject pending forum post
+// @access  Private/Admin
+router.patch('/forum/posts/:postId/reject', adminController.rejectPost);
+
 module.exports = router;

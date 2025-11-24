@@ -12,10 +12,12 @@ router.get('/posts/:id', forumController.getPostById);
 router.get('/topics/popular', forumController.getPopularTopics);
 
 // Protected routes (require authentication)
+router.get('/my-posts', authenticate, forumController.getMyPosts);
 router.post('/posts', authenticate, forumController.createPost);
 router.put('/posts/:id', authenticate, forumController.updatePost);
 router.delete('/posts/:id', authenticate, forumController.deletePost);
 router.post('/posts/:id/like', authenticate, forumController.toggleLike);
 router.post('/posts/:id/comments', authenticate, forumController.addComment);
+router.post('/posts/:id/report', authenticate, forumController.reportPost);
 
 module.exports = router;

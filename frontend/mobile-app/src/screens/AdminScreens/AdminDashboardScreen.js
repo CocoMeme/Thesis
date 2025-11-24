@@ -178,6 +178,43 @@ export const AdminDashboardScreen = ({ navigation }) => {
           </View>
         </View>
 
+        {/* Forum Stats */}
+        {dashboardData?.forumStats && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Forum Statistics</Text>
+            <View style={styles.statsGrid}>
+              <StatCard
+                title="Pending Posts"
+                value={dashboardData.forumStats.pendingPosts || 0}
+                icon="time"
+                color="#FF9800"
+                onPress={() => navigation.navigate('ForumManagement', { filter: 'pending' })}
+              />
+              <StatCard
+                title="Active Posts"
+                value={dashboardData.forumStats.activePosts || 0}
+                icon="chatbubble-ellipses"
+                color="#4CAF50"
+                onPress={() => navigation.navigate('ForumManagement', { filter: 'active' })}
+              />
+              <StatCard
+                title="Flagged Posts"
+                value={dashboardData.forumStats.flaggedPosts || 0}
+                icon="flag"
+                color="#9C27B0"
+                onPress={() => navigation.navigate('ForumManagement', { filter: 'flagged' })}
+              />
+              <StatCard
+                title="Total Posts"
+                value={dashboardData.forumStats.totalPosts || 0}
+                icon="chatbubbles"
+                color={theme.colors.primary}
+                onPress={() => navigation.navigate('ForumManagement')}
+              />
+            </View>
+          </View>
+        )}
+
         {/* Users by Role */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Users by Role</Text>
@@ -225,6 +262,12 @@ export const AdminDashboardScreen = ({ navigation }) => {
               onPress={() => navigation.navigate('UserManagement')}
             />
             <QuickAction
+              title="Manage Forum"
+              icon="chatbubbles"
+              color="#4CAF50"
+              onPress={() => navigation.navigate('ForumManagement')}
+            />
+            <QuickAction
               title="View Reports"
               icon="stats-chart"
               color="#FF9800"
@@ -234,12 +277,6 @@ export const AdminDashboardScreen = ({ navigation }) => {
               title="Settings"
               icon="settings"
               color="#9C27B0"
-              onPress={() => {}}
-            />
-            <QuickAction
-              title="Support"
-              icon="help-circle"
-              color="#00BCD4"
               onPress={() => {}}
             />
           </View>

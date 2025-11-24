@@ -22,7 +22,7 @@ const getAuthHeaders = async () => {
  */
 export const getAllPosts = async (params = {}) => {
   try {
-    const { category, search, tags, sortBy, page, limit } = params;
+    const { category, search, tags, sortBy, page, limit, isPinned } = params;
     
     const queryParams = new URLSearchParams();
     if (category) queryParams.append('category', category);
@@ -37,6 +37,7 @@ export const getAllPosts = async (params = {}) => {
     if (sortBy) queryParams.append('sortBy', sortBy);
     if (page) queryParams.append('page', page);
     if (limit) queryParams.append('limit', limit);
+    if (isPinned !== undefined) queryParams.append('isPinned', isPinned);
 
     const response = await axios.get(
       `${API_BASE_URL}/forum/posts?${queryParams.toString()}`
@@ -239,6 +240,66 @@ export const getPopularTopics = async (limit = 10) => {
   }
 };
 
+/**
+ * Get user's own posts (including pending)
+ */
+export const getMyPosts = async (params = {}) => {
+  try {
+    const headers = await getAuthHeaders();
+    const { page, limit, status } = params;
+    
+    const queryParams = new URLSearchParams();
+    if (page) queryParams.append('page', page);
+    if (limit) queryParams.append('limit', limit);
+    if (status) queryParams.append('status', status);
+
+    const response = await axios.get(
+      `${API_BASE_URL}/forum/my-posts?${queryParams.toString()}`,
+      { headers }
+    );
+
+    return {
+      success: true,
+      data: response.data.data,
+      pagination: response.data.pagination,
+    };
+  } catch (error) {
+    console.error('Error fetching my posts:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to fetch your posts',
+      error: error.message,
+    };
+  }
+};
+
+/**
+ * Report a post for inappropriate content
+ */
+export const reportPost = async (postId) => {
+  try {
+    const headers = await getAuthHeaders();
+    
+    const response = await axios.post(
+      `${API_BASE_URL}/forum/posts/${postId}/report`,
+      {},
+      { headers }
+    );
+
+    return {
+      success: true,
+      message: response.data.message || 'Post reported successfully',
+    };
+  } catch (error) {
+    console.error('Error reporting post:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to report post',
+      error: error.message,
+    };
+  }
+};
+
 export default {
   getAllPosts,
   getPostById,
@@ -248,4 +309,6 @@ export default {
   toggleLike,
   addComment,
   getPopularTopics,
+  getMyPosts,
+  reportPost,
 };
