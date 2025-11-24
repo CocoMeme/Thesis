@@ -1,6 +1,7 @@
 // Home Screens
 export { HomeScreen } from './HomeScreens/HomeScreen';
 export { NewsScreen } from './HomeScreens/NewsScreen';
+export { ChatbotScreen } from './HomeScreens/ChatbotScreen';
 export { default as HowToUseScreen } from './HomeScreens/HowToUseScreen';
 export { default as EducationalScreen } from './HomeScreens/EducationalScreen';
 

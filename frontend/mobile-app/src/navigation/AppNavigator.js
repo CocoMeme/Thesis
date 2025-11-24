@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, View, Alert } from 'react-native';
 
-import { HomeScreen, CameraScreen, ResultsScreen, HistoryScreen, NewsScreen, LoginScreen, SignUpScreen, ProfileScreen, PollinationScreen, PlantFormScreen, PlantDetailScreen, HowToUseScreen, EducationalScreen, CommunityScreen, CreatePostScreen, PostDetailScreen } from '../screens';
+import { HomeScreen, CameraScreen, ResultsScreen, HistoryScreen, NewsScreen, ChatbotScreen, LoginScreen, SignUpScreen, ProfileScreen, PollinationScreen, PlantFormScreen, PlantDetailScreen, HowToUseScreen, EducationalScreen, CommunityScreen, CreatePostScreen, PostDetailScreen } from '../screens';
 import { AdminDashboardScreen, UserManagementScreen, UserDetailScreen } from '../screens/AdminScreens';
 import { theme } from '../styles';
 
@@ -62,6 +62,11 @@ const HomeStack = ({ route }) => {
       <Stack.Screen 
         name="NewsMain" 
         component={NewsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="Chatbot" 
+        component={ChatbotScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen 

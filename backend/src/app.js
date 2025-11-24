@@ -131,7 +131,10 @@ class App {
           scans: '/api/scans',
           uploads: '/api/uploads',
           news: '/api/news',
-          pollination: '/api/pollination'
+          pollination: '/api/pollination',
+          forum: '/api/forum',
+          chatbot: '/api/chatbot',
+          admin: '/api/admin'
         },
         documentation: '/api/docs'
       });
@@ -144,6 +147,7 @@ class App {
     this.app.use('/api/news', require('./routes/news'));
     this.app.use('/api/pollination', require('./routes/pollination'));
     this.app.use('/api/forum', require('./routes/forum'));
+    this.app.use('/api/chatbot', require('./routes/chatbot'));
     this.app.use('/api/admin', require('./routes/admin'));
     // TODO: Add these when other route modules are created
     // this.app.use('/api/users', require('./routes/users'));

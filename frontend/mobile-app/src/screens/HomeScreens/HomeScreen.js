@@ -97,6 +97,13 @@ export const HomeScreen = ({ navigation, route }) => {
 
   const quickTools = [
     {
+      id: 'chatbot',
+      label: 'Ask Me',
+      icon: 'chatbubble-ellipses-outline',
+      action: () => navigation.navigate('Chatbot'),
+      highlight: true,
+    },
+    {
       id: 'history',
       label: 'History',
       icon: 'time-outline',
@@ -345,14 +352,14 @@ export const HomeScreen = ({ navigation, route }) => {
               {quickTools.map((tool) => (
                 <TouchableOpacity
                   key={tool.id}
-                  style={styles.toolButton}
+                  style={[styles.toolButton, tool.highlight && styles.toolButtonHighlight]}
                   onPress={tool.action}
                   activeOpacity={0.85}
                 >
-                  <View style={styles.toolIconWrap}>
-                    <Ionicons name={tool.icon} size={20} color={theme.colors.primary} />
+                  <View style={[styles.toolIconWrap, tool.highlight && styles.toolIconWrapHighlight]}>
+                    <Ionicons name={tool.icon} size={20} color={tool.highlight ? '#fff' : theme.colors.primary} />
                   </View>
-                  <Text style={styles.toolLabel}>{tool.label}</Text>
+                  <Text style={[styles.toolLabel, tool.highlight && styles.toolLabelHighlight]}>{tool.label}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -534,6 +541,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.sm,
     minWidth: 70,
   },
+  toolButtonHighlight: {
+    transform: [{ scale: 1.05 }],
+  },
   toolIconWrap: {
     width: 44,
     height: 44,
@@ -543,10 +553,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: theme.spacing.xs,
   },
+  toolIconWrapHighlight: {
+    backgroundColor: theme.colors.primary,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
   toolLabel: {
     fontSize: 12,
     fontFamily: theme.fonts.medium,
     color: theme.colors.text.primary,
+  },
+  toolLabelHighlight: {
+    color: theme.colors.primary,
+    fontFamily: theme.fonts.bold,
   },
   statRow: {
     flexDirection: 'row',
