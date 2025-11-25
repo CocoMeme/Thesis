@@ -149,10 +149,10 @@ class App {
     this.app.use('/api/forum', require('./routes/forum'));
     this.app.use('/api/chatbot', require('./routes/chatbot'));
     this.app.use('/api/admin', require('./routes/admin'));
+    this.app.use('/api/scans', require('./routes/scan'));
+    this.app.use('/api/uploads', require('./routes/uploads'));
     // TODO: Add these when other route modules are created
     // this.app.use('/api/users', require('./routes/users'));
-    // this.app.use('/api/scans', require('./routes/scans'));
-    // this.app.use('/api/uploads', require('./routes/uploads'));
 
     // Catch-all route for undefined endpoints
     this.app.use((req, res) => {

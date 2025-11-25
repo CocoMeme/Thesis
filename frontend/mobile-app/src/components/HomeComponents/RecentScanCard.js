@@ -1,10 +1,12 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../styles';
 
 export const RecentScanCard = ({ imageUri, result, date, onPress }) => {
+  const [isLoading, setIsLoading] = useState(true);
+
   const getStatusConfig = (result) => {
     if (result?.toLowerCase().includes('ready')) {
       return {
@@ -46,7 +48,17 @@ export const RecentScanCard = ({ imageUri, result, date, onPress }) => {
       <View style={styles.imageContainer}>
         {imageUri ? (
           <>
-            <Image source={{ uri: imageUri }} style={styles.image} />
+            <Image 
+              source={{ uri: imageUri }} 
+              style={styles.image}
+              onLoadStart={() => setIsLoading(true)}
+              onLoadEnd={() => setIsLoading(false)}
+            />
+            {isLoading && (
+              <View style={[styles.image, styles.loadingOverlay]}>
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+              </View>
+            )}
             <LinearGradient
               colors={['transparent', 'rgba(0, 0, 0, 0.3)']}
               style={styles.imageOverlay}
@@ -115,6 +127,16 @@ const styles = StyleSheet.create({
     height: '50%',
     borderBottomLeftRadius: theme.borderRadius.medium,
     borderBottomRightRadius: theme.borderRadius.medium,
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background.secondary,
   },
   placeholderImage: {
     justifyContent: 'center',

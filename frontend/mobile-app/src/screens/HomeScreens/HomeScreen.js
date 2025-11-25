@@ -13,7 +13,7 @@ import {
 } from '../../components';
 import { theme } from '../../styles';
 import { getAllNews, getPopupNews, markNewsAsRead } from '../../services/newsService';
-import { authService, connectionService } from '../../services';
+import { authService, connectionService, scanService } from '../../services';
 
 const TAB_BAR_HEIGHT = 70;
 
@@ -64,20 +64,8 @@ export const HomeScreen = ({ navigation, route }) => {
     );
   };
   
-  const [recentScans] = useState([
-    {
-      id: '1',
-      imageUri: null,
-      result: 'Ready for Harvest',
-      date: new Date().toISOString(),
-    },
-    {
-      id: '2',
-      imageUri: null,
-      result: 'Almost Ready',
-      date: new Date(Date.now() - 86400000).toISOString(),
-    },
-  ]);
+  const [recentScans, setRecentScans] = useState([]);
+  const [loadingScans, setLoadingScans] = useState(true);
 
   const [alert, setAlert] = useState({ visible: false, type: 'info', title: '', message: '', buttons: [] });
   const [news, setNews] = useState([]);
@@ -107,7 +95,7 @@ export const HomeScreen = ({ navigation, route }) => {
       id: 'history',
       label: 'History',
       icon: 'time-outline',
-      action: () => navigation.navigate('History'),
+      action: () => navigation.navigate('Profile', { initialTab: 'history' }),
     },
     {
       id: 'educational',
@@ -119,7 +107,7 @@ export const HomeScreen = ({ navigation, route }) => {
       id: 'news',
       label: 'News',
       icon: 'newspaper-outline',
-      action: () => navigation.navigate('News'),
+      action: () => navigation.navigate('NewsMain'),
     },
     {
       id: 'profile',
@@ -135,10 +123,24 @@ export const HomeScreen = ({ navigation, route }) => {
     },
   ];
 
-  // Fetch news on component mount
+  // Fetch news and scans on component mount
   useEffect(() => {
     fetchNews();
+    fetchRecentScans();
   }, []);
+
+  const fetchRecentScans = async () => {
+    try {
+      setLoadingScans(true);
+      const history = await scanService.getScanHistory();
+      // Take the last 3 scans
+      setRecentScans(history.slice(0, 3));
+    } catch (error) {
+      console.error('Error fetching recent scans:', error);
+    } finally {
+      setLoadingScans(false);
+    }
+  };
 
   const fetchNews = async () => {
     try {
@@ -198,6 +200,9 @@ export const HomeScreen = ({ navigation, route }) => {
       
       // Reload news data
       await fetchNews();
+
+      // Reload recent scans
+      await fetchRecentScans();
       
       console.log('✅ Refresh completed successfully');
       
@@ -294,6 +299,24 @@ export const HomeScreen = ({ navigation, route }) => {
   const handleStatsPress = (type) => {
     // Navigate to filtered history
     navigation.navigate('History', { filter: type });
+  };
+
+  const handleScanPress = (scan) => {
+    navigation.navigate('Camera', {
+      screen: 'Results',
+      params: {
+        scanId: scan._id,
+        imageUri: scan.imageUrl,
+        prediction: {
+          gender: scan.prediction,
+          confidence: scan.confidence,
+          timestamp: scan.date,
+          modelType: 'MobileNetV2',
+          modelVersion: '1.0.0',
+          processingTime: 0
+        }
+      }
+    });
   };
 
   const scrollContentPadding = useMemo(
@@ -412,28 +435,32 @@ export const HomeScreen = ({ navigation, route }) => {
             )}
           </View>
 
-          {recentScans.length > 0 && (
+          {loadingScans ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color={theme.colors.primary} />
+            </View>
+          ) : recentScans.length > 0 ? (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Recent Scans</Text>
                 <Text
                   style={styles.sectionAction}
-                  onPress={() => navigation.navigate('History')}
+                  onPress={() => navigation.navigate('Profile', { initialTab: 'history' })}
                 >
                   View all
                 </Text>
               </View>
               {recentScans.map((scan) => (
                 <RecentScanCard
-                  key={scan.id}
-                  imageUri={scan.imageUri}
-                  result={scan.result}
+                  key={scan._id}
+                  imageUri={scan.imageUrl}
+                  result={`${scan.prediction} Flower`}
                   date={scan.date}
-                  onPress={() => {}}
+                  onPress={() => handleScanPress(scan)}
                 />
               ))}
             </View>
-          )}
+          ) : null}
         </View>
       </ScrollView>
 

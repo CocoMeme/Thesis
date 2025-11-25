@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useLayoutEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -7,16 +7,20 @@ import {
   TouchableOpacity, 
   ScrollView,
   Alert,
-  Dimensions
+  Dimensions,
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../styles';
+import { scanService } from '../../services';
 
 const { width } = Dimensions.get('window');
 
 export const ResultsScreen = ({ route, navigation }) => {
-  const { imageUri, prediction } = route.params;
+  const { imageUri, prediction, scanId } = route.params;
   const [isSaving, setIsSaving] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
+  const isHistoryView = !!scanId;
 
   // Helper: Get gender icon
   const getGenderIcon = (gender) => {
@@ -65,12 +69,44 @@ export const ResultsScreen = ({ route, navigation }) => {
     }
   };
 
+  // Handler: Delete scan
+  const handleDelete = async () => {
+    Alert.alert(
+      'Delete Scan',
+      'Are you sure you want to delete this scan?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await scanService.deleteScan(scanId);
+              Alert.alert('Success', 'Scan deleted successfully');
+              navigation.goBack();
+            } catch (error) {
+              console.error('Delete error:', error);
+              Alert.alert('Error', 'Failed to delete scan');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   // Handler: Save scan to backend
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // TODO: Implement save to backend
-      // await scanService.saveScan(imageUri, prediction);
+      const scanData = {
+        prediction: prediction.gender,
+        confidence: prediction.confidence,
+        diseaseInfo: {}, // Placeholder for future disease detection
+        location: null, // Placeholder for location data
+        notes: '',
+      };
+
+      await scanService.saveScan(scanData, imageUri);
       
       Alert.alert(
         'Success! 🎉',
@@ -78,15 +114,19 @@ export const ResultsScreen = ({ route, navigation }) => {
         [
           {
             text: 'View History',
-            onPress: () => navigation.navigate('History')
+            onPress: () => navigation.navigate('Profile', { 
+              screen: 'ProfileMain', 
+              params: { initialTab: 'history' } 
+            })
           },
           {
             text: 'Take Another',
-            onPress: () => navigation.navigate('Camera')
+            onPress: () => navigation.navigate('CameraMain')
           }
         ]
       );
     } catch (error) {
+      console.error('Save error:', error);
       Alert.alert(
         'Save Failed',
         'Failed to save scan. Please try again.',
@@ -99,7 +139,7 @@ export const ResultsScreen = ({ route, navigation }) => {
 
   // Handler: Retake photo
   const handleRetake = () => {
-    navigation.goBack();
+    navigation.navigate('CameraMain');
   };
 
   // Handler: Share results
@@ -111,6 +151,34 @@ export const ResultsScreen = ({ route, navigation }) => {
     );
   };
 
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={styles.headerButtons}>
+          <TouchableOpacity onPress={handleRetake} style={styles.headerButton}>
+            <Ionicons name="camera-outline" size={22} color="#000000" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleShare} style={styles.headerButton}>
+            <Ionicons name="share-outline" size={22} color="#000000" />
+          </TouchableOpacity>
+          {isHistoryView ? (
+            <TouchableOpacity onPress={handleDelete} style={styles.headerButton}>
+              <Ionicons name="trash-outline" size={22} color="#000000" />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={handleSave} disabled={isSaving} style={styles.headerButton}>
+              {isSaving ? (
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+              ) : (
+                <Ionicons name="save-outline" size={22} color="#000000" />
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
+      ),
+    });
+  }, [navigation, isHistoryView, isSaving]);
+
   const confidenceInfo = getConfidenceLevel(prediction.confidence);
   const flowerInfo = getFlowerInfo(prediction.gender);
 
@@ -118,7 +186,18 @@ export const ResultsScreen = ({ route, navigation }) => {
     <ScrollView style={styles.container}>
       {/* Image Preview */}
       <View style={styles.imageContainer}>
-        <Image source={{ uri: imageUri }} style={styles.image} />
+        <Image 
+          source={{ uri: imageUri }} 
+          style={styles.image} 
+          onLoadStart={() => setImageLoading(true)}
+          onLoadEnd={() => setImageLoading(false)}
+        />
+        
+        {imageLoading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+          </View>
+        )}
         
         {/* Quick Result Badge */}
         <View style={[
@@ -245,38 +324,6 @@ export const ResultsScreen = ({ route, navigation }) => {
 
       </View>
 
-      {/* Action Buttons */}
-      <View style={styles.actionButtons}>
-        <TouchableOpacity 
-          style={[styles.button, styles.secondaryButton]} 
-          onPress={handleRetake}
-          disabled={isSaving}
-        >
-          <Ionicons name="camera" size={24} color={theme.colors.primary} />
-          <Text style={styles.secondaryButtonText}>Retake</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={[styles.button, styles.secondaryButton]} 
-          onPress={handleShare}
-          disabled={isSaving}
-        >
-          <Ionicons name="share-outline" size={24} color={theme.colors.primary} />
-          <Text style={styles.secondaryButtonText}>Share</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={[styles.button, styles.primaryButton]} 
-          onPress={handleSave}
-          disabled={isSaving}
-        >
-          <Ionicons name="save" size={24} color="#FFFFFF" />
-          <Text style={styles.primaryButtonText}>
-            {isSaving ? 'Saving...' : 'Save'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
       {/* Bottom Spacing */}
       <View style={styles.bottomSpacing} />
     </ScrollView>
@@ -298,6 +345,12 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     resizeMode: 'contain',
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000000',
   },
   resultBadge: {
     position: 'absolute',
@@ -490,5 +543,14 @@ const styles = StyleSheet.create({
   },
   bottomSpacing: {
     height: theme.spacing.xl,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: theme.spacing.sm,
+  },
+  headerButton: {
+    padding: theme.spacing.sm,
+    marginLeft: theme.spacing.xs,
   },
 });

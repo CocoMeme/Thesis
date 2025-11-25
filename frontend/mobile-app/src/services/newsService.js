@@ -1,6 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../config/api';
+import { authService } from './authService';
 
 // Create axios instance
 const api = axios.create({
@@ -60,8 +61,17 @@ export const getNewsById = async (newsId) => {
  */
 export const getPopupNews = async () => {
   try {
-    const response = await api.get('/news/user/popup');
-    return response.data;
+    const response = await authService.authenticatedRequest('/news/user/popup', {
+      method: 'GET',
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to fetch popup news');
+    }
+    
+    return data;
   } catch (error) {
     console.error('Error fetching popup news:', error);
     throw error;
@@ -88,8 +98,17 @@ export const getNewsByCategory = async (category, limit = 10) => {
  */
 export const markNewsAsRead = async (newsId) => {
   try {
-    const response = await api.post(`/news/${newsId}/read`);
-    return response.data;
+    const response = await authService.authenticatedRequest(`/news/${newsId}/read`, {
+      method: 'POST',
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to mark news as read');
+    }
+    
+    return data;
   } catch (error) {
     console.error('Error marking news as read:', error);
     throw error;
@@ -101,8 +120,17 @@ export const markNewsAsRead = async (newsId) => {
  */
 export const likeNews = async (newsId) => {
   try {
-    const response = await api.post(`/news/${newsId}/like`);
-    return response.data;
+    const response = await authService.authenticatedRequest(`/news/${newsId}/like`, {
+      method: 'POST',
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to like news');
+    }
+    
+    return data;
   } catch (error) {
     console.error('Error liking news:', error);
     throw error;

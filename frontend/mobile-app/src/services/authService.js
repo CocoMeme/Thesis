@@ -23,10 +23,62 @@ class AuthService {
       this.token = token;
       this.user = user ? JSON.parse(user) : null;
       
-      return !!token;
+      // If we have a token but no user data, try to fetch the profile
+      if (this.token && !this.user) {
+        try {
+          const result = await this.fetchProfile();
+          if (result.success) {
+            this.user = result.user;
+            await AsyncStorage.setItem(USER_KEY, JSON.stringify(this.user));
+          } else {
+            // If fetching profile fails (e.g. invalid token), clear everything
+            await this.logout();
+            return false;
+          }
+        } catch (error) {
+          console.error('Error fetching profile during initialization:', error);
+          // Don't logout here, maybe just network error. 
+          // But without user data, app might be unstable.
+        }
+      }
+
+      return !!this.token;
     } catch (error) {
       console.error('Error initializing auth service:', error);
       return false;
+    }
+  }
+
+  /**
+   * Fetch current user profile from server
+   */
+  async fetchProfile() {
+    try {
+      if (!this.token) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/auth/local/me`, {
+        method: 'GET',
+        headers: this.getAuthHeaders(),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to fetch profile');
+      }
+
+      return {
+        success: true,
+        user: data.user,
+      };
+    } catch (error) {
+      console.error('Fetch profile error:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to fetch profile',
+      };
     }
   }
 

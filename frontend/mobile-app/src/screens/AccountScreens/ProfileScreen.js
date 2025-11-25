@@ -20,7 +20,7 @@ import { HistoryScreen } from '../HistoryScreens/HistoryScreen';
 
 const TAB_BAR_HEIGHT = 70;
 
-export const ProfileScreen = ({ navigation, onAuthChange }) => {
+export const ProfileScreen = ({ navigation, route, onAuthChange }) => {
   const insets = useSafeAreaInsets();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -29,6 +29,15 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
   const [verificationPin, setVerificationPin] = useState('');
   const [sendingPin, setSendingPin] = useState(false);
   const [verifyingPin, setVerifyingPin] = useState(false);
+
+  // Handle initial tab from navigation params
+  useEffect(() => {
+    if (route?.params?.initialTab) {
+      setActiveTab(route.params.initialTab);
+      // Clear params to prevent sticking to this tab on subsequent renders if needed
+      navigation.setParams({ initialTab: undefined });
+    }
+  }, [route?.params?.initialTab]);
 
   // Logo configuration - adjust these values to customize the logo
   const logoConfig = {
@@ -473,7 +482,7 @@ export const ProfileScreen = ({ navigation, onAuthChange }) => {
         </TouchableOpacity>
       </View>
       {activeTab === 'profile' && renderProfileTab()}
-      {activeTab === 'history' && <HistoryScreen />}
+      {activeTab === 'history' && <HistoryScreen navigation={navigation} />}
       {activeTab === 'settings' && renderSettingsTab()}
       <Modal
         visible={verificationModalVisible}
