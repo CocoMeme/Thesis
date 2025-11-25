@@ -18,8 +18,6 @@ import { authService } from '../../services';
 import { theme } from '../../styles';
 import { HistoryScreen } from '../HistoryScreens/HistoryScreen';
 
-const TAB_BAR_HEIGHT = 70;
-
 export const ProfileScreen = ({ navigation, route, onAuthChange }) => {
   const insets = useSafeAreaInsets();
   const [user, setUser] = useState(null);
@@ -281,7 +279,7 @@ export const ProfileScreen = ({ navigation, route, onAuthChange }) => {
   const tabContentPadding = useMemo(
     () => [
       styles.tabContentContainer,
-      { paddingBottom: theme.spacing.xl + insets.bottom + TAB_BAR_HEIGHT },
+      { paddingBottom: theme.spacing.lg + insets.bottom },
     ],
     [insets.bottom]
   );

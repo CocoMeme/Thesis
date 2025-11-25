@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: theme.spacing.md,
-    paddingBottom: theme.spacing.xl * 2,
+    paddingBottom: theme.spacing.lg,
   },
   card: {
     marginBottom: theme.spacing.md,
