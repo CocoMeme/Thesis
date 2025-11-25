@@ -655,6 +655,114 @@ const getDashboardStats = async (req, res) => {
   }
 };
 
+// @desc    Update pollination success status (Successful/Failed)
+// @route   POST /api/pollination/:id/check-success
+// @access  Private
+const updatePollinationStatus = async (req, res) => {
+  try {
+    const { status } = req.body; // status should be 'Successful' or 'Failed'
+
+    // Validate status
+    if (!['Successful', 'Failed'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Status must be either "Successful" or "Failed"'
+      });
+    }
+
+    const pollination = await Pollination.findOne({
+      _id: req.params.id,
+      user: req.user.id
+    });
+
+    if (!pollination) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pollination record not found'
+      });
+    }
+
+    // Add new pollination status entry
+    pollination.pollinationStatus.push({
+      statuspollination: status,
+      date: new Date()
+    });
+
+    // Update main status based on result
+    if (status === 'Successful') {
+      // Successful = advance to fruiting
+      pollination.status = 'fruiting';
+    } else if (status === 'Failed') {
+      // Failed = pollination failed, cannot retry
+      // Status stays as 'pollinated' but we mark it as complete/failed
+      pollination.status = 'pollinated';
+    }
+
+    await pollination.save();
+
+    res.status(200).json({
+      success: true,
+      message: status === 'Successful' 
+        ? '🌸 Pollination successful! Plant advancing to fruiting stage.'
+        : '❌ Pollination failed. This flower cannot be re-pollinated.',
+      data: pollination
+    });
+  } catch (error) {
+    console.error('Update pollination status error:', error);
+    res.status(400).json({
+      success: false,
+      message: 'Error updating pollination status',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Update plant status (e.g., fruiting to harvested)
+// @route   POST /api/pollination/:id/status
+// @access  Private
+const updateStatus = async (req, res) => {
+  try {
+    const { newStatus } = req.body;
+
+    // Validate status
+    const validStatuses = ['planted', 'flowering', 'pollinated', 'fruiting', 'harvested'];
+    if (!validStatuses.includes(newStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: `Status must be one of: ${validStatuses.join(', ')}`
+      });
+    }
+
+    const pollination = await Pollination.findOne({
+      _id: req.params.id,
+      user: req.user.id
+    });
+
+    if (!pollination) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pollination record not found'
+      });
+    }
+
+    pollination.status = newStatus;
+    await pollination.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Status updated to ${newStatus}`,
+      data: pollination
+    });
+  } catch (error) {
+    console.error('Update status error:', error);
+    res.status(400).json({
+      success: false,
+      message: 'Error updating status',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getPollinations,
   getPollination,
@@ -669,5 +777,7 @@ module.exports = {
   getPlantsNeedingAttention,
   getUpcomingPollinations,
   getPlantTypes,
-  getDashboardStats
+  getDashboardStats,
+  updatePollinationStatus,
+  updateStatus
 };

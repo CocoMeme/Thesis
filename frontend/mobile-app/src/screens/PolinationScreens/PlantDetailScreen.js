@@ -99,11 +99,65 @@ export const PlantDetailScreen = ({ navigation, route }) => {
           onPress: async () => {
             try {
               await pollinationService.markPollinated(plantId);
-              Alert.alert('Success', 'Plant marked as pollinated!');
+              Alert.alert('Success', 'Plant marked as pollinated! Now check if it was successful.');
               fetchPlantDetails(false);
             } catch (error) {
               console.error('Error marking pollination:', error);
               Alert.alert('Error', 'Failed to mark as pollinated.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handlePollinationCheck = (success) => {
+    const status = success ? 'Successful' : 'Failed';
+    Alert.alert(
+      `Mark as ${status}`,
+      success
+        ? 'Are you sure the pollination was successful?'
+        : 'Are you sure the pollination failed? This flower cannot be re-pollinated.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Yes',
+          onPress: async () => {
+            try {
+              await pollinationService.updatePollinationStatus(plantId, status);
+              Alert.alert(
+                'Success',
+                success
+                  ? '🌸 Pollination was successful! Plant advancing to FRUITING stage.'
+                  : '❌ Pollination failed. This flower cannot be re-pollinated.',
+                [{ text: 'OK', onPress: () => fetchPlantDetails(false) }]
+              );
+            } catch (error) {
+              console.error('Error updating pollination status:', error);
+              Alert.alert('Error', 'Failed to update status.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleHarvest = () => {
+    Alert.alert(
+      'Mark as Harvested',
+      'Is the fruit ready to harvest?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Yes, Harvest',
+          onPress: async () => {
+            try {
+              await pollinationService.updateStatus(plantId, 'harvested');
+              Alert.alert('Success', 'Plant marked as harvested!');
+              fetchPlantDetails(false);
+            } catch (error) {
+              console.error('Error harvesting:', error);
+              Alert.alert('Error', 'Failed to mark as harvested.');
             }
           }
         }
@@ -147,6 +201,16 @@ export const PlantDetailScreen = ({ navigation, route }) => {
 
   const getPollinationStatus = () => {
     return pollinationService.getPollinationStatus(plant?.estimatedDates, plant?.datePollinated);
+  };
+
+  // Helper to check if pollination has been decided (Successful or Failed)
+  const hasPollinationBeenDecided = () => {
+    if (!plant?.pollinationStatus || plant.pollinationStatus.length === 0) {
+      return false;
+    }
+    // Check if the most recent pollination status is Successful or Failed
+    const lastStatus = plant.pollinationStatus[plant.pollinationStatus.length - 1];
+    return lastStatus.statuspollination === 'Successful' || lastStatus.statuspollination === 'Failed';
   };
 
   const renderImageGallery = () => {
@@ -345,12 +409,65 @@ export const PlantDetailScreen = ({ navigation, route }) => {
             />
           )}
           
-          {plant.gender !== 'undetermined' && !plant.datePollinated && (
+          {plant.gender !== 'undetermined' && plant.status === 'flowering' && !plant.datePollinated && (
             <Button
               title="Mark Pollinated"
               onPress={handleMarkPollinated}
               style={styles.actionButton}
             />
+          )}
+
+          {/* Pollination Success Check - Only show when status is 'pollinated' and decision hasn't been made */}
+          {plant.status === 'pollinated' && !hasPollinationBeenDecided() && (
+            <View style={styles.pollinationCheckContainer}>
+              <Text style={styles.pollinationCheckTitle}>Was the pollination successful?</Text>
+              <View style={styles.checkButtonsRow}>
+                <Button
+                  title="✓ Successful"
+                  onPress={() => handlePollinationCheck(true)}
+                  style={[styles.actionButton, styles.successButton]}
+                />
+                <Button
+                  title="✗ Failed"
+                  onPress={() => handlePollinationCheck(false)}
+                  style={[styles.actionButton, styles.failedButton]}
+                />
+              </View>
+            </View>
+          )}
+
+          {/* Show result once decision has been made */}
+          {plant.status === 'pollinated' && hasPollinationBeenDecided() && (
+            <View style={styles.pollnationResultContainer}>
+              {plant.pollinationStatus[plant.pollinationStatus.length - 1].statuspollination === 'Successful' ? (
+                <View style={styles.successResultBanner}>
+                  <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+                  <Text style={styles.successResultText}>Pollination Successful! ✓</Text>
+                </View>
+              ) : (
+                <View style={styles.failedResultBanner}>
+                  <Ionicons name="close-circle" size={24} color="#F44336" />
+                  <Text style={styles.failedResultText}>Pollination Failed - Cannot Retry ❌</Text>
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Harvest Button - Only show when status is 'fruiting' */}
+          {plant.status === 'fruiting' && (
+            <Button
+              title="Mark as Harvested"
+              onPress={handleHarvest}
+              style={styles.actionButton}
+            />
+          )}
+
+          {/* Show message when harvested */}
+          {plant.status === 'harvested' && (
+            <View style={styles.harvestedBanner}>
+              <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+              <Text style={styles.harvestedText}>Harvest Complete! 🎉</Text>
+            </View>
           )}
         </View>
       </ScrollView>
@@ -637,5 +754,93 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     marginBottom: theme.spacing.sm,
+  },
+  
+  // Pollination Check Container
+  pollinationCheckContainer: {
+    backgroundColor: theme.colors.background.secondary,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.medium,
+    marginBottom: theme.spacing.sm,
+    borderLeftWidth: 4,
+    borderLeftColor: theme.colors.primary,
+  },
+  pollinationCheckTitle: {
+    ...theme.typography.bodyMedium,
+    color: theme.colors.text.primary,
+    fontWeight: '600',
+    marginBottom: theme.spacing.md,
+    textAlign: 'center',
+  },
+  checkButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: theme.spacing.sm,
+  },
+  successButton: {
+    flex: 0.48,
+    backgroundColor: '#4CAF50',
+  },
+  failedButton: {
+    flex: 0.48,
+    backgroundColor: '#F44336',
+  },
+
+  // Pollination Result Container
+  pollnationResultContainer: {
+    marginBottom: theme.spacing.md,
+  },
+  successResultBanner: {
+    backgroundColor: '#E8F5E9',
+    borderColor: '#4CAF50',
+    borderWidth: 2,
+    borderRadius: theme.borderRadius.medium,
+    padding: theme.spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  successResultText: {
+    ...theme.typography.bodyMedium,
+    color: '#2E7D32',
+    marginLeft: theme.spacing.md,
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  failedResultBanner: {
+    backgroundColor: '#FFEBEE',
+    borderColor: '#F44336',
+    borderWidth: 2,
+    borderRadius: theme.borderRadius.medium,
+    padding: theme.spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  failedResultText: {
+    ...theme.typography.bodyMedium,
+    color: '#C62828',
+    marginLeft: theme.spacing.md,
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  
+  // Harvested Banner
+  harvestedBanner: {
+    backgroundColor: '#E8F5E9',
+    borderColor: '#4CAF50',
+    borderWidth: 2,
+    borderRadius: theme.borderRadius.medium,
+    padding: theme.spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: theme.spacing.md,
+  },
+  harvestedText: {
+    ...theme.typography.h3,
+    color: '#2E7D32',
+    marginLeft: theme.spacing.md,
+    fontWeight: '700',
   },
 });

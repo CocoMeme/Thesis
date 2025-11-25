@@ -16,7 +16,9 @@ const {
   getPlantsNeedingAttention,
   getUpcomingPollinations,
   getPlantTypes,
-  getDashboardStats
+  getDashboardStats,
+  updatePollinationStatus,
+  updateStatus
 } = require('../controllers/pollinationController');
 
 // Import middleware
@@ -60,5 +62,7 @@ router.post('/:id/notes', validateNote, addNote);
 // Plant lifecycle management routes
 router.post('/:id/flowering', markFlowering);
 router.post('/:id/pollinate', markPollinated);
+router.post('/:id/check-success', updatePollinationStatus);
+router.post('/:id/status', updateStatus);
 
 module.exports = router;

@@ -290,6 +290,32 @@ class PollinationService {
     }
   }
 
+  // Update pollination status (Successful/Failed)
+  async updatePollinationStatus(id, status) {
+    try {
+      const response = await api.post(`${this.baseURL}/${id}/check-success`, {
+        status
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating pollination status:', error);
+      throw error;
+    }
+  }
+
+  // Update plant status (fruiting to harvested)
+  async updateStatus(id, newStatus) {
+    try {
+      const response = await api.post(`${this.baseURL}/${id}/status`, {
+        newStatus
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating status:', error);
+      throw error;
+    }
+  }
+
   // Get plants needing attention
   async getPlantsNeedingAttention() {
     try {

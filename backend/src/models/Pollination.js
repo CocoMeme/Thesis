@@ -85,6 +85,19 @@ const pollinationSchema = new mongoose.Schema({
     }
   }],
 
+    // Notes and observations
+  pollinationStatus: [{
+    statuspollination: {
+      type: String,
+      enum: ['Successful', 'Failed', 'pending'],
+      default: 'pending'
+    },
+    date: {
+      type: Date,
+      default: Date.now
+    },
+  }],
+
   // User who manages this plant
   user: {
     type: mongoose.Schema.Types.ObjectId,
