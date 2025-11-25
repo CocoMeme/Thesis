@@ -40,7 +40,7 @@ const Dashboard = () => {
     return <div className="error-message">Failed to load dashboard data</div>;
   }
 
-  const { overview = {}, usersByRole = {}, usersByProvider = {}, forumStats = {}, verificationStats = {} } = dashboard;
+  const { overview = {}, usersByRole = {}, usersByProvider = {}, forumStats = {}, newsStats = {}, verificationStats = {} } = dashboard;
 
   const statCards = [
     {
@@ -66,7 +66,7 @@ const Dashboard = () => {
     },
     {
       title: 'Forum Posts',
-      value: forumStats.total || 0,
+      value: forumStats.totalPosts || 0,
       icon: MessageSquare,
       color: '#9c27b0',
       bgColor: '#f3e5f5',
@@ -167,29 +167,55 @@ const Dashboard = () => {
           <div className="info-items">
             <div className="info-item">
               <span>Verified</span>
-              <strong className="text-success">{verificationStats.verified || 0}</strong>
+              <strong className="text-success">{overview.verifiedUsers || 0}</strong>
             </div>
             <div className="info-item">
               <span>Unverified</span>
-              <strong className="text-warning">{verificationStats.unverified || 0}</strong>
+              <strong className="text-warning">{overview.unverifiedUsers || 0}</strong>
             </div>
           </div>
         </div>
 
         <div className="card info-card">
-          <h3>Forum Activity</h3>
+          <h3>Forum Posts</h3>
           <div className="info-items">
             <div className="info-item">
-              <span>Active Posts</span>
-              <strong className="text-success">{forumStats.active || 0}</strong>
+              <span>Total</span>
+              <strong>{forumStats.totalPosts || 0}</strong>
+            </div>
+            <div className="info-item">
+              <span>Active</span>
+              <strong className="text-success">{forumStats.activePosts || 0}</strong>
             </div>
             <div className="info-item">
               <span>Pending</span>
-              <strong className="text-warning">{forumStats.pending || 0}</strong>
+              <strong className="text-warning">{forumStats.pendingPosts || 0}</strong>
             </div>
             <div className="info-item">
               <span>Flagged</span>
-              <strong className="text-danger">{forumStats.flagged || 0}</strong>
+              <strong className="text-danger">{forumStats.flaggedPosts || 0}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div className="card info-card">
+          <h3>News Articles</h3>
+          <div className="info-items">
+            <div className="info-item">
+              <span>Total</span>
+              <strong>{newsStats.totalNews || 0}</strong>
+            </div>
+            <div className="info-item">
+              <span>Published</span>
+              <strong className="text-success">{newsStats.publishedNews || 0}</strong>
+            </div>
+            <div className="info-item">
+              <span>Draft</span>
+              <strong className="text-warning">{newsStats.draftNews || 0}</strong>
+            </div>
+            <div className="info-item">
+              <span>Archived</span>
+              <strong className="text-secondary">{newsStats.archivedNews || 0}</strong>
             </div>
           </div>
         </div>

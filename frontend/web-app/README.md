@@ -18,21 +18,25 @@ A React-based web admin dashboard for managing the Gourd Classification System.
 ## Installation
 
 1. Navigate to the web-app directory:
+
 ```bash
 cd frontend/web-app
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Create `.env` file (optional, defaults to backend at 192.168.1.40:5000):
+
 ```bash
 cp .env.example .env
 ```
 
 Edit `.env` if needed:
+
 ```
 VITE_API_URL=http://192.168.1.40:5000/api
 ```
@@ -87,12 +91,14 @@ If you don't have an admin user, create one via backend:
 ## Features Guide
 
 ### Dashboard
+
 - View total users, active users, inactive users
 - See user distribution by role and provider
 - Monitor forum activity and verification stats
 - View user growth charts
 
 ### User Management
+
 - **List Users**: Paginated table with search and filters
 - **Search**: By name, email, or username
 - **Filters**: By role (user/admin/researcher) and status (active/inactive)
@@ -102,6 +108,7 @@ If you don't have an admin user, create one via backend:
   - View user details
 
 ### Forum Management
+
 - **List Posts**: View all forum posts with status
 - **Filter**: By status (active/pending/flagged/archived)
 - **Actions**:
@@ -111,6 +118,7 @@ If you don't have an admin user, create one via backend:
   - Delete posts
 
 ### News Management
+
 - **List News**: Grid view of all news articles
 - **Create**: Add new articles with title, description, content
 - **Edit**: Modify existing articles
@@ -134,12 +142,15 @@ If you don't have an admin user, create one via backend:
 The web app communicates with the backend via REST API:
 
 ### Authentication
+
 - `POST /api/auth/local/login` - Admin login
 
 ### Dashboard
+
 - `GET /api/admin/dashboard` - Overview statistics
 
 ### Users
+
 - `GET /api/admin/users` - List all users (paginated)
 - `GET /api/admin/users/:userId` - Get user details
 - `PATCH /api/admin/users/:userId/activate` - Activate user
@@ -147,6 +158,7 @@ The web app communicates with the backend via REST API:
 - `DELETE /api/admin/users/:userId` - Delete user
 
 ### Forum
+
 - `GET /api/admin/forum/posts` - List all posts
 - `PATCH /api/admin/forum/posts/:postId/approve` - Approve post
 - `PATCH /api/admin/forum/posts/:postId/reject` - Reject post
@@ -155,6 +167,7 @@ The web app communicates with the backend via REST API:
 - `DELETE /api/admin/forum/posts/:postId` - Delete post
 
 ### News
+
 - `GET /api/news` - List all news
 - `POST /api/news` - Create news article
 - `PUT /api/news/:id` - Update news article
@@ -197,17 +210,20 @@ frontend/web-app/
 ## Troubleshooting
 
 ### Can't login
+
 - Ensure backend is running
 - Check API_BASE_URL in .env or vite.config.js
 - Verify you have admin role in database
 - Check browser console for errors
 
 ### API errors
+
 - Verify backend API is accessible at configured URL
 - Check network tab in browser dev tools
 - Ensure CORS is enabled on backend for your domain
 
 ### Build errors
+
 - Delete `node_modules` and run `npm install` again
 - Clear Vite cache: `npm run dev -- --force`
 - Ensure Node.js version is 18 or higher
@@ -222,6 +238,7 @@ frontend/web-app/
 ## Production Deployment
 
 1. Build the production bundle:
+
 ```bash
 npm run build
 ```

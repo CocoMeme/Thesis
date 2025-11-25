@@ -1,17 +1,20 @@
 # Quick Start Guide - Admin Web Dashboard
 
 ## Prerequisites
+
 - Node.js 18+ installed
 - Backend API running (default: http://192.168.1.40:5000)
 
 ## Installation (5 minutes)
 
 ### 1. Navigate to directory
+
 ```bash
 cd frontend/web-app
 ```
 
 ### 2. Install dependencies
+
 ```bash
 npm install
 ```
@@ -19,6 +22,7 @@ npm install
 This installs: React, React Router, Axios, Recharts, React Toastify, Lucide Icons, Vite
 
 ### 3. Start development server
+
 ```bash
 npm run dev
 ```
@@ -60,6 +64,7 @@ npm run format           # Format code
 ### Change API URL
 
 Edit `vite.config.js`:
+
 ```javascript
 server: {
   proxy: {
@@ -72,6 +77,7 @@ server: {
 ```
 
 Or create `.env`:
+
 ```
 VITE_API_URL=http://YOUR_BACKEND_IP:5000/api
 ```
@@ -79,16 +85,19 @@ VITE_API_URL=http://YOUR_BACKEND_IP:5000/api
 ## Troubleshooting
 
 ### Can't login?
+
 - Verify backend is running
 - Check user has `role: 'admin'`
 - Check browser console for errors
 
 ### API not connecting?
+
 - Verify backend URL in vite.config.js
 - Ensure backend allows CORS from localhost:3000
 - Test backend: http://192.168.1.40:5000/api/health
 
 ### Build fails?
+
 ```bash
 rm -rf node_modules package-lock.json
 npm install
@@ -97,18 +106,21 @@ npm install
 ## Features Overview
 
 ### Dashboard
+
 - User statistics
 - Role distribution chart
 - Provider distribution chart
 - Forum activity stats
 
 ### User Management
+
 - List all users (paginated)
 - Search by name/email/username
 - Filter by role & status
 - Activate/deactivate/delete users
 
 ### Forum Management
+
 - List all posts
 - Filter by status
 - Approve/reject pending posts
@@ -117,6 +129,7 @@ npm install
 - Delete posts
 
 ### News Management
+
 - Create news articles
 - Edit existing articles
 - Delete articles

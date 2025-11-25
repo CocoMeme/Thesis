@@ -86,8 +86,8 @@ export const adminService = {
     return await api.patch(`/admin/users/${userId}/activate`);
   },
 
-  deactivateUser: async (userId) => {
-    return await api.patch(`/admin/users/${userId}/deactivate`);
+  deactivateUser: async (userId, data = {}) => {
+    return await api.patch(`/admin/users/${userId}/deactivate`, data);
   },
 
   suspendUser: async (userId, data) => {

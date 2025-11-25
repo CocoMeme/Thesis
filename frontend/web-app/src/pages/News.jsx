@@ -9,6 +9,8 @@ const News = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingNews, setEditingNews] = useState(null);
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('published');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -23,12 +25,17 @@ const News = () => {
 
   useEffect(() => {
     fetchNews();
-  }, []);
+  }, [categoryFilter, statusFilter]);
 
   const fetchNews = async () => {
     try {
       setLoading(true);
-      const response = await newsService.getAllNews({ limit: 50 });
+      const params = {
+        limit: 50,
+        ...(categoryFilter !== 'all' && { category: categoryFilter }),
+        status: statusFilter,
+      };
+      const response = await newsService.getAllNews(params);
       if (response.success) {
         setNews(response.data);
       }
@@ -120,6 +127,32 @@ const News = () => {
           <Plus size={18} />
           Create News
         </button>
+      </div>
+
+      {/* Filters */}
+      <div className="card filters-card">
+        <div className="filters">
+          <div className="filter-group">
+            <label>Category:</label>
+            <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+              <option value="all">All Categories</option>
+              <option value="feature">Feature</option>
+              <option value="model_update">Model Update</option>
+              <option value="announcement">Announcement</option>
+              <option value="tips">Tips</option>
+              <option value="general">General</option>
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <label>Status:</label>
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <option value="published">Published</option>
+              <option value="draft">Draft</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* News Grid */}

@@ -13,19 +13,17 @@ import {
 } from '../../components';
 import { theme } from '../../styles';
 import { getAllNews, getPopupNews, markNewsAsRead } from '../../services/newsService';
-import { authService, connectionService, scanService } from '../../services';
-
-const TAB_BAR_HEIGHT = 70;
+import { authService, connectionService, scanService, pollinationService } from '../../services';
 
 export const HomeScreen = ({ navigation, route }) => {
   const insets = useSafeAreaInsets();
   // Top Banner
   // Mock data - replace with real data from API/storage
   const [userName] = useState('Coco Meme');
-  const [stats] = useState({
-    totalScans: 24,
-    readyGourds: 18,
-    pendingGourds: 6,
+  const [stats, setStats] = useState({
+    totalScans: 0,
+    readyGourds: 0,
+    pollinationsCount: 0,
   });
   
   // User state
@@ -78,7 +76,7 @@ export const HomeScreen = ({ navigation, route }) => {
   const summaryStats = [
     { id: 'total', label: 'Total scans', value: stats.totalScans || 0 },
     { id: 'ready', label: 'Ready', value: stats.readyGourds || 0 },
-    { id: 'pending', label: 'Pending', value: stats.pendingGourds || 0 },
+    { id: 'pollinations', label: 'Pollinations', value: stats.pollinationsCount || 0 },
   ];
 
   const newsPreview = news.slice(0, 3);
@@ -127,12 +125,43 @@ export const HomeScreen = ({ navigation, route }) => {
   useEffect(() => {
     fetchNews();
     fetchRecentScans();
+    fetchPollinationStats();
   }, []);
+
+  const fetchPollinationStats = async () => {
+    try {
+      // Only fetch if we have a user, or try to fetch anyway (service handles token)
+      const statsData = await pollinationService.getDashboardStats();
+      if (statsData.success) {
+        const { statusBreakdown } = statsData.data;
+        
+        // Calculate specific counts from breakdown
+        // statusBreakdown is array of { _id: 'status', count: number }
+        const pollinatedCount = statusBreakdown.find(s => s._id === 'pollinated')?.count || 0;
+        const fruitingCount = statusBreakdown.find(s => s._id === 'fruiting')?.count || 0;
+        
+        setStats(prev => ({
+          ...prev,
+          readyGourds: fruitingCount,
+          pollinationsCount: pollinatedCount
+        }));
+      }
+    } catch (error) {
+      console.log('Error fetching pollination stats:', error);
+    }
+  };
 
   const fetchRecentScans = async () => {
     try {
       setLoadingScans(true);
       const history = await scanService.getScanHistory();
+      
+      // Update total scans count
+      setStats(prev => ({
+        ...prev,
+        totalScans: history.length
+      }));
+
       // Take the last 3 scans
       setRecentScans(history.slice(0, 3));
     } catch (error) {
@@ -203,6 +232,9 @@ export const HomeScreen = ({ navigation, route }) => {
 
       // Reload recent scans
       await fetchRecentScans();
+
+      // Reload pollination stats
+      await fetchPollinationStats();
       
       console.log('✅ Refresh completed successfully');
       
@@ -320,7 +352,7 @@ export const HomeScreen = ({ navigation, route }) => {
   };
 
   const scrollContentPadding = useMemo(
-    () => ({ paddingBottom: theme.spacing.xl + insets.bottom + TAB_BAR_HEIGHT }),
+    () => ({ paddingBottom: theme.spacing.lg + insets.bottom }),
     [insets.bottom]
   );
 

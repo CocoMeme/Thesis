@@ -11,7 +11,7 @@ const SNAP_WIDTH = CARD_WIDTH + (CARD_HORIZONTAL_MARGIN * 2);
 export const StatsSection = ({ 
   totalScans, 
   readyGourds, 
-  pendingGourds, 
+  pollinationsCount, 
   onStatsPress,
   recentScans = [] 
 }) => {
@@ -50,14 +50,14 @@ export const StatsSection = ({
       detailsTitle: 'Ready Gourds'
     },
     {
-      id: 'pending',
-      icon: 'clock-outline',
-      value: pendingGourds || 0,
-      label: 'Almost Ready',
+      id: 'pollinations',
+      icon: 'flower-outline',
+      value: pollinationsCount || 0,
+      label: 'Active Pollinations',
       color: theme.colors.secondary,
       gradientColors: [theme.colors.secondary, '#c9c940'],
       details: [],
-      detailsTitle: 'Pending Gourds'
+      detailsTitle: 'Active Pollinations'
     },
   ];
 

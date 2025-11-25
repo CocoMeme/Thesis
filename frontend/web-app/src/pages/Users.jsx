@@ -12,6 +12,10 @@ const Users = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState(null);
+  const [deactivateModal, setDeactivateModal] = useState({ show: false, userId: null });
+  const [deactivateReason, setDeactivateReason] = useState('');
+  const [roleChangeModal, setRoleChangeModal] = useState({ show: false, userId: null, currentRole: '' });
+  const [newRole, setNewRole] = useState('');
 
   useEffect(() => {
     fetchUsers();
@@ -24,7 +28,7 @@ const Users = () => {
         page,
         limit: 20,
         ...(roleFilter !== 'all' && { role: roleFilter }),
-        ...(statusFilter !== 'all' && { status: statusFilter }),
+        ...(statusFilter !== 'all' && { isActive: statusFilter === 'active' }),
         ...(search && { search }),
       };
 
@@ -60,14 +64,35 @@ const Users = () => {
   };
 
   const handleDeactivateUser = async (userId) => {
-    if (!window.confirm('Are you sure you want to deactivate this user?')) return;
-    
+    setDeactivateModal({ show: true, userId });
+  };
+
+  const confirmDeactivate = async () => {
     try {
-      await adminService.deactivateUser(userId);
+      await adminService.deactivateUser(deactivateModal.userId, { reason: deactivateReason });
       toast.success('User deactivated successfully');
+      setDeactivateModal({ show: false, userId: null });
+      setDeactivateReason('');
       fetchUsers();
     } catch (error) {
       toast.error('Failed to deactivate user');
+    }
+  };
+
+  const handleRoleChange = async (userId, currentRole) => {
+    setRoleChangeModal({ show: true, userId, currentRole });
+    setNewRole(currentRole);
+  };
+
+  const confirmRoleChange = async () => {
+    try {
+      await adminService.changeUserRole(roleChangeModal.userId, newRole);
+      toast.success('User role changed successfully');
+      setRoleChangeModal({ show: false, userId: null, currentRole: '' });
+      setNewRole('');
+      fetchUsers();
+    } catch (error) {
+      toast.error('Failed to change user role');
     }
   };
 
@@ -122,7 +147,6 @@ const Users = () => {
               <option value="all">All Roles</option>
               <option value="user">User</option>
               <option value="admin">Admin</option>
-              <option value="researcher">Researcher</option>
             </select>
           </div>
 
@@ -175,7 +199,12 @@ const Users = () => {
                       </td>
                       <td>{user.email}</td>
                       <td>
-                        <span className={`badge badge-${user.role}`}>
+                        <span 
+                          className={`badge badge-${user.role}`}
+                          onClick={() => handleRoleChange(user._id, user.role)}
+                          style={{ cursor: 'pointer' }}
+                          title="Click to change role"
+                        >
                           {user.role}
                         </span>
                       </td>
@@ -258,6 +287,74 @@ const Users = () => {
           </>
         )}
       </div>
+
+      {/* Deactivate Modal */}
+      {deactivateModal.show && (
+        <div className="modal-overlay" onClick={() => setDeactivateModal({ show: false, userId: null })}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>Deactivate User</h2>
+            <p>Are you sure you want to deactivate this user?</p>
+            <div className="form-group">
+              <label>Reason (optional):</label>
+              <textarea
+                value={deactivateReason}
+                onChange={(e) => setDeactivateReason(e.target.value)}
+                placeholder="Enter reason for deactivation..."
+                rows="3"
+              />
+            </div>
+            <div className="modal-actions">
+              <button 
+                className="btn btn-outline" 
+                onClick={() => {
+                  setDeactivateModal({ show: false, userId: null });
+                  setDeactivateReason('');
+                }}
+              >
+                Cancel
+              </button>
+              <button className="btn btn-danger" onClick={confirmDeactivate}>
+                Deactivate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Role Change Modal */}
+      {roleChangeModal.show && (
+        <div className="modal-overlay" onClick={() => setRoleChangeModal({ show: false, userId: null, currentRole: '' })}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>Change User Role</h2>
+            <p>Select a new role for this user:</p>
+            <div className="form-group">
+              <label>Role:</label>
+              <select value={newRole} onChange={(e) => setNewRole(e.target.value)}>
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div className="modal-actions">
+              <button 
+                className="btn btn-outline" 
+                onClick={() => {
+                  setRoleChangeModal({ show: false, userId: null, currentRole: '' });
+                  setNewRole('');
+                }}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-primary" 
+                onClick={confirmRoleChange}
+                disabled={newRole === roleChangeModal.currentRole}
+              >
+                Change Role
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
