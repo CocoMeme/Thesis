@@ -151,6 +151,7 @@ export const ImageCapture = ({
 
   const handleImageRetake = () => {
     setCapturedImage(null);
+    setShowCamera(true);
   };
 
   const handleClose = () => {
@@ -163,9 +164,9 @@ export const ImageCapture = ({
     setFacing(current => (current === 'back' ? 'front' : 'back'));
   };
 
-  if (showCamera) {
+  if (showCamera && visible) {
     return (
-      <Modal visible={visible} animationType="slide">
+      <Modal visible={visible && showCamera} animationType="slide">
         <View style={styles.cameraContainer}>
           <CameraView 
             style={styles.camera} 
@@ -176,7 +177,7 @@ export const ImageCapture = ({
               <View style={styles.cameraHeader}>
                 <TouchableOpacity 
                   style={styles.cameraButton}
-                  onPress={() => setShowCamera(false)}
+                  onPress={handleClose}
                 >
                   <Ionicons name="close" size={30} color="#FFFFFF" />
                 </TouchableOpacity>

@@ -37,7 +37,19 @@ export const PollinationScreen = ({ navigation }) => {
       setFilteredPlants(response.data);
     } catch (error) {
       console.error('Error fetching plants:', error);
-      Alert.alert('Error', 'Failed to fetch plants. Please try again.');
+      
+      // Provide specific error messages
+      let errorMessage = 'Failed to fetch plants. Please try again.';
+      
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        errorMessage = 'Session expired. Please log in again.';
+      } else if (error.message === 'Network Error' || error.code === 'ECONNABORTED') {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      } else if (error.response?.status >= 500) {
+        errorMessage = 'Server error. Please try again later.';
+      }
+      
+      Alert.alert('Error', errorMessage);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);

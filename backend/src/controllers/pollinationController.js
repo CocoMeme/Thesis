@@ -1,5 +1,6 @@
 const { Pollination } = require('../models');
 const cloudinary = require('cloudinary').v2;
+const streamifier = require('streamifier');
 
 // @desc    Get all pollination records for authenticated user
 // @route   GET /api/pollination
@@ -263,9 +264,10 @@ const deletePollination = async (req, res) => {
 const addImage = async (req, res) => {
   try {
     console.log('📸 Add image request for plant:', req.params.id);
-    console.log('📸 User:', req.user.id);
-    console.log('📸 File:', req.file);
-    console.log('📸 Body:', req.body);
+    console.log('📸 req.file exists:', !!req.file);
+    console.log('📸 req.file keys:', req.file ? Object.keys(req.file) : 'N/A');
+    console.log('📸 req.file.buffer exists:', req.file ? !!req.file.buffer : false);
+    console.log('📸 req.file.buffer length:', req.file ? req.file.buffer?.length : 'N/A');
     
     const pollination = await Pollination.findOne({
       _id: req.params.id,
@@ -288,27 +290,37 @@ const addImage = async (req, res) => {
       });
     }
 
+    if (!req.file.buffer) {
+      console.log('❌ File received but no buffer:', req.file);
+      return res.status(400).json({
+        success: false,
+        message: 'File buffer is empty'
+      });
+    }
+
     console.log('📤 Uploading to Cloudinary...');
-    // Upload to cloudinary
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: 'pollination',
-      transformation: [
-        { width: 800, height: 600, crop: 'limit' },
-        { quality: 'auto:good' }
-      ]
+    
+    // Create a stream upload to Cloudinary (like uploadController)
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'pollination',
+          allowed_formats: ['jpg', 'png', 'jpeg'],
+          transformation: [{ width: 800, height: 600, crop: 'limit' }]
+        },
+        (error, result) => {
+          if (result) {
+            resolve(result);
+          } else {
+            reject(error);
+          }
+        }
+      );
+
+      streamifier.createReadStream(req.file.buffer).pipe(stream);
     });
 
     console.log('✅ Cloudinary upload successful:', result.public_id);
-
-    // Delete the temporary file after successful upload to Cloudinary
-    const fs = require('fs').promises;
-    try {
-      await fs.unlink(req.file.path);
-      console.log('🗑️ Temporary file deleted:', req.file.path);
-    } catch (unlinkError) {
-      console.error('⚠️ Failed to delete temporary file:', unlinkError);
-      // Don't throw error, image was still uploaded successfully
-    }
 
     // Add image to pollination record
     const imageData = {

@@ -5,10 +5,7 @@ import { API_BASE_URL } from '../config/api';
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  timeout: 30000,
 });
 
 // Add auth token to requests
@@ -29,6 +26,24 @@ api.interceptors.request.use(
   }
 );
 
+// Add response error interceptor
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      // Server responded with error status
+      console.error('❌ Response error:', error.response.status, error.response.data);
+    } else if (error.request) {
+      // Request was made but no response received
+      console.error('❌ No response received:', error.request);
+    } else {
+      // Something happened in setting up the request
+      console.error('❌ Request setup error:', error.message);
+    }
+    return Promise.reject(error);
+  }
+);
+
 class PollinationService {
   constructor() {
     this.baseURL = '/pollination'; // Fixed: removed /api prefix since it's already in API_BASE_URL
@@ -36,45 +51,80 @@ class PollinationService {
 
   // Get all pollination records
   async getPollinations(filters = {}) {
-    try {
-      const queryParams = new URLSearchParams();
-      
-      if (filters.status) queryParams.append('status', filters.status);
-      if (filters.name) queryParams.append('name', filters.name);
-      if (filters.sort) queryParams.append('sort', filters.sort);
-      if (filters.page) queryParams.append('page', filters.page.toString());
-      if (filters.limit) queryParams.append('limit', filters.limit.toString());
+    const maxRetries = 3;
+    let lastError;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const queryParams = new URLSearchParams();
+        
+        if (filters.status) queryParams.append('status', filters.status);
+        if (filters.name) queryParams.append('name', filters.name);
+        if (filters.sort) queryParams.append('sort', filters.sort);
+        if (filters.page) queryParams.append('page', filters.page.toString());
+        if (filters.limit) queryParams.append('limit', filters.limit.toString());
 
-      const queryString = queryParams.toString();
-      const url = queryString ? `${this.baseURL}?${queryString}` : this.baseURL;
-      
-      // Debug logging
-      console.log('🔍 Fetching pollinations from:', `${API_BASE_URL}${url}`);
-      console.log('🔑 Base URL:', API_BASE_URL);
-      console.log('🛣️ Full URL:', url);
-      
-      // Check if token exists
-      const token = await AsyncStorage.getItem('userToken');
-      console.log('🎟️ Token exists:', !!token);
-      
-      const response = await api.get(url);
-      console.log('✅ Successfully fetched pollinations:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('❌ Error fetching pollinations:', error.response?.status, error.response?.data || error.message);
-      throw error;
+        const queryString = queryParams.toString();
+        const url = queryString ? `${this.baseURL}?${queryString}` : this.baseURL;
+        
+        // Debug logging
+        console.log(`🔍 Fetching pollinations (attempt ${attempt}/${maxRetries}) from:`, `${API_BASE_URL}${url}`);
+        
+        // Check if token exists
+        const token = await AsyncStorage.getItem('userToken');
+        console.log('🎟️ Token exists:', !!token);
+        
+        const response = await api.get(url);
+        console.log('✅ Successfully fetched pollinations:', response.data);
+        return response.data;
+      } catch (error) {
+        lastError = error;
+        console.error(`❌ Attempt ${attempt} failed:`, error.message);
+        
+        // Don't retry on 401/403 auth errors
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          console.error('❌ Auth error - not retrying');
+          throw error;
+        }
+        
+        // Wait before retrying (exponential backoff)
+        if (attempt < maxRetries) {
+          const delay = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s
+          console.log(`⏳ Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
     }
+    
+    console.error('❌ All retry attempts failed');
+    throw lastError;
   }
 
   // Get single pollination record
   async getPollination(id) {
-    try {
-      const response = await api.get(`${this.baseURL}/${id}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching pollination:', error);
-      throw error;
+    const maxRetries = 3;
+    let lastError;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await api.get(`${this.baseURL}/${id}`);
+        return response.data;
+      } catch (error) {
+        lastError = error;
+        console.error(`❌ Attempt ${attempt} failed getting pollination:`, error.message);
+        
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          throw error;
+        }
+        
+        if (attempt < maxRetries) {
+          const delay = Math.pow(2, attempt - 1) * 1000;
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
     }
+    
+    throw lastError;
   }
 
   // Create new pollination record
@@ -99,13 +149,16 @@ class PollinationService {
       // If there was an image, add it now
       if (imageData && createdPlant._id) {
         try {
-          console.log('🖼️ Now uploading image...');
+          console.log('🖼️ Now uploading image to:', createdPlant._id);
           const imageResponse = await this.addImage(createdPlant._id, imageData);
           console.log('✅ Image uploaded successfully:', imageResponse);
         } catch (imageError) {
           console.error('⚠️ Plant created but image upload failed:', imageError);
-          console.error('⚠️ Image error details:', imageError.response?.data);
-          // Don't throw error, plant was still created successfully
+          console.error('⚠️ Image error status:', imageError.response?.status);
+          console.error('⚠️ Image error data:', imageError.response?.data);
+          console.error('⚠️ Image error message:', imageError.message);
+          // Throw the error so user knows
+          throw new Error(`Plant created but image upload failed: ${imageError.message}`);
         }
       }
       
@@ -139,7 +192,7 @@ class PollinationService {
     }
   }
 
-  // Add image to pollination record
+// Add image to pollination record
   async addImage(id, imageData, caption, imageType = 'general') {
     try {
       console.log('🖼️ Adding image to plant:', id);
