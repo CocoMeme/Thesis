@@ -1,0 +1,165 @@
+.forum-page {
+  max-width: 1400px;
+}
+
+.posts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+
+.post-card {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 20px;
+  background: white;
+  transition: box-shadow 0.2s;
+}
+
+.post-card:hover {
+  box-shadow: var(--shadow);
+}
+
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 20px;
+}
+
+.post-title-section {
+  flex: 1;
+}
+
+.post-card h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.post-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.post-author {
+  font-weight: 600;
+}
+
+.post-status {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-active {
+  background: #e8f5e9;
+  color: #388e3c;
+}
+
+.status-pending {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.status-flagged {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.status-archived {
+  background: #f5f5f5;
+  color: #757575;
+}
+
+.pin-icon, .lock-icon {
+  color: var(--primary-color);
+}
+
+.post-stats {
+  display: flex;
+  gap: 20px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.post-content {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 6px;
+}
+
+.post-content p {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.post-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.btn.active {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.no-data {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+  .post-header {
+    flex-direction: column;
+  }
+
+  .post-stats {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .post-actions {
+    flex-direction: column;
+  }
+
+  .post-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
