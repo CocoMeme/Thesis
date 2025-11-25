@@ -80,7 +80,8 @@
   color: #757575;
 }
 
-.pin-icon, .lock-icon {
+.pin-icon,
+.lock-icon {
   color: var(--primary-color);
 }
 

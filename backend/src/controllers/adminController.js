@@ -1,5 +1,6 @@
 const { User } = require('../models');
 const ForumPost = require('../models/ForumPost');
+const News = require('../models/News');
 const mongoose = require('mongoose');
 
 /**
@@ -70,6 +71,12 @@ exports.getDashboardOverview = async (req, res) => {
     const deletedPosts = await ForumPost.countDocuments({ status: 'deleted' });
     const pinnedPosts = await ForumPost.countDocuments({ isPinned: true });
 
+    // Get news stats
+    const totalNews = await News.countDocuments();
+    const publishedNews = await News.countDocuments({ status: 'published' });
+    const draftNews = await News.countDocuments({ status: 'draft' });
+    const archivedNews = await News.countDocuments({ status: 'archived' });
+
     // Get recent registrations (last 10)
     const recentRegistrations = await User.find()
       .select('username email firstName lastName createdAt provider isActive')
@@ -97,6 +104,12 @@ exports.getDashboardOverview = async (req, res) => {
           rejectedPosts,
           deletedPosts,
           pinnedPosts
+        },
+        newsStats: {
+          totalNews,
+          publishedNews,
+          draftNews,
+          archivedNews
         },
         usersByRole: usersByRole.reduce((acc, item) => {
           acc[item._id] = item.count;
@@ -360,7 +373,7 @@ exports.activateUser = async (req, res) => {
 exports.deactivateUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { reason } = req.body;
+    const { reason } = req.body || {};
 
     // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -378,17 +391,9 @@ exports.deactivateUser = async (req, res) => {
       });
     }
 
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { 
-        $set: { 
-          isActive: false,
-          ...(reason && { deactivationReason: reason })
-        }
-      },
-      { new: true }
-    ).select('-password -refreshTokens -verificationPin');
-
+    // First, find the user and revoke refresh tokens
+    const user = await User.findById(userId);
+    
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -396,16 +401,31 @@ exports.deactivateUser = async (req, res) => {
       });
     }
 
-    // Revoke all refresh tokens
-    user.refreshTokens.forEach(token => {
-      token.isActive = false;
-    });
+    // Revoke all refresh tokens if they exist
+    if (user.refreshTokens && user.refreshTokens.length > 0) {
+      user.refreshTokens.forEach(token => {
+        token.isActive = false;
+      });
+    }
+
+    // Update user status
+    user.isActive = false;
+    if (reason) {
+      user.deactivationReason = reason;
+    }
+    
     await user.save();
+
+    // Return user without sensitive fields
+    const userResponse = user.toObject();
+    delete userResponse.password;
+    delete userResponse.refreshTokens;
+    delete userResponse.verificationPin;
 
     res.status(200).json({
       success: true,
       message: 'User account deactivated successfully',
-      data: { user }
+      data: { user: userResponse }
     });
 
   } catch (error) {
@@ -426,7 +446,7 @@ exports.deactivateUser = async (req, res) => {
 exports.suspendUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { reason, duration } = req.body; // duration in days
+    const { reason, duration } = req.body || {}; // duration in days
 
     // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -485,14 +505,13 @@ exports.suspendUser = async (req, res) => {
 };
 
 /**
- * Delete user account (soft delete or hard delete)
+ * Delete user account (soft delete by default)
  * @route DELETE /api/admin/users/:userId
  * @access Private/Admin
  */
 exports.deleteUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { permanent = false } = req.query;
 
     // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -510,48 +529,40 @@ exports.deleteUser = async (req, res) => {
       });
     }
 
-    if (permanent === 'true') {
-      // Hard delete - permanently remove user
-      const user = await User.findByIdAndDelete(userId);
-      
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: 'User not found'
-        });
-      }
-
-      res.status(200).json({
-        success: true,
-        message: 'User account permanently deleted',
-        data: { userId }
-      });
-    } else {
-      // Soft delete - just deactivate
-      const user = await User.findByIdAndUpdate(
-        userId,
-        { 
-          $set: { 
-            isActive: false,
-            deletedAt: new Date()
-          }
-        },
-        { new: true }
-      ).select('-password -refreshTokens -verificationPin');
-
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: 'User not found'
-        });
-      }
-
-      res.status(200).json({
-        success: true,
-        message: 'User account deleted (soft delete)',
-        data: { user }
+    // Soft delete - mark as deleted with timestamp
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
       });
     }
+
+    // Mark as deleted and inactive
+    user.deletedAt = new Date();
+    user.isActive = false;
+    
+    // Revoke all refresh tokens if they exist
+    if (user.refreshTokens && user.refreshTokens.length > 0) {
+      user.refreshTokens.forEach(token => {
+        token.isActive = false;
+      });
+    }
+    
+    await user.save();
+
+    // Return user without sensitive fields
+    const userResponse = user.toObject();
+    delete userResponse.password;
+    delete userResponse.refreshTokens;
+    delete userResponse.verificationPin;
+
+    res.status(200).json({
+      success: true,
+      message: 'User account deleted successfully',
+      data: { user: userResponse }
+    });
 
   } catch (error) {
     console.error('Delete user error:', error);
@@ -571,7 +582,7 @@ exports.deleteUser = async (req, res) => {
 exports.changeUserRole = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { role } = req.body;
+    const { role } = req.body || {};
 
     // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -581,8 +592,8 @@ exports.changeUserRole = async (req, res) => {
       });
     }
 
-    // Validate role
-    const validRoles = ['user', 'admin', 'researcher'];
+    // Validate role (only user and admin allowed)
+    const validRoles = ['user', 'admin'];
     if (!validRoles.includes(role)) {
       return res.status(400).json({
         success: false,
@@ -590,7 +601,7 @@ exports.changeUserRole = async (req, res) => {
       });
     }
 
-    // Prevent admin from changing their own role
+    // Prevent changing own role if admin
     if (userId === req.user._id.toString()) {
       return res.status(403).json({
         success: false,
@@ -634,7 +645,7 @@ exports.changeUserRole = async (req, res) => {
  */
 exports.bulkUpdateUsers = async (req, res) => {
   try {
-    const { userIds, action, value } = req.body;
+    const { userIds, action, value } = req.body || {};
 
     // Validate input
     if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
@@ -919,7 +930,7 @@ exports.getForumPostById = async (req, res) => {
 exports.updateForumPostStatus = async (req, res) => {
   try {
     const { postId } = req.params;
-    const { status } = req.body;
+    const { status } = req.body || {};
 
     // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(postId)) {
@@ -1108,7 +1119,7 @@ exports.toggleLockPost = async (req, res) => {
 exports.approvePost = async (req, res) => {
   try {
     const { postId } = req.params;
-    const { note } = req.body;
+    const { note } = req.body || {};
 
     // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(postId)) {
@@ -1161,7 +1172,7 @@ exports.approvePost = async (req, res) => {
 exports.rejectPost = async (req, res) => {
   try {
     const { postId } = req.params;
-    const { reason } = req.body;
+    const { reason } = req.body || {};
 
     // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(postId)) {

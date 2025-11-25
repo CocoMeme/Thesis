@@ -118,8 +118,19 @@ const userSchema = new mongoose.Schema({
 
   role: {
     type: String,
-    enum: ['user', 'admin', 'researcher'],
+    enum: ['user', 'admin'],
     default: 'user'
+  },
+
+  // Soft delete
+  deletedAt: {
+    type: Date,
+    default: null
+  },
+
+  deactivationReason: {
+    type: String,
+    default: null
   },
 
   // Password reset

@@ -8,6 +8,7 @@ exports.getAllNews = async (req, res) => {
   try {
     const { 
       category, 
+      status,
       limit = 10, 
       skip = 0,
       search 
@@ -18,12 +19,25 @@ exports.getAllNews = async (req, res) => {
     if (search) {
       news = await News.searchNews(search, parseInt(limit));
     } else {
-      const filters = category ? { category } : {};
-      news = await News.getPublishedNews(
-        filters, 
-        parseInt(limit), 
-        parseInt(skip)
-      );
+      const filters = {};
+      if (category) filters.category = category;
+      if (status) filters.status = status;
+      
+      // If user is authenticated (admin view), allow viewing all statuses
+      // Otherwise, use getPublishedNews for public view
+      if (req.user) {
+        news = await News.find(filters)
+          .sort({ 'display.isPinned': -1, 'display.priority': -1, createdAt: -1 })
+          .limit(parseInt(limit))
+          .skip(parseInt(skip))
+          .populate('author', 'username email');
+      } else {
+        news = await News.getPublishedNews(
+          filters, 
+          parseInt(limit), 
+          parseInt(skip)
+        );
+      }
     }
 
     res.status(200).json({

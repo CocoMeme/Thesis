@@ -30,7 +30,8 @@ Write-Host "Step 2: Creating .env file..." -ForegroundColor Cyan
 if (-Not (Test-Path ".env")) {
     Copy-Item ".env.example" ".env"
     Write-Host ".env file created!" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host ".env file already exists." -ForegroundColor Yellow
 }
 
