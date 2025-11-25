@@ -69,13 +69,7 @@ export const WelcomeHeader = ({
           <View style={styles.rightSection}>
             <TouchableOpacity 
               style={styles.iconButton}
-              onPress={() => {
-                if (navigation) {
-                  navigation.navigate('NewsMain');
-                } else if (onNotificationPress) {
-                  onNotificationPress();
-                }
-              }}
+              onPress={onNotificationPress}
             >
               <Ionicons 
                 name="notifications-outline" 

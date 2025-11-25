@@ -24,6 +24,7 @@ export default function App() {
     async function prepare() {
       if (fontsLoaded) {
         // Hide the splash screen once fonts are loaded
+        // Notification initialization will happen after user login in AppNavigator
         await SplashScreenExpo.hideAsync();
       }
     }

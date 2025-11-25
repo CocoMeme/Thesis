@@ -12,6 +12,7 @@ import {
   FlatList
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Notifications from 'expo-notifications';
 import { theme } from '../../styles';
 import { pollinationService } from '../../services';
 import { Button, ImageCapture } from '../../components';
@@ -29,7 +30,25 @@ export const PlantDetailScreen = ({ navigation, route }) => {
     if (!initialPlant) {
       fetchPlantDetails();
     }
+    // Setup notification channel on mount
+    setupNotificationChannel();
   }, [plantId]);
+
+  const setupNotificationChannel = async () => {
+    try {
+      await Notifications.setNotificationChannelAsync('pollination', {
+        name: 'Pollination Reminders',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#4CAF50',
+        sound: 'default',
+        enableVibrate: true,
+        enableLights: true,
+      });
+    } catch (error) {
+      console.error('Error setting up notification channel:', error);
+    }
+  };
 
   const fetchPlantDetails = async (showLoader = true) => {
     try {
@@ -125,6 +144,34 @@ export const PlantDetailScreen = ({ navigation, route }) => {
           onPress: async () => {
             try {
               await pollinationService.updatePollinationStatus(plantId, status);
+              
+              // Send success notification
+              if (success) {
+                try {
+                  await Notifications.scheduleNotificationAsync({
+                    content: {
+                      title: '🌸 Pollination Successful!',
+                      body: `${pollinationService.formatPlantName(plant.name, 'english')} has been successfully pollinated!`,
+                      sound: 'default',
+                      badge: 1,
+                      data: {
+                        plantId,
+                        plantName: plant.name,
+                        type: 'pollination-success'
+                      },
+                      android: {
+                        channelId: 'pollination',
+                        priority: 'max',
+                        vibrate: [0, 250, 250, 250],
+                      },
+                    },
+                    trigger: { seconds: 1 }
+                  });
+                } catch (notifError) {
+                  console.error('Error sending notification:', notifError);
+                }
+              }
+
               Alert.alert(
                 'Success',
                 success
@@ -153,7 +200,33 @@ export const PlantDetailScreen = ({ navigation, route }) => {
           onPress: async () => {
             try {
               await pollinationService.updateStatus(plantId, 'harvested');
-              Alert.alert('Success', 'Plant marked as harvested!');
+              
+              // Send harvest notification
+              try {
+                await Notifications.scheduleNotificationAsync({
+                  content: {
+                    title: '🎉 Harvest Complete!',
+                    body: `Your ${pollinationService.formatPlantName(plant.name, 'english')} is ready to harvest!`,
+                    sound: 'default',
+                    badge: 1,
+                    data: {
+                      plantId,
+                      plantName: plant.name,
+                      type: 'harvest-complete'
+                    },
+                    android: {
+                      channelId: 'pollination',
+                      priority: 'max',
+                      vibrate: [0, 250, 250, 250],
+                    },
+                  },
+                  trigger: { seconds: 1 }
+                });
+              } catch (notifError) {
+                console.error('Error sending harvest notification:', notifError);
+              }
+
+              Alert.alert('Success', 'Plant marked as harvested! 🎉');
               fetchPlantDetails(false);
             } catch (error) {
               console.error('Error harvesting:', error);
@@ -203,7 +276,6 @@ export const PlantDetailScreen = ({ navigation, route }) => {
     return pollinationService.getPollinationStatus(plant?.estimatedDates, plant?.datePollinated);
   };
 
-  // Helper to check if pollination has been decided (Successful or Failed)
   const hasPollinationBeenDecided = () => {
     if (!plant?.pollinationStatus || plant.pollinationStatus.length === 0) {
       return false;
@@ -211,6 +283,77 @@ export const PlantDetailScreen = ({ navigation, route }) => {
     // Check if the most recent pollination status is Successful or Failed
     const lastStatus = plant.pollinationStatus[plant.pollinationStatus.length - 1];
     return lastStatus.statuspollination === 'Successful' || lastStatus.statuspollination === 'Failed';
+  };
+
+  // Helper to format date for display
+  const formatDateDisplay = (date) => {
+    const d = new Date(date);
+    return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+  };
+
+  // Helper to render pollination timeline
+  const renderPollinationTimeline = () => {
+    if (plant.gender !== 'female' || !plant.datePollinated) {
+      return null;
+    }
+
+    const reminderTimes = pollinationService.getPollinationReminderTimes(plant.name, plant.datePollinated);
+    if (!reminderTimes) return null;
+
+    return (
+      <View style={styles.timelineCard}>
+        <View style={styles.timelineHeader}>
+          <Ionicons name="notifications" size={20} color={theme.colors.primary} />
+          <Text style={styles.timelineTitle}>Pollination Reminders</Text>
+        </View>
+        
+        <Text style={styles.pollinationDate}>
+          📅 {formatDateDisplay(plant.datePollinated)}
+        </Text>
+        <Text style={styles.plantTypeInfo}>
+          {reminderTimes.timing.description}
+        </Text>
+
+        <View style={styles.timelineContainer}>
+          {/* 1 Hour Before Reminder */}
+          <View style={styles.timelineItem}>
+            <View style={[styles.timelineDot, { backgroundColor: '#FF9800' }]} />
+            <View style={styles.timelineContent}>
+              <Text style={styles.timelineTime}>⏰ {reminderTimes.displayTimes.oneHourBefore}</Text>
+              <Text style={styles.timelineLabel}>1 Hour Before Window</Text>
+              <Text style={styles.timelineMessage}>🔔 Get your tools ready!</Text>
+            </View>
+          </View>
+
+          {/* 30 Minutes Before Reminder */}
+          <View style={styles.timelineItem}>
+            <View style={[styles.timelineDot, { backgroundColor: '#FF6F00' }]} />
+            <View style={styles.timelineContent}>
+              <Text style={styles.timelineTime}>⏰ {reminderTimes.displayTimes.thirtyMinsBefore}</Text>
+              <Text style={styles.timelineLabel}>30 Minutes Before</Text>
+              <Text style={styles.timelineMessage}>🌸 Pollination window is opening soon!</Text>
+            </View>
+          </View>
+
+          {/* Pollination Window Open */}
+          <View style={styles.timelineItem}>
+            <View style={[styles.timelineDot, { backgroundColor: '#4CAF50' }]} />
+            <View style={styles.timelineContent}>
+              <Text style={styles.timelineTime}>🌸 {reminderTimes.displayTimes.windowStart} - {reminderTimes.displayTimes.windowEnd}</Text>
+              <Text style={styles.timelineLabel}>Pollination Window</Text>
+              <Text style={styles.timelineMessage}>✅ Flowers are open - Time to pollinate!</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.timelineTip}>
+          <Ionicons name="bulb" size={16} color={theme.colors.primary} />
+          <Text style={styles.timelineTipText}>
+            Only female flowers will produce fruits. Mark gender before pollinating!
+          </Text>
+        </View>
+      </View>
+    );
   };
 
   const renderImageGallery = () => {

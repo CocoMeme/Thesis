@@ -18,7 +18,9 @@ const {
   getPlantTypes,
   getDashboardStats,
   updatePollinationStatus,
-  updateStatus
+  updateStatus,
+  getPendingNotifications,
+  markNotificationSent
 } = require('../controllers/pollinationController');
 
 // Import middleware
@@ -39,6 +41,7 @@ router.use(authenticate);
 router.get('/dashboard/stats', getDashboardStats);
 router.get('/attention/needed', getPlantsNeedingAttention);
 router.get('/upcoming/pollinations', getUpcomingPollinations);
+router.get('/notifications/pending', getPendingNotifications);
 
 // Main CRUD routes
 router.route('/')
@@ -64,5 +67,6 @@ router.post('/:id/flowering', markFlowering);
 router.post('/:id/pollinate', markPollinated);
 router.post('/:id/check-success', updatePollinationStatus);
 router.post('/:id/status', updateStatus);
+router.post('/:id/notification-sent', markNotificationSent);
 
 module.exports = router;

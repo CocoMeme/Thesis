@@ -9,6 +9,7 @@ import { ActivityIndicator, View, Alert } from 'react-native';
 import { HomeScreen, CameraScreen, ResultsScreen, HistoryScreen, NewsScreen, ChatbotScreen, LoginScreen, SignUpScreen, ProfileScreen, PollinationScreen, PlantFormScreen, PlantDetailScreen, HowToUseScreen, EducationalScreen, CommunityScreen, CreatePostScreen, PostDetailScreen } from '../screens';
 import { AdminDashboardScreen, UserManagementScreen, UserDetailScreen, ForumManagementScreen } from '../screens/AdminScreens';
 import { theme } from '../styles';
+import { pollinationNotificationHelper } from '../utils/pollinationNotificationHelper';
 
 const TAB_BAR_HEIGHT = 70;
 
@@ -427,6 +428,15 @@ export const AppNavigator = () => {
           console.log('👤 User Data:', user);
           console.log('🔑 User Role:', user.role);
           setUserRole(user.role);
+        }
+
+        // Initialize pollination notifications now that user is authenticated
+        console.log('🔔 User authenticated - initializing notifications...');
+        try {
+          await pollinationNotificationHelper.initialize();
+        } catch (error) {
+          console.error('Error initializing notifications after login:', error);
+          // Don't fail the app if notifications fail to initialize
         }
       }
     } catch (error) {

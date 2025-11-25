@@ -316,6 +316,30 @@ class PollinationService {
     }
   }
 
+  // Get pending pollination notifications
+  async getPendingNotifications() {
+    try {
+      const response = await api.get(`${this.baseURL}/notifications/pending`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching pending notifications:', error);
+      throw error;
+    }
+  }
+
+  // Mark pollination notification as sent
+  async markNotificationSent(id, notificationType) {
+    try {
+      const response = await api.post(`${this.baseURL}/${id}/notification-sent`, {
+        notificationType
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error marking notification as sent:', error);
+      throw error;
+    }
+  }
+
   // Get plants needing attention
   async getPlantsNeedingAttention() {
     try {

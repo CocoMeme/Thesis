@@ -1,6 +1,7 @@
 const { Pollination } = require('../models');
 const cloudinary = require('cloudinary').v2;
 const streamifier = require('streamifier');
+const notificationScheduler = require('../utils/notificationScheduler');
 
 // @desc    Get all pollination records for authenticated user
 // @route   GET /api/pollination
@@ -763,6 +764,71 @@ const updateStatus = async (req, res) => {
   }
 };
 
+// @desc    Get pending pollination notifications
+// @route   GET /api/pollination/notifications/pending
+// @access  Private
+const getPendingNotifications = async (req, res) => {
+  try {
+    const notifications = await notificationScheduler.getPendingNotifications(req.user.id);
+
+    res.status(200).json({
+      success: true,
+      message: `Found ${notifications.length} pending notifications`,
+      data: notifications
+    });
+  } catch (error) {
+    console.error('Get pending notifications error:', error);
+    res.status(400).json({
+      success: false,
+      message: 'Error fetching pending notifications',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Mark pollination notification as sent
+// @route   POST /api/pollination/:id/notification-sent
+// @access  Private
+const markNotificationSent = async (req, res) => {
+  try {
+    const { notificationType } = req.body; // 'oneHourBefore' or 'thirtyMinsBefore'
+
+    if (!['oneHourBefore', 'thirtyMinsBefore'].includes(notificationType)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid notification type'
+      });
+    }
+
+    const pollination = await Pollination.findOne({
+      _id: req.params.id,
+      user: req.user.id
+    });
+
+    if (!pollination) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pollination record not found'
+      });
+    }
+
+    const updated = await notificationScheduler.markNotificationAsSent(req.params.id, notificationType);
+
+    res.status(200).json({
+      success: true,
+      message: `Notification marked as sent: ${notificationType}`,
+      data: updated
+    });
+  } catch (error) {
+    console.error('Mark notification sent error:', error);
+    res.status(400).json({
+      success: false,
+      message: 'Error marking notification as sent',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getPollinations,
   getPollination,
@@ -779,5 +845,7 @@ module.exports = {
   getPlantTypes,
   getDashboardStats,
   updatePollinationStatus,
-  updateStatus
+  updateStatus,
+  getPendingNotifications,
+  markNotificationSent
 };

@@ -98,6 +98,36 @@ const pollinationSchema = new mongoose.Schema({
     },
   }],
 
+  // Pollination timing info for notifications
+  pollinationTiming: {
+    startHour: {
+      type: Number,
+      min: 0,
+      max: 23,
+      description: 'Hour when pollination window opens (0-23)'
+    },
+    endHour: {
+      type: Number,
+      min: 0,
+      max: 23,
+      description: 'Hour when pollination window closes (0-23)'
+    },
+    scheduledDate: {
+      type: Date,
+      description: 'Date of the next pollination window'
+    },
+    notificationScheduled: {
+      oneHourBefore: {
+        type: Boolean,
+        default: false
+      },
+      thirtyMinsBefore: {
+        type: Boolean,
+        default: false
+      }
+    }
+  },
+
   // User who manages this plant
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -274,7 +304,36 @@ pollinationSchema.methods.markPollinated = function(date) {
   // If no date provided, use current date
   this.datePollinated = date || new Date();
   this.status = 'pollinated';
+  
+  // Set up pollination timing for notifications
+  this.setPollintionTiming(date || new Date());
+  
   return this.save();
+};
+
+// Instance method to set pollination timing based on plant type
+pollinationSchema.methods.setPollintionTiming = function(pollinationDate) {
+  // Pollination timing by plant type
+  const timingMap = {
+    ampalaya: { startHour: 6, endHour: 9 },     // 6:00 AM - 9:00 AM
+    kalabasa: { startHour: 6, endHour: 9 },     // 6:00 AM - 9:00 AM
+    kundol: { startHour: 6, endHour: 8 },       // 6:00 AM - 8:00 AM (very early)
+    patola: { startHour: 5, endHour: 20 },      // Morning OR Evening - needs user input, default to evening
+    upo: { startHour: 17, endHour: 20 }         // 5:00 PM - 8:00 PM
+  };
+
+  const timing = timingMap[this.name];
+  if (timing) {
+    this.pollinationTiming = {
+      startHour: timing.startHour,
+      endHour: timing.endHour,
+      scheduledDate: pollinationDate,
+      notificationScheduled: {
+        oneHourBefore: false,
+        thirtyMinsBefore: false
+      }
+    };
+  }
 };
 
 // Static method to get plants needing attention (simplified)
