@@ -107,16 +107,25 @@ const login = async (req, res) => {
       });
     }
 
-    // Find user by email
+    // Find user by email (don't filter by isActive yet)
     const user = await User.findOne({ 
-      email: email.toLowerCase().trim(),
-      isActive: true 
+      email: email.toLowerCase().trim()
     }).select('+password'); // Include password field for comparison
 
     if (!user) {
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password',
+      });
+    }
+
+    // Check if account is deactivated
+    if (!user.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been deactivated. Please contact support for assistance.',
+        accountDeactivated: true,
+        deactivationReason: user.deactivationReason || null,
       });
     }
 

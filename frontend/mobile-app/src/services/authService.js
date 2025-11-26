@@ -101,6 +101,16 @@ class AuthService {
       const data = await response.json();
 
       if (!response.ok) {
+        // Check if account is deactivated
+        if (response.status === 403 && data.accountDeactivated) {
+          return {
+            success: false,
+            message: data.message || 'Your account has been deactivated',
+            accountDeactivated: true,
+            deactivationReason: data.deactivationReason,
+          };
+        }
+        
         throw new Error(data.message || 'Login failed');
       }
 
@@ -207,6 +217,16 @@ class AuthService {
       const data = await response.json();
 
       if (!response.ok) {
+        // Check if account is deactivated
+        if (response.status === 403 && data.accountDeactivated) {
+          return {
+            success: false,
+            message: data.message || 'Your account has been deactivated',
+            accountDeactivated: true,
+            deactivationReason: data.deactivationReason,
+          };
+        }
+
         return {
           success: false,
           message: data.message || 'Server authentication failed',

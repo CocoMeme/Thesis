@@ -60,13 +60,28 @@ export const LoginScreen = ({ navigation, onAuthSuccess }) => {
           onAuthSuccess();
         }
       } else {
-        setAlert({
-          visible: true,
-          type: 'error',
-          title: 'Login Failed',
-          message: result.message || 'Invalid credentials. Please try again.',
-          buttons: [],
-        });
+        // Check if account is deactivated
+        if (result.accountDeactivated) {
+          const message = result.deactivationReason 
+            ? `Your account has been deactivated.\n\nReason: ${result.deactivationReason}\n\nPlease contact support for assistance.`
+            : 'Your account has been deactivated. Please contact support for assistance.';
+          
+          setAlert({
+            visible: true,
+            type: 'error',
+            title: 'Account Deactivated',
+            message: message,
+            buttons: [],
+          });
+        } else {
+          setAlert({
+            visible: true,
+            type: 'error',
+            title: 'Login Failed',
+            message: result.message || 'Invalid credentials. Please try again.',
+            buttons: [],
+          });
+        }
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -99,27 +114,42 @@ export const LoginScreen = ({ navigation, onAuthSuccess }) => {
           onAuthSuccess();
         }
       } else {
-        // Show a more detailed error for configuration issues
-        const errorMessage = result.message || 'Unable to sign in with Google';
-        if (errorMessage.includes('not configured')) {
-          setAlert({
-            visible: true,
-            type: 'info',
-            title: 'Setup Required',
-            message: 'Google Sign-In is running in demo mode. To enable real Google authentication, please follow the setup guide.',
-            buttons: [
-              { text: 'Use Demo Mode', onPress: () => handleGoogleSignIn() },
-              { text: 'Cancel', style: 'cancel' }
-            ],
-          });
-        } else {
+        // Check if account is deactivated
+        if (result.accountDeactivated) {
+          const message = result.deactivationReason 
+            ? `Your account has been deactivated.\n\nReason: ${result.deactivationReason}\n\nPlease contact support for assistance.`
+            : 'Your account has been deactivated. Please contact support for assistance.';
+          
           setAlert({
             visible: true,
             type: 'error',
-            title: 'Sign-In Failed',
-            message: errorMessage,
+            title: 'Account Deactivated',
+            message: message,
             buttons: [],
           });
+        } else {
+          // Show a more detailed error for configuration issues
+          const errorMessage = result.message || 'Unable to sign in with Google';
+          if (errorMessage.includes('not configured')) {
+            setAlert({
+              visible: true,
+              type: 'info',
+              title: 'Setup Required',
+              message: 'Google Sign-In is running in demo mode. To enable real Google authentication, please follow the setup guide.',
+              buttons: [
+                { text: 'Use Demo Mode', onPress: () => handleGoogleSignIn() },
+                { text: 'Cancel', style: 'cancel' }
+              ],
+            });
+          } else {
+            setAlert({
+              visible: true,
+              type: 'error',
+              title: 'Sign-In Failed',
+              message: errorMessage,
+              buttons: [],
+            });
+          }
         }
       }
     } catch (error) {

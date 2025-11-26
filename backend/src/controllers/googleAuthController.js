@@ -101,6 +101,16 @@ const googleOAuth = async (req, res) => {
 
       await localUser.save();
     } else {
+      // Check if account is deactivated
+      if (!localUser.isActive) {
+        return res.status(403).json({
+          success: false,
+          message: 'Your account has been deactivated. Please contact support for assistance.',
+          accountDeactivated: true,
+          deactivationReason: localUser.deactivationReason || null,
+        });
+      }
+
       // Update existing user's last login and Google ID if needed
       localUser.lastLogin = new Date();
       if (!localUser.googleId) {
